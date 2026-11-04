@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a reproducible problem with the toolkit or skill.
+body:
+  - type: markdown
+    attributes:
+      value: Use a minimal owned fixture. Do not attach secrets, private binaries or captured user data. See SECURITY.md for sensitive vulnerabilities.
+  - type: input
+    id: environment
+    attributes:
+      label: Version and environment
+      description: Include REA Pro Max version/commit, OS, Node version and host if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Small reproduction
+      description: Include the exact command/task, fixture or shareable source, reset conditions and input.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and observed behavior
+      description: Include the actual verdict/error and relevant evidence without sensitive data.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: What was actually executed?
+      description: Distinguish static inspection, supplied receipt comparison, controlled model and real app/browser/device observations.
