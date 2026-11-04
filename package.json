@@ -1,14 +1,15 @@
 {
   "name": "rea-pro-max",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Independent reverse-engineering skill and workbench: artifact boundaries, distinguishing experiments and finite behavioral verification.",
+  "description": "Independent reverse-engineering MCP, skill and CLI: artifact boundaries, distinguishing experiments and finite behavioral verification.",
   "type": "module",
   "engines": {
     "node": ">=22"
   },
   "bin": {
-    "rea-pro-max": "skills/rea-pro-max/scripts/rea-pro-max.mjs"
+    "rea-pro-max": "skills/rea-pro-max/scripts/rea-pro-max.mjs",
+    "rea-pro-max-mcp": "skills/rea-pro-max/scripts/mcp-server.mjs"
   },
   "scripts": {
     "test": "node --test \"tests/*.test.mjs\"",
@@ -16,12 +17,19 @@
     "check:docs": "node tools/check-docs.mjs",
     "demo": "node skills/rea-pro-max/scripts/rea-pro-max.mjs demo --out ./rpm-lab",
     "package:skill": "python3 tools/package_skill.py",
-    "build:demo": "node tools/build-demo.mjs"
+    "build:demo": "node tools/build-demo.mjs",
+    "vendor:mcp": "node tools/vendor-mcp.mjs",
+    "check:vendor": "node tools/vendor-mcp.mjs --check",
+    "check:mcp": "node tools/check-mcp.mjs"
   },
   "license": "MIT",
   "devDependencies": {
+    "@modelcontextprotocol/client": "2.4.0",
+    "@modelcontextprotocol/server": "2.4.0",
     "electron": "45.2.2",
-    "eslint": "10.14.0"
+    "esbuild": "0.28.2",
+    "eslint": "10.14.0",
+    "zod": "4.6.7"
   },
   "overrides": {
     "minimatch": "11.0.1"

@@ -1,6 +1,20 @@
-# REA Pro Max v0.1.0 — verification record
+# REA Pro Max — verification record
 
 Recorded 2026-11-04. This record separates executable engine checks, a controlled model and actual app observations. No comparison with another reverse-engineering product was run.
+
+## v0.2.0 — MCP and documentation
+
+The independent local stdio server exposes12 tools through the bundled official SDK2.4.0 runtime. Official clients exercise both the legacy initialization path and the current2026-07-28 discovery path. The v0.2 suite passes **105 tests**, including22 MCP workflow/security cases. This is protocol/client integration evidence, not a claim that a commercial LLM completed a live task in every named host.
+
+Checks include scoped artifact/JSON access; deterministic bounded paging; opaque session handles; portable case export/import; failed-mutation rollback; concurrent revision conflicts; current case-target binding checks; valid finite fail/unknown results; exclusive HTML/JSON exports; cache eviction; input/model/graph bounds; two concurrent heavy operations; stdout discipline and EOF shutdown.
+
+The56-file self-contained archive is extracted outside the repository. Its server runs without node_modules in its installation. Official current and legacy clients repeat capabilities/catalog, static inspection/evidence paging, case export/import, fixed owned lab, finite mismatch verification and standalone report export. The original CLI help/demo/verify path also passes after extraction. The105-test suite and extracted server checks also pass on local macOS arm64 with Node24.22.2; the Node22 and Node24 archive builds are byte-identical.
+
+`npm run check:vendor` regenerates and compares the pinned SDK/schema bundle and retained license bytes. Complete original SDK Apache-2.0/MIT transition licenses and Zod MIT license are included. Development dependencies require npm; the packaged runtime does not.
+
+The main README is expanded; English remains at root and eight substantive translations live under `docs/i18n`. All nine selectors resolve to the same language destinations. The commands distinguish Git/source archives from the packaged skill ZIP layout. Localization has no professional human/native-speaker review.
+
+For current remote CI status, use [Actions](https://github.com/hieunguyenak92/rea-pro-max/actions). The release publication report records actual remote results separately; a configured matrix is not a completed run. Existing real-app fixture observations below were collected for v0.1 and are retained as dated examples.
 
 ## Reproduce the engine checks
 
@@ -12,7 +26,7 @@ npm run check:docs
 python3 tools/package_skill.py --check
 ```
 
-The local Node26 run passes **82 tests** with no skips. The suite covers artifact parsing without execution, context/alias ambiguity, conservative unknowns, bounded graph expansion, revision conflicts, stale bindings, finite behavior comparison, event ordering, reset-aware failure reduction, CLI exit codes, inert report embedding and extracted/linked installation paths. A Windows host may skip symlink-only checks when its account lacks symlink privileges. Remote CI status is visible in [Actions](https://github.com/hieunguyenak92/rea-pro-max/actions); the prepared matrix is Node22/24 on Linux/macOS/Windows. Do not infer remote success from this local record.
+The original v0.1 local Node26 run passed **82 tests** with no skips. The v0.2 local Node22 suite passes **105 tests** with no skips. The suite covers artifact parsing without execution, context/alias ambiguity, conservative unknowns, bounded graph expansion, revision conflicts, stale bindings, finite behavior comparison, event ordering, reset-aware failure reduction, CLI exit codes, inert report embedding and extracted/linked installation paths. A Windows host may skip symlink-only checks when its account lacks symlink privileges. Remote CI status is visible in [Actions](https://github.com/hieunguyenak92/rea-pro-max/actions); the prepared matrix is Node22/24 on Linux/macOS/Windows. Do not infer remote success from this local record.
 
 The skill ZIP is built twice from the same source and checked byte-for-byte. It is extracted outside the checkout; `help`, `demo` and `verify` run without npm, Electron or an upstream REA installation. Internal checksums cover its entries. Release checksums bind bytes, not the truth of imported observations.
 

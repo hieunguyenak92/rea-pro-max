@@ -3,8 +3,8 @@ import { dirname, extname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const readmes = ['README.md', 'README.vi.md', 'README.ko.md', 'README.ja.md', 'README.es.md', 'README.pt-BR.md', 'README.zh-CN.md', 'README.th.md', 'README.fr.md'];
-const ignored = new Set(['node_modules', '.git', 'dist', 'rpm-lab', '__pycache__']);
+const readmes = ['README.md', 'docs/i18n/vi.md', 'docs/i18n/ko.md', 'docs/i18n/ja.md', 'docs/i18n/es.md', 'docs/i18n/pt-BR.md', 'docs/i18n/zh-CN.md', 'docs/i18n/th.md', 'docs/i18n/fr.md'];
+const ignored = new Set(['node_modules', '.git', 'dist', 'rpm-lab', '.rpm', '__pycache__']);
 const errors = [], notes = [];
 function require(condition, message) { if (!condition) errors.push(message); }
 function json(file) {
@@ -29,18 +29,21 @@ for (const name of readmes) {
   const file = resolve(root, name);
   if (!existsSync(file)) { errors.push(`Missing required localized README: ${name}`); continue; }
   const text = readFileSync(file, 'utf8');
-  const selector = text.split('\n').find(line => readmes.every(target => line.includes(`](${target})`)));
+  const selector = text.split('\n').find(line => { const destinations = links(line).map(target => resolve(dirname(file), target)); return readmes.every(target => destinations.includes(resolve(root,target))); });
   require(Boolean(selector), `${name}: one visible selector must link all nine README languages.`);
   if (selector) {
-    if (expectedSelector === undefined) expectedSelector = selector.trim();
-    require(selector.trim() === expectedSelector, `${name}: language selector differs from the English selector.`);
+    const labels = [...selector.matchAll(/\[([^\]]+)\]\(/gu)].map(match => match[1]).join('|');
+    if (expectedSelector === undefined) expectedSelector = labels;
+    require(labels === expectedSelector, `${name}: visible language labels differ from the English selector.`);
   }
   require(text.length > 1500 && (text.match(/^#{1,3}\s/gmu)?.length ?? 0) >= 5, `${name}: substantive introduction, usage, features and limits are required.`);
   require(text.includes('rea-pro-max.mjs demo --out'), `${name}: include the executable first-use path.`);
+  require(text.includes('mcp-server.mjs') && text.includes('docs/MCP.md') || text.includes('../MCP.md'), `${name}: include MCP setup or technical reference.`);
   require(text.includes('36'), `${name}: keep the measured 36-template catalog count consistent.`);
   require(!/\b(?:guaranteed?|buy|purchased)\s+(?:1[,.]?000\s+)?stars\b/iu.test(text), `${name}: unsupported star/adoption claim.`);
 }
 
+require(readdirSync(root).filter(name => /^README(?:[._-].*)?\.md$/u.test(name)).length === 1, 'Keep only English README.md at root; translations belong under docs/i18n.');
 const files = markdownFiles(root);
 let localLinks = 0;
 for (const file of files) {

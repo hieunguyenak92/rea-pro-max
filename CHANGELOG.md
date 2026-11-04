@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 — 2026-11-04
+
+- Add an independent local stdio MCP server with12 tools and bundled officialSDK2.4.0 runtime; current-discovery and legacy clients are exercised.
+- Add workspace-contained artifact/JSON access, bounded handles/pages, portable case import/export, revision-safe updates and explicit report exports.
+- Keep arbitrary oracle/shell execution outside MCP; its lab runs bundled owned scripts under simulated Chrome APIs.
+- Expand the main README and8 substantive translations; move localized documents into `docs/i18n` so the root contains one README.
+- Add real-client, scope, paging, cache, input-budget, error, concurrent-revision and concurrency-bound checks; preserve original dependency licenses and reproducible bundle checks.
+
 ## 0.1.0
 
 - Independent Claude Code/Codex skill with a bundled Node toolkit.

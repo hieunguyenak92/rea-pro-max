@@ -31,7 +31,9 @@ jobs:
           python-version: '3.12'
       - name: Install development tools without Electron runtime download
         run: npm ci --ignore-scripts
-      - name: Run engine and CLI tests
+      - name: Verify bundled SDK bytes and retained licenses
+        run: npm run check:vendor
+      - name: Run engine, CLI and real MCP client tests
         run: npm test
       - name: Lint
         run: npm run lint

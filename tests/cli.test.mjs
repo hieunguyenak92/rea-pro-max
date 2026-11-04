@@ -185,7 +185,7 @@ test('CLI invoked through a symlinked parent directory still executes its entryp
   catch (error) { if (['EPERM', 'EACCES'].includes(error.code)) { t.skip('Directory symlink privilege is unavailable.'); return; } throw error; }
   const result = spawnSync(process.execPath, [join(alias, 'scripts/rea-pro-max.mjs'), 'help'], { cwd: directory, encoding: 'utf8', timeout: 20000 });
   assert.equal(result.error, undefined); assert.equal(result.status, 0); assert.equal(result.stderr, '');
-  assert.match(result.stdout, /REA Pro Max 0\.1\.0/u);
+  assert.match(result.stdout, /REA Pro Max 0\.2\.0/u);
 });
 
 test('malformed JSON, ambiguous options and extra positional arguments are rejected', t => {
@@ -199,8 +199,8 @@ test('malformed JSON, ambiguous options and extra positional arguments are rejec
 });
 
 test('help, version and prompt inventory are available without external services', () => {
-  assert.match(run(['help']).stdout, /REA Pro Max 0\.1\.0/u);
-  assert.equal(run(['version']).stdout.trim(), '0.1.0');
+  assert.match(run(['help']).stdout, /REA Pro Max 0\.2\.0/u);
+  assert.equal(run(['version']).stdout.trim(), '0.2.0');
   const prompts = parse(run(['prompts'])); assert.ok(prompts.length >= 5);
   const target = prompts[0].target; const selected = parse(run(['prompts', '--target', target]));
   assert.ok(selected.length); assert.equal(selected.every(item => item.target === target), true);
@@ -214,4 +214,12 @@ test('fresh JSON output refuses a dangling symlink without replacing it', t => {
   const result = run(['inspect', fixture, '--out', linked], 1);
   assert.equal(JSON.parse(result.stderr).error, 'output_exists');
   assert.equal(lstatSync(linked).isSymbolicLink(), true);
+});
+
+test('main CLI MCP command uses the independent stdio entry and closes cleanly on EOF', t => {
+  const directory = workspace(t);
+  const started = spawnSync(process.execPath, [cli,'mcp','--workspace',directory], {cwd:directory,input:'',encoding:'utf8',timeout:20000});
+  assert.equal(started.error,undefined); assert.equal(started.status,0); assert.equal(started.stdout,''); assert.equal(started.stderr,'');
+  assert.equal(JSON.parse(run(['mcp','--workspace'],1).stderr).error,'arguments');
+  assert.match(run(['help']).stdout,/mcp --workspace ABSOLUTE_DIRECTORY/u);
 });

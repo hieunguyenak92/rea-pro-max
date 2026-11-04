@@ -19,6 +19,7 @@ EXCLUDED = {".git", "node_modules", "__pycache__", ".pytest_cache", ".DS_Store"}
 REQUIRED = {
     "SKILL.md", "LICENSE", "assets/vendor/acorn.mjs", "assets/vendor/ACORN-LICENSE",
     "scripts/rea-pro-max.mjs", "lib/analysis/inspect.mjs", "assets/prompts.json",
+    "scripts/mcp-server.mjs", "assets/vendor/mcp-sdk.mjs", "assets/vendor/MCP-NOTICES.md", "assets/vendor/MCP-RECEIPT.json", "lib/version.mjs",
     "assets/workbench/index.html", "assets/workbench/app.js", "assets/workbench/style.css",
 }
 
@@ -45,7 +46,7 @@ def sources():
     if missing:
         raise ValueError(f"Required skill files missing: {', '.join(sorted(missing))}")
     notices = (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
-    notices = notices.replace("skills/rea-pro-max/assets/vendor/ACORN-LICENSE", "assets/vendor/ACORN-LICENSE")
+    notices = notices.replace("skills/rea-pro-max/", "")
     notices = notices.replace("docs/ACORN-RECEIPT.json", "ACORN-RECEIPT.json")
     entries["THIRD_PARTY_NOTICES.md"] = notices.encode("utf-8")
     entries["ACORN-RECEIPT.json"] = (ROOT / "docs" / "ACORN-RECEIPT.json").read_bytes()
@@ -105,8 +106,14 @@ def smoke_test(data):
                                      "--candidate", lab / "candidate.json"], expected=2))
         if verdict["status"] != "fail" or not (lab / "report.html").is_file():
             raise ValueError("Extracted CLI lost the verification/report artifacts.")
+        mcp = subprocess.run([node, str(ROOT / "tools/check-mcp.mjs"), "--server",
+                              str(skill / "scripts/mcp-server.mjs"), "--workspace", str(extracted)],
+                             cwd=extracted, text=True, encoding="utf-8", capture_output=True,
+                             timeout=60, check=False)
+        if mcp.returncode != 0:
+            raise ValueError(f"Extracted MCP check failed; run npm ci --ignore-scripts for the development client: {mcp.stderr}")
         return {"commands": ["help", "demo", "verify"], "verification": "fail",
-                "reduced_actions": len(reduced["sequence"])}
+                "reduced_actions": len(reduced["sequence"]), "mcp": json.loads(mcp.stdout)}
 
 
 def atomic_write(path, data):

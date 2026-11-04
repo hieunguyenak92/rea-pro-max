@@ -1,13 +1,19 @@
 ---
 name: rea-pro-max
-description: Investigate how a shipped app, browser extension or web feature works, then implement and verify the selected behavior in the user's project. Use for reverse engineering, MV3 popup/content/worker/storage flows, Electron preload/IPC boundaries, comparing target builds and reducing reproducible behavior mismatches. The bundled toolkit reads JavaScript artifacts without executing them, ranks distinguishing experiments, compares finite behavior receipts and shrinks failing action sequences. Execute the requested work and hand over the working artifact; a plan or report alone does not complete a rebuild request.
-compatibility: Node.js22+ for the bundled toolkit. Claude Code or Codex with filesystem/terminal tools; browser or app/device tools are needed for actual runtime observations. Native/mobile providers are optional and must be available for the particular task.
+description: Reverse engineer a shipped JavaScript/web feature, MV3 extension or extracted Electron app, then implement and verify the selected behavior in the user's project. Use for feature reconstruction, ambiguous state/message mechanisms, target-build regressions and stable failure reduction. Use connected REA Pro Max MCP tools or the bundled CLI for executable analysis and finite verification; hand over runnable work when rebuilding.
+compatibility: Node.js 22+ for bundled MCP/CLI. Claude Code, Codex or a compatible local MCP client; host coding/browser/app tools perform implementation and actual runtime observations. Native/mobile tasks require appropriate external providers.
 license: MIT
 ---
 
 # REA Pro Max
 
 Recover the mechanism needed for the user's job, implement the requested feature and verify the finite behavior you can actually observe. Resolve this skill directory from this file; commands use `<skill>` for that absolute path. Quote paths. Save cases/reports in the user's workspace, outside the installed skill.
+
+## Select the connected execution path
+
+When the `rea-pro-max` MCP server is available, call `get_capabilities` and use its admitted workspace and discovered schemas. Use its structured tools for inspection, case revisions, experiment ranking, finite verification and explicit export. Page the relevant source/evidence sections through `read_artifact`; retain returned opaque handles and current revisions. [mcp-workflow.md](references/mcp-workflow.md) gives the tool sequence, session persistence and limits.
+
+The CLI commands below are the execution path when that server is unavailable. Host coding and browser/app tools implement the requested feature and obtain actual runtime evidence. Keep source candidates, reported observations and exercised results distinct in either path.
 
 ## Start from the target and outcome
 
