@@ -1,0 +1,2378 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-04T14:50:11.527Z",
+  "evidence_kind": "recorded-owned-controlled-model",
+  "states": [
+    {
+      "id": "inspect",
+      "label": "Read the boundaries",
+      "description": "Static MV3 artifact analysis. Source positions and context identity are retained; execution is not inferred.",
+      "data": {
+        "schema_version": 1,
+        "title": "A decision that survives",
+        "kind": "lab",
+        "narrative": {
+          "description": "Artifact inspection, conservative probe ranking and a real execution of our owned worker scripts under simulated Chrome APIs. This model does not establish real Chromium suspension; see the release verification record for separately observed browser cases.",
+          "label": "Owned synthetic lab / controlled JavaScript model",
+          "reference": {
+            "bindings": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "effects": [
+              {
+                "channel": "modeled-chrome-storage-local",
+                "name": "set",
+                "value": {
+                  "clips": [
+                    {
+                      "id": "0001",
+                      "text": "Café · 東京 · a decision that survives"
+                    }
+                  ],
+                  "nextId": 2
+                }
+              }
+            ],
+            "evidence_kind": "controlled-javascript-model",
+            "final": {
+              "action": "read",
+              "clips": [
+                {
+                  "id": "0001",
+                  "text": "Café · 東京 · a decision that survives"
+                }
+              ],
+              "model_boot": 2,
+              "ok": true
+            },
+            "limits": [
+              "Chrome APIs are simulated; this does not prove real Chromium worker suspension."
+            ],
+            "observations": [
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "save",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "restart",
+                "model_boot": 2
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 2,
+                "ok": true
+              }
+            ],
+            "sequence": [
+              {
+                "type": "read"
+              },
+              {
+                "text": "Café · 東京 · a decision that survives",
+                "type": "save"
+              },
+              {
+                "type": "read"
+              },
+              {
+                "type": "restart"
+              },
+              {
+                "type": "read"
+              }
+            ]
+          },
+          "regression": {
+            "bindings": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "31b8bc2777a370b01d778200c83f2a5568883f6efef84c2bc0506923e518b155",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "effects": [],
+            "evidence_kind": "controlled-javascript-model",
+            "final": {
+              "action": "read",
+              "clips": [],
+              "model_boot": 2,
+              "ok": true
+            },
+            "limits": [
+              "Chrome APIs are simulated; this does not prove real Chromium worker suspension."
+            ],
+            "observations": [
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "save",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "restart",
+                "model_boot": 2
+              },
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 2,
+                "ok": true
+              }
+            ],
+            "sequence": [
+              {
+                "type": "read"
+              },
+              {
+                "text": "Café · 東京 · a decision that survives",
+                "type": "save"
+              },
+              {
+                "type": "read"
+              },
+              {
+                "type": "restart"
+              },
+              {
+                "type": "read"
+              }
+            ]
+          }
+        },
+        "inspection": {
+          "artifact": {
+            "bytes": 4857,
+            "file_count": 5,
+            "kind": "manifest-v3",
+            "path": "owned-fixture/mv3/reference",
+            "sha256": "f8e3ae595c01994425ab54c8b8b1ac432a8340ff5812c7389ba7e068910389f1"
+          },
+          "capabilities": [
+            "bounded-static-inventory",
+            "javascript-ast",
+            "mv3-declared-contexts"
+          ],
+          "contexts": [
+            {
+              "declaration_index": 0,
+              "entrypoints": [
+                "content.js"
+              ],
+              "id": "ctx_3688d78e5af1220de177bc1a662fd3500ad2691e558636ca5bdcb214e61dd424",
+              "kind": "content-script",
+              "label": "Content script declaration 1",
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "world": "ISOLATED"
+            },
+            {
+              "entrypoints": [
+                "worker.js"
+              ],
+              "id": "ctx_6a91baa679e76078fa10154e4499b5409b7c9c43ee13a6461a13a6bbfc4c2926",
+              "kind": "service-worker",
+              "label": "Extension service worker"
+            },
+            {
+              "entrypoints": [
+                "popup.html"
+              ],
+              "id": "ctx_b3450e9b8ead6b5e0f1b66804c71ad318f9dfab1eee9c6a287f332ebbc5d92b0",
+              "kind": "popup",
+              "label": "Extension popup"
+            },
+            {
+              "entrypoints": [
+                "manifest.json"
+              ],
+              "id": "ctx_e25150a2114ae8bc6527eb97c2c79d83e140ecfd746f4377175fa43f021a8ae5",
+              "kind": "extension-manifest",
+              "label": "Manifest V3 declarations"
+            }
+          ],
+          "edges": [
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_844f4a3d166e962175222f348c2dd1a3d9533ee68234d23f88240a0881e82222"
+              ],
+              "from": "ctx_e25150a2114ae8bc6527eb97c2c79d83e140ecfd746f4377175fa43f021a8ae5",
+              "id": "edge_0ea2b1760e8b34fdec8bbe7812b58ab5718c15a66cf4820c3766bd264ab6e37d",
+              "kind": "declares-entry",
+              "to": "module_32a4b4c8dad605b644f4e1c27f3e07d50150a3ad2c1e720c78947dc9a57877a2"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_07aa9723e2ad9c03a4ed908188a9617a71598a7e322b617560e65f4a914254e4"
+              ],
+              "from": "module_95b5f5a6c1c931e6dbe682ec3a26f57520244f22270630136fe5a6adc4aea315",
+              "id": "edge_10240c4f76c2bce1a1b436e507d56ca398d60b21242f19e2add6b62c13675c7e",
+              "kind": "declares-call",
+              "to": "operation_a5278c5bb54219bad8d725cf752640cf5e34e5329edb54cd86958f01244b288b"
+            },
+            {
+              "authority": "candidate",
+              "evidence_ids": [
+                "ev_00b27a430652989e2e8e766a56e560130b86ab58f75efb9a29189a203205e9ba"
+              ],
+              "from": "operation_50b1986246e7e32abc50631e1ccceeb4edd1d3fca22fbe6eb6edcc6302829167",
+              "id": "edge_164bf56a444f7364c93ccfbe7610b878e9a5aa4f8b92d02771a963ea540b704b",
+              "kind": "candidate-write",
+              "to": "storage_cb9d31121b47586aa54dee50d6fc4fddee4bfdbba428554debd82d9c51003461"
+            },
+            {
+              "authority": "candidate",
+              "evidence_ids": [
+                "ev_00734745082d5b833652a79e2560bc3ebf8c0ead4df77c719411964bc9c00a72",
+                "ev_07aa9723e2ad9c03a4ed908188a9617a71598a7e322b617560e65f4a914254e4"
+              ],
+              "from": "operation_df62bdb32292e31a37816119a531075b08870d1d46bdd065a59e49485c08eaea",
+              "id": "edge_1681d20f285a8305ba6e7c1968ebf019579b3dc6b90fcf1240496b9af218712f",
+              "kind": "candidate-message-route",
+              "to": "operation_a5278c5bb54219bad8d725cf752640cf5e34e5329edb54cd86958f01244b288b"
+            },
+            {
+              "authority": "candidate",
+              "evidence_ids": [
+                "ev_315150559ded369a669d1d2924224d19b19303d90064ebea618a608e8ee27b80"
+              ],
+              "from": "operation_9959421a6a1adee900d3baf227238fc62a39c180b12014b17062e4b84b4bdef4",
+              "id": "edge_2a61299edebb51e1bed3b5490a7b5771fb17b27b26adfa46d7da5399100500b0",
+              "kind": "candidate-read",
+              "to": "storage_6a14a20fa96d9f9e1838d63e1992ee3440e237ff52ba5520cfd89ee60b324e0d"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_844f4a3d166e962175222f348c2dd1a3d9533ee68234d23f88240a0881e82222"
+              ],
+              "from": "ctx_3688d78e5af1220de177bc1a662fd3500ad2691e558636ca5bdcb214e61dd424",
+              "id": "edge_3143e6a6b199f60d433295332916eb39839fbce2e2d80ee9bbf40d88acea1cd2",
+              "kind": "declares-entry",
+              "to": "module_ed0d220f3386f9e460f206be64ecc31f0fe6891effb772e66792d6effa06388d"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_00734745082d5b833652a79e2560bc3ebf8c0ead4df77c719411964bc9c00a72"
+              ],
+              "from": "module_ed0d220f3386f9e460f206be64ecc31f0fe6891effb772e66792d6effa06388d",
+              "id": "edge_6151f895f745710e9b3e8aad0339cd5ef4713ee07e9b222b9f7e74f811d0def0",
+              "kind": "declares-call",
+              "to": "operation_df62bdb32292e31a37816119a531075b08870d1d46bdd065a59e49485c08eaea"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_07aa9723e2ad9c03a4ed908188a9617a71598a7e322b617560e65f4a914254e4"
+              ],
+              "from": "module_95b5f5a6c1c931e6dbe682ec3a26f57520244f22270630136fe5a6adc4aea315",
+              "id": "edge_76881a054e24fd54842264023c9299dd924a69605366f19ff9b07f462d6a1094",
+              "kind": "declares-call",
+              "to": "operation_48b57513e56455dcfe41ebaf99a8d44f26c0a3199b0852eaa71ad532a3d4ca79"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_a24c0579d7bd03a7f3192101c4badcadc8853a13b8724325de9a50786c5603ab"
+              ],
+              "from": "module_96b83ffd5df0749d929da5c5a174c4a551bea54ecd04912f84abee87bed7ea98",
+              "id": "edge_7781e35fd33741491edec363757d6473b2a99bd2592c29dedfdaf6e91c322513",
+              "kind": "declares-script",
+              "to": "module_4cb7c9595fac8231e9942eda5d08bf68a7a8b58d2452c12586888fe968383e93"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_8946b033725142c1fb990dcc6f968d4acaa1f434ee592b2985ab27411aa082bb"
+              ],
+              "from": "module_4cb7c9595fac8231e9942eda5d08bf68a7a8b58d2452c12586888fe968383e93",
+              "id": "edge_7d0c52f05b5d1ed4d846cc4ce4c681be232815b4665180d9a8ff7d1d90d47cfd",
+              "kind": "declares-call",
+              "to": "operation_4b76ed2b4262a262662723948c996080a28e5ad1d0dd4a3559ebb8ae887a0864"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_e9184338bc5c9558c6222529f511135c89b15df845d22cdebe59b08fce6e9529"
+              ],
+              "from": "module_95b5f5a6c1c931e6dbe682ec3a26f57520244f22270630136fe5a6adc4aea315",
+              "id": "edge_82ab34c9e49f69a99ab83ccd8779a26ddb4e3967a47e4db48ee67e5089832e41",
+              "kind": "declares-call",
+              "to": "operation_e1dd5a542728b303538da486743739c1f4fa07aea0dee4cc8d0d35741d08b01d"
+            },
+            {
+              "authority": "candidate",
+              "evidence_ids": [
+                "ev_e9184338bc5c9558c6222529f511135c89b15df845d22cdebe59b08fce6e9529"
+              ],
+              "from": "operation_e1dd5a542728b303538da486743739c1f4fa07aea0dee4cc8d0d35741d08b01d",
+              "id": "edge_b0143a3068247a14d8d28ffb3d2fcdedb95943a0208da0e2bd57fb10ceadd72e",
+              "kind": "candidate-write",
+              "to": "storage_cb9d31121b47586aa54dee50d6fc4fddee4bfdbba428554debd82d9c51003461"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_a24c0579d7bd03a7f3192101c4badcadc8853a13b8724325de9a50786c5603ab"
+              ],
+              "from": "ctx_b3450e9b8ead6b5e0f1b66804c71ad318f9dfab1eee9c6a287f332ebbc5d92b0",
+              "id": "edge_b256d2495a07cdb2b457f0761d0dc6ffbc4597ad72ca4f646c2b36ccb0d2bc7f",
+              "kind": "declares-entry",
+              "to": "module_4cb7c9595fac8231e9942eda5d08bf68a7a8b58d2452c12586888fe968383e93"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_844f4a3d166e962175222f348c2dd1a3d9533ee68234d23f88240a0881e82222"
+              ],
+              "from": "ctx_6a91baa679e76078fa10154e4499b5409b7c9c43ee13a6461a13a6bbfc4c2926",
+              "id": "edge_c607d081cfe6d0f1f14be73820e11fddfa16846a89e72889d9d67b1d2e27d095",
+              "kind": "declares-entry",
+              "to": "module_95b5f5a6c1c931e6dbe682ec3a26f57520244f22270630136fe5a6adc4aea315"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_844f4a3d166e962175222f348c2dd1a3d9533ee68234d23f88240a0881e82222"
+              ],
+              "from": "ctx_e25150a2114ae8bc6527eb97c2c79d83e140ecfd746f4377175fa43f021a8ae5",
+              "id": "edge_c69186e8fb161e50a3cfc0ef63e3a35ef8df7f97a2793588328b30ce343deb66",
+              "kind": "declares-permission",
+              "to": "permission_5744d151a4f202225446b30b5aab267b732fa70160bc70d166f8cbc21bbb15e3"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_844f4a3d166e962175222f348c2dd1a3d9533ee68234d23f88240a0881e82222"
+              ],
+              "from": "ctx_b3450e9b8ead6b5e0f1b66804c71ad318f9dfab1eee9c6a287f332ebbc5d92b0",
+              "id": "edge_ce68e62a7c49be7b73003fc427650b23d209c950c14d31095b2b341e4dcf4126",
+              "kind": "declares-entry",
+              "to": "module_96b83ffd5df0749d929da5c5a174c4a551bea54ecd04912f84abee87bed7ea98"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_00b27a430652989e2e8e766a56e560130b86ab58f75efb9a29189a203205e9ba"
+              ],
+              "from": "module_95b5f5a6c1c931e6dbe682ec3a26f57520244f22270630136fe5a6adc4aea315",
+              "id": "edge_d6347bc70fdada5215ffca09408aa8f9ac99747a6228b81dbd2add06e53a7c2f",
+              "kind": "declares-call",
+              "to": "operation_50b1986246e7e32abc50631e1ccceeb4edd1d3fca22fbe6eb6edcc6302829167"
+            },
+            {
+              "authority": "declared",
+              "evidence_ids": [
+                "ev_315150559ded369a669d1d2924224d19b19303d90064ebea618a608e8ee27b80"
+              ],
+              "from": "module_95b5f5a6c1c931e6dbe682ec3a26f57520244f22270630136fe5a6adc4aea315",
+              "id": "edge_f93a533acbc929d5df41a3703e54a207f935f22df366b7c234d50a70105a771d",
+              "kind": "declares-call",
+              "to": "operation_9959421a6a1adee900d3baf227238fc62a39c180b12014b17062e4b84b4bdef4"
+            }
+          ],
+          "evidence": [
+            {
+              "column": 27,
+              "end": 452,
+              "file": "content.js",
+              "id": "ev_00734745082d5b833652a79e2560bc3ebf8c0ead4df77c719411964bc9c00a72",
+              "line": 6,
+              "operation": "chrome.runtime.sendMessage",
+              "range_unit": "utf16-code-unit",
+              "sha256": "9ea3090d05847ecaed3d8e7159da5833f2d9b5267cd38a073debf210c529b7de",
+              "start": 380
+            },
+            {
+              "column": 12,
+              "end": 729,
+              "file": "worker.js",
+              "id": "ev_00b27a430652989e2e8e766a56e560130b86ab58f75efb9a29189a203205e9ba",
+              "line": 12,
+              "operation": "chrome.storage.local.set",
+              "range_unit": "utf16-code-unit",
+              "sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "start": 697
+            },
+            {
+              "column": 0,
+              "end": 1139,
+              "file": "worker.js",
+              "id": "ev_07aa9723e2ad9c03a4ed908188a9617a71598a7e322b617560e65f4a914254e4",
+              "line": 4,
+              "operation": "chrome.runtime.onMessage.addListener",
+              "range_unit": "utf16-code-unit",
+              "sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "start": 151
+            },
+            {
+              "column": 25,
+              "end": 416,
+              "file": "worker.js",
+              "id": "ev_315150559ded369a669d1d2924224d19b19303d90064ebea618a608e8ee27b80",
+              "line": 7,
+              "operation": "chrome.storage.local.get",
+              "range_unit": "utf16-code-unit",
+              "sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "start": 366
+            },
+            {
+              "column": 4,
+              "end": 149,
+              "file": "worker.js",
+              "id": "ev_4676712e48bca2bc3fe316a5195515e5a48c2871bf718d3a652fbb46eb2faad9",
+              "line": 3,
+              "operation": "worker-mutable-binding",
+              "range_unit": "utf16-code-unit",
+              "sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "start": 122
+            },
+            {
+              "column": 0,
+              "end": 403,
+              "file": "manifest.json",
+              "id": "ev_844f4a3d166e962175222f348c2dd1a3d9533ee68234d23f88240a0881e82222",
+              "line": 1,
+              "operation": "extension-manifest",
+              "range_unit": "utf16-code-unit",
+              "sha256": "1813d0212f895507ae1178c8a6fc870adb9786c9a50df207a751bc7f33547c08",
+              "start": 0
+            },
+            {
+              "column": 25,
+              "end": 195,
+              "file": "popup.js",
+              "id": "ev_8946b033725142c1fb990dcc6f968d4acaa1f434ee592b2985ab27411aa082bb",
+              "line": 4,
+              "operation": "chrome.runtime.sendMessage",
+              "range_unit": "utf16-code-unit",
+              "sha256": "6cead66b8945c636c3129d18764c87cbb4e212bee914f2db5e0f0a79b8ad131e",
+              "start": 111
+            },
+            {
+              "column": 759,
+              "end": 1669,
+              "file": "popup.html",
+              "id": "ev_a24c0579d7bd03a7f3192101c4badcadc8853a13b8724325de9a50786c5603ab",
+              "line": 3,
+              "operation": "html-script-declaration",
+              "range_unit": "utf16-code-unit",
+              "sha256": "ae7cc94a32654c31facab04ec664117258589891ffe5d6631e1f362d22f666f9",
+              "start": 1637
+            },
+            {
+              "column": 12,
+              "end": 862,
+              "file": "worker.js",
+              "id": "ev_e9184338bc5c9558c6222529f511135c89b15df845d22cdebe59b08fce6e9529",
+              "line": 15,
+              "operation": "chrome.storage.local.set",
+              "range_unit": "utf16-code-unit",
+              "sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "start": 830
+            }
+          ],
+          "findings": [
+            {
+              "detail": "Module-scoped mutable binding pending is a static persistence question. Verify cold-worker behavior; no data-loss conclusion follows from this declaration alone.",
+              "evidence_ids": [
+                "ev_4676712e48bca2bc3fe316a5195515e5a48c2871bf718d3a652fbb46eb2faad9"
+              ],
+              "id": "finding_1550ee84b7fae16b6d54e4ce3f9b482314c8acf16bbd7fda3d2327b7728c2334",
+              "severity": "warning",
+              "title": "Worker memory has no persistence guarantee"
+            }
+          ],
+          "limits": {
+            "analyzed_occurrences": 5,
+            "coverage": "bounded-static",
+            "max_analysis_occurrences": 1024,
+            "max_ast_nodes": 100000,
+            "max_contexts": 128,
+            "max_diagnostics": 2000,
+            "max_directory_depth": 32,
+            "max_edges": 10000,
+            "max_evidence": 5000,
+            "max_file_bytes": 2097152,
+            "max_files": 256,
+            "max_nodes": 5000,
+            "max_total_bytes": 16777216,
+            "parser": "acorn-8.15.0",
+            "target_executed": false
+          },
+          "nodes": [
+            {
+              "context_id": "ctx_3688d78e5af1220de177bc1a662fd3500ad2691e558636ca5bdcb214e61dd424",
+              "context_kind": "content-script",
+              "id": "ctx_3688d78e5af1220de177bc1a662fd3500ad2691e558636ca5bdcb214e61dd424",
+              "kind": "context",
+              "label": "Content script declaration 1"
+            },
+            {
+              "context_id": "ctx_6a91baa679e76078fa10154e4499b5409b7c9c43ee13a6461a13a6bbfc4c2926",
+              "context_kind": "service-worker",
+              "id": "ctx_6a91baa679e76078fa10154e4499b5409b7c9c43ee13a6461a13a6bbfc4c2926",
+              "kind": "context",
+              "label": "Extension service worker"
+            },
+            {
+              "context_id": "ctx_b3450e9b8ead6b5e0f1b66804c71ad318f9dfab1eee9c6a287f332ebbc5d92b0",
+              "context_kind": "popup",
+              "id": "ctx_b3450e9b8ead6b5e0f1b66804c71ad318f9dfab1eee9c6a287f332ebbc5d92b0",
+              "kind": "context",
+              "label": "Extension popup"
+            },
+            {
+              "context_id": "ctx_e25150a2114ae8bc6527eb97c2c79d83e140ecfd746f4377175fa43f021a8ae5",
+              "context_kind": "extension-manifest",
+              "id": "ctx_e25150a2114ae8bc6527eb97c2c79d83e140ecfd746f4377175fa43f021a8ae5",
+              "kind": "context",
+              "label": "Manifest V3 declarations"
+            },
+            {
+              "context_id": "ctx_e25150a2114ae8bc6527eb97c2c79d83e140ecfd746f4377175fa43f021a8ae5",
+              "file": "manifest.json",
+              "id": "module_32a4b4c8dad605b644f4e1c27f3e07d50150a3ad2c1e720c78947dc9a57877a2",
+              "kind": "source-module",
+              "label": "manifest.json",
+              "sha256": "1813d0212f895507ae1178c8a6fc870adb9786c9a50df207a751bc7f33547c08"
+            },
+            {
+              "context_id": "ctx_b3450e9b8ead6b5e0f1b66804c71ad318f9dfab1eee9c6a287f332ebbc5d92b0",
+              "file": "popup.js",
+              "id": "module_4cb7c9595fac8231e9942eda5d08bf68a7a8b58d2452c12586888fe968383e93",
+              "kind": "source-module",
+              "label": "popup.js",
+              "sha256": "6cead66b8945c636c3129d18764c87cbb4e212bee914f2db5e0f0a79b8ad131e"
+            },
+            {
+              "context_id": "ctx_6a91baa679e76078fa10154e4499b5409b7c9c43ee13a6461a13a6bbfc4c2926",
+              "file": "worker.js",
+              "id": "module_95b5f5a6c1c931e6dbe682ec3a26f57520244f22270630136fe5a6adc4aea315",
+              "kind": "source-module",
+              "label": "worker.js",
+              "sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a"
+            },
+            {
+              "context_id": "ctx_b3450e9b8ead6b5e0f1b66804c71ad318f9dfab1eee9c6a287f332ebbc5d92b0",
+              "file": "popup.html",
+              "id": "module_96b83ffd5df0749d929da5c5a174c4a551bea54ecd04912f84abee87bed7ea98",
+              "kind": "source-module",
+              "label": "popup.html",
+              "sha256": "ae7cc94a32654c31facab04ec664117258589891ffe5d6631e1f362d22f666f9"
+            },
+            {
+              "context_id": "ctx_3688d78e5af1220de177bc1a662fd3500ad2691e558636ca5bdcb214e61dd424",
+              "file": "content.js",
+              "id": "module_ed0d220f3386f9e460f206be64ecc31f0fe6891effb772e66792d6effa06388d",
+              "kind": "source-module",
+              "label": "content.js",
+              "sha256": "9ea3090d05847ecaed3d8e7159da5833f2d9b5267cd38a073debf210c529b7de"
+            },
+            {
+              "api": "chrome.runtime.onMessage.addListener",
+              "channel": "reset",
+              "context_id": "ctx_6a91baa679e76078fa10154e4499b5409b7c9c43ee13a6461a13a6bbfc4c2926",
+              "evidence_ids": [
+                "ev_07aa9723e2ad9c03a4ed908188a9617a71598a7e322b617560e65f4a914254e4"
+              ],
+              "file": "worker.js",
+              "id": "operation_48b57513e56455dcfe41ebaf99a8d44f26c0a3199b0852eaa71ad532a3d4ca79",
+              "kind": "message-listener",
+              "label": "chrome.runtime.onMessage.addListener: reset"
+            },
+            {
+              "api": "chrome.runtime.sendMessage",
+              "channel": null,
+              "context_id": "ctx_b3450e9b8ead6b5e0f1b66804c71ad318f9dfab1eee9c6a287f332ebbc5d92b0",
+              "evidence_ids": [
+                "ev_8946b033725142c1fb990dcc6f968d4acaa1f434ee592b2985ab27411aa082bb"
+              ],
+              "file": "popup.js",
+              "id": "operation_4b76ed2b4262a262662723948c996080a28e5ad1d0dd4a3559ebb8ae887a0864",
+              "kind": "message-send",
+              "label": "chrome.runtime.sendMessage"
+            },
+            {
+              "api": "chrome.storage.local.set",
+              "channel": null,
+              "context_id": "ctx_6a91baa679e76078fa10154e4499b5409b7c9c43ee13a6461a13a6bbfc4c2926",
+              "evidence_ids": [
+                "ev_00b27a430652989e2e8e766a56e560130b86ab58f75efb9a29189a203205e9ba"
+              ],
+              "file": "worker.js",
+              "id": "operation_50b1986246e7e32abc50631e1ccceeb4edd1d3fca22fbe6eb6edcc6302829167",
+              "kind": "storage-write",
+              "label": "chrome.storage.local.set"
+            },
+            {
+              "api": "chrome.storage.local.get",
+              "channel": null,
+              "context_id": "ctx_6a91baa679e76078fa10154e4499b5409b7c9c43ee13a6461a13a6bbfc4c2926",
+              "evidence_ids": [
+                "ev_315150559ded369a669d1d2924224d19b19303d90064ebea618a608e8ee27b80"
+              ],
+              "file": "worker.js",
+              "id": "operation_9959421a6a1adee900d3baf227238fc62a39c180b12014b17062e4b84b4bdef4",
+              "kind": "storage-read",
+              "label": "chrome.storage.local.get"
+            },
+            {
+              "api": "chrome.runtime.onMessage.addListener",
+              "channel": "save",
+              "context_id": "ctx_6a91baa679e76078fa10154e4499b5409b7c9c43ee13a6461a13a6bbfc4c2926",
+              "evidence_ids": [
+                "ev_07aa9723e2ad9c03a4ed908188a9617a71598a7e322b617560e65f4a914254e4"
+              ],
+              "file": "worker.js",
+              "id": "operation_a5278c5bb54219bad8d725cf752640cf5e34e5329edb54cd86958f01244b288b",
+              "kind": "message-listener",
+              "label": "chrome.runtime.onMessage.addListener: save"
+            },
+            {
+              "api": "chrome.runtime.sendMessage",
+              "channel": "save",
+              "context_id": "ctx_3688d78e5af1220de177bc1a662fd3500ad2691e558636ca5bdcb214e61dd424",
+              "evidence_ids": [
+                "ev_00734745082d5b833652a79e2560bc3ebf8c0ead4df77c719411964bc9c00a72"
+              ],
+              "file": "content.js",
+              "id": "operation_df62bdb32292e31a37816119a531075b08870d1d46bdd065a59e49485c08eaea",
+              "kind": "message-send",
+              "label": "chrome.runtime.sendMessage: save"
+            },
+            {
+              "api": "chrome.storage.local.set",
+              "channel": null,
+              "context_id": "ctx_6a91baa679e76078fa10154e4499b5409b7c9c43ee13a6461a13a6bbfc4c2926",
+              "evidence_ids": [
+                "ev_e9184338bc5c9558c6222529f511135c89b15df845d22cdebe59b08fce6e9529"
+              ],
+              "file": "worker.js",
+              "id": "operation_e1dd5a542728b303538da486743739c1f4fa07aea0dee4cc8d0d35741d08b01d",
+              "kind": "storage-write",
+              "label": "chrome.storage.local.set"
+            },
+            {
+              "context_id": "ctx_e25150a2114ae8bc6527eb97c2c79d83e140ecfd746f4377175fa43f021a8ae5",
+              "id": "permission_5744d151a4f202225446b30b5aab267b732fa70160bc70d166f8cbc21bbb15e3",
+              "kind": "permission",
+              "label": "storage"
+            },
+            {
+              "area": "local",
+              "context_id": "ctx_6a91baa679e76078fa10154e4499b5409b7c9c43ee13a6461a13a6bbfc4c2926",
+              "id": "storage_6a14a20fa96d9f9e1838d63e1992ee3440e237ff52ba5520cfd89ee60b324e0d",
+              "keys": [
+                "clips",
+                "nextId"
+              ],
+              "kind": "storage",
+              "label": "local: clips, nextId"
+            },
+            {
+              "area": "local",
+              "context_id": "ctx_6a91baa679e76078fa10154e4499b5409b7c9c43ee13a6461a13a6bbfc4c2926",
+              "id": "storage_cb9d31121b47586aa54dee50d6fc4fddee4bfdbba428554debd82d9c51003461",
+              "keys": [],
+              "kind": "storage",
+              "label": "local: unresolved keys"
+            }
+          ],
+          "schema_version": 1,
+          "unknowns": [
+            {
+              "code": "dynamic_message",
+              "detail": "Message type is unresolved; no channel match is inferred.",
+              "end": 195,
+              "file": "popup.js",
+              "start": 111
+            },
+            {
+              "code": "html_discovery_bounded",
+              "detail": "HTML source scanning covers declared script tags; it is not a browser parse/execution oracle or a complete dynamic loader model.",
+              "file": "popup.html"
+            },
+            {
+              "code": "runtime_not_observed",
+              "detail": "Manifest entries and JavaScript calls are static declarations/candidates. Worker lifetime, registration, message delivery and storage effects require qualified runtime observations."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "plan",
+      "label": "Ask the useful question",
+      "description": "Reopening the popup predicts the same outcome. A worker-context reset separates the two known storage hypotheses.",
+      "data": {
+        "schema_version": 1,
+        "title": "A decision that survives",
+        "kind": "lab",
+        "narrative": {
+          "description": "Artifact inspection, conservative probe ranking and a real execution of our owned worker scripts under simulated Chrome APIs. This model does not establish real Chromium suspension; see the release verification record for separately observed browser cases.",
+          "label": "Owned synthetic lab / controlled JavaScript model",
+          "reference": {
+            "bindings": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "effects": [
+              {
+                "channel": "modeled-chrome-storage-local",
+                "name": "set",
+                "value": {
+                  "clips": [
+                    {
+                      "id": "0001",
+                      "text": "Café · 東京 · a decision that survives"
+                    }
+                  ],
+                  "nextId": 2
+                }
+              }
+            ],
+            "evidence_kind": "controlled-javascript-model",
+            "final": {
+              "action": "read",
+              "clips": [
+                {
+                  "id": "0001",
+                  "text": "Café · 東京 · a decision that survives"
+                }
+              ],
+              "model_boot": 2,
+              "ok": true
+            },
+            "limits": [
+              "Chrome APIs are simulated; this does not prove real Chromium worker suspension."
+            ],
+            "observations": [
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "save",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "restart",
+                "model_boot": 2
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 2,
+                "ok": true
+              }
+            ],
+            "sequence": [
+              {
+                "type": "read"
+              },
+              {
+                "text": "Café · 東京 · a decision that survives",
+                "type": "save"
+              },
+              {
+                "type": "read"
+              },
+              {
+                "type": "restart"
+              },
+              {
+                "type": "read"
+              }
+            ]
+          },
+          "regression": {
+            "bindings": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "31b8bc2777a370b01d778200c83f2a5568883f6efef84c2bc0506923e518b155",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "effects": [],
+            "evidence_kind": "controlled-javascript-model",
+            "final": {
+              "action": "read",
+              "clips": [],
+              "model_boot": 2,
+              "ok": true
+            },
+            "limits": [
+              "Chrome APIs are simulated; this does not prove real Chromium worker suspension."
+            ],
+            "observations": [
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "save",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "restart",
+                "model_boot": 2
+              },
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 2,
+                "ok": true
+              }
+            ],
+            "sequence": [
+              {
+                "type": "read"
+              },
+              {
+                "text": "Café · 東京 · a decision that survives",
+                "type": "save"
+              },
+              {
+                "type": "read"
+              },
+              {
+                "type": "restart"
+              },
+              {
+                "type": "read"
+              }
+            ]
+          }
+        },
+        "case": {
+          "capabilities": [
+            "owned-model"
+          ],
+          "created_at": "2026-11-04T14:50:11.463Z",
+          "goal": "Find which declared persistence mechanism retains clips across a worker restart.",
+          "hypotheses": [
+            {
+              "id": "memory",
+              "label": "Worker memory only",
+              "predictions": {
+                "reopen": "retained",
+                "restart": "lost"
+              }
+            },
+            {
+              "id": "local",
+              "label": "Persistent extension-local storage",
+              "predictions": {
+                "reopen": "retained",
+                "restart": "retained"
+              }
+            },
+            {
+              "id": "unknown",
+              "label": "Another unmodeled mechanism",
+              "predictions": {
+                "reopen": null,
+                "restart": null
+              }
+            }
+          ],
+          "id": "rpm_95219b56-7d93-48fe-8135-c595f4ac4d2b",
+          "observations": [],
+          "probes": [
+            {
+              "cost": 1,
+              "effects": [],
+              "id": "reopen",
+              "label": "Reopen the popup",
+              "requires": [
+                "owned-model"
+              ],
+              "reset": "empty owned fixture storage",
+              "steps": [
+                "Save one synthetic clip.",
+                "Close and reopen only the popup.",
+                "Read clips."
+              ]
+            },
+            {
+              "cost": 2,
+              "effects": [],
+              "id": "restart",
+              "label": "Restart the worker context",
+              "requires": [
+                "owned-model"
+              ],
+              "reset": "empty owned fixture storage",
+              "steps": [
+                "Save one synthetic clip.",
+                "Replace the owned worker context while retaining modeled storage.",
+                "Read clips."
+              ]
+            }
+          ],
+          "revision": 2,
+          "schema_version": 1,
+          "target": {
+            "kind": "manifest-v3",
+            "sha256": "f8e3ae595c01994425ab54c8b8b1ac432a8340ff5812c7389ba7e068910389f1"
+          }
+        },
+        "planner": {
+          "applied_observations": [],
+          "excluded": [],
+          "ignored_observations": [],
+          "next_probe_id": "restart",
+          "ranked": [
+            {
+              "cost": 2,
+              "gain": 1,
+              "id": "restart",
+              "label": "Restart the worker context",
+              "partitions": [
+                {
+                  "hypothesis_ids": [
+                    "memory"
+                  ],
+                  "outcome": "lost"
+                },
+                {
+                  "hypothesis_ids": [
+                    "local"
+                  ],
+                  "outcome": "retained"
+                }
+              ],
+              "score": 0.5,
+              "unknown_prediction_ids": [
+                "unknown"
+              ],
+              "worst_survivors": 2
+            },
+            {
+              "cost": 1,
+              "gain": 0,
+              "id": "reopen",
+              "label": "Reopen the popup",
+              "partitions": [
+                {
+                  "hypothesis_ids": [
+                    "local",
+                    "memory"
+                  ],
+                  "outcome": "retained"
+                }
+              ],
+              "score": 0,
+              "unknown_prediction_ids": [
+                "unknown"
+              ],
+              "worst_survivors": 3
+            }
+          ],
+          "scope": "Declared finite hypotheses and predicted outcomes; ranking is a heuristic, not a calibrated probability or independent attestation.",
+          "status": "open",
+          "surviving_ids": [
+            "local",
+            "memory",
+            "unknown"
+          ]
+        }
+      }
+    },
+    {
+      "id": "plan-observed",
+      "label": "Keep the unknown alive",
+      "description": "A reported model observation excludes worker-only memory, while an unmodeled explanation still survives. This is not a confidence percentage.",
+      "data": {
+        "schema_version": 1,
+        "title": "A decision that survives",
+        "kind": "lab",
+        "narrative": {
+          "description": "Artifact inspection, conservative probe ranking and a real execution of our owned worker scripts under simulated Chrome APIs. This model does not establish real Chromium suspension; see the release verification record for separately observed browser cases.",
+          "label": "Owned synthetic lab / controlled JavaScript model",
+          "reference": {
+            "bindings": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "effects": [
+              {
+                "channel": "modeled-chrome-storage-local",
+                "name": "set",
+                "value": {
+                  "clips": [
+                    {
+                      "id": "0001",
+                      "text": "Café · 東京 · a decision that survives"
+                    }
+                  ],
+                  "nextId": 2
+                }
+              }
+            ],
+            "evidence_kind": "controlled-javascript-model",
+            "final": {
+              "action": "read",
+              "clips": [
+                {
+                  "id": "0001",
+                  "text": "Café · 東京 · a decision that survives"
+                }
+              ],
+              "model_boot": 2,
+              "ok": true
+            },
+            "limits": [
+              "Chrome APIs are simulated; this does not prove real Chromium worker suspension."
+            ],
+            "observations": [
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "save",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "restart",
+                "model_boot": 2
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 2,
+                "ok": true
+              }
+            ],
+            "sequence": [
+              {
+                "type": "read"
+              },
+              {
+                "text": "Café · 東京 · a decision that survives",
+                "type": "save"
+              },
+              {
+                "type": "read"
+              },
+              {
+                "type": "restart"
+              },
+              {
+                "type": "read"
+              }
+            ]
+          },
+          "regression": {
+            "bindings": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "31b8bc2777a370b01d778200c83f2a5568883f6efef84c2bc0506923e518b155",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "effects": [],
+            "evidence_kind": "controlled-javascript-model",
+            "final": {
+              "action": "read",
+              "clips": [],
+              "model_boot": 2,
+              "ok": true
+            },
+            "limits": [
+              "Chrome APIs are simulated; this does not prove real Chromium worker suspension."
+            ],
+            "observations": [
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "save",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "restart",
+                "model_boot": 2
+              },
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 2,
+                "ok": true
+              }
+            ],
+            "sequence": [
+              {
+                "type": "read"
+              },
+              {
+                "text": "Café · 東京 · a decision that survives",
+                "type": "save"
+              },
+              {
+                "type": "read"
+              },
+              {
+                "type": "restart"
+              },
+              {
+                "type": "read"
+              }
+            ]
+          }
+        },
+        "case": {
+          "capabilities": [
+            "owned-model"
+          ],
+          "created_at": "2026-11-04T14:50:11.463Z",
+          "goal": "Find which declared persistence mechanism retains clips across a worker restart.",
+          "hypotheses": [
+            {
+              "id": "memory",
+              "label": "Worker memory only",
+              "predictions": {
+                "reopen": "retained",
+                "restart": "lost"
+              }
+            },
+            {
+              "id": "local",
+              "label": "Persistent extension-local storage",
+              "predictions": {
+                "reopen": "retained",
+                "restart": "retained"
+              }
+            },
+            {
+              "id": "unknown",
+              "label": "Another unmodeled mechanism",
+              "predictions": {
+                "reopen": null,
+                "restart": null
+              }
+            }
+          ],
+          "id": "rpm_95219b56-7d93-48fe-8135-c595f4ac4d2b",
+          "observations": [
+            {
+              "authority": "reported",
+              "bindings": {
+                "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+                "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+                "target_sha256": "f8e3ae595c01994425ab54c8b8b1ac432a8340ff5812c7389ba7e068910389f1",
+                "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+                "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+              },
+              "content_sha256": "be83da71f46e7ada28464aeec6d029a8d3b0ac57ff48be9f1445edd016d03d5c",
+              "id": "obs_be83da71f46e7ada28464aeec6d029a8d3b0ac57ff48be9f1445edd016d03d5c",
+              "outcome": "retained",
+              "partial": false,
+              "probe_id": "restart",
+              "source": "owned worker script / simulated Chrome API model"
+            }
+          ],
+          "probes": [
+            {
+              "cost": 1,
+              "effects": [],
+              "id": "reopen",
+              "label": "Reopen the popup",
+              "requires": [
+                "owned-model"
+              ],
+              "reset": "empty owned fixture storage",
+              "steps": [
+                "Save one synthetic clip.",
+                "Close and reopen only the popup.",
+                "Read clips."
+              ]
+            },
+            {
+              "cost": 2,
+              "effects": [],
+              "id": "restart",
+              "label": "Restart the worker context",
+              "requires": [
+                "owned-model"
+              ],
+              "reset": "empty owned fixture storage",
+              "steps": [
+                "Save one synthetic clip.",
+                "Replace the owned worker context while retaining modeled storage.",
+                "Read clips."
+              ]
+            }
+          ],
+          "revision": 3,
+          "schema_version": 1,
+          "target": {
+            "kind": "manifest-v3",
+            "sha256": "f8e3ae595c01994425ab54c8b8b1ac432a8340ff5812c7389ba7e068910389f1"
+          }
+        },
+        "planner": {
+          "status": "no_discriminating_probe",
+          "surviving_ids": [
+            "local",
+            "unknown"
+          ],
+          "ranked": [
+            {
+              "id": "reopen",
+              "label": "Reopen the popup",
+              "cost": 1,
+              "gain": 0,
+              "worst_survivors": 2,
+              "score": 0,
+              "unknown_prediction_ids": [
+                "unknown"
+              ],
+              "partitions": [
+                {
+                  "outcome": "retained",
+                  "hypothesis_ids": [
+                    "local"
+                  ]
+                }
+              ]
+            }
+          ],
+          "ignored_observations": [],
+          "applied_observations": [
+            {
+              "id": "obs_be83da71f46e7ada28464aeec6d029a8d3b0ac57ff48be9f1445edd016d03d5c",
+              "probe_id": "restart",
+              "authority": "reported",
+              "source": "owned worker script / simulated Chrome API model"
+            }
+          ],
+          "excluded": [
+            {
+              "id": "restart",
+              "reason": "already_observed"
+            }
+          ],
+          "next_probe_id": null,
+          "scope": "Declared finite hypotheses and predicted outcomes; ranking is a heuristic, not a calibrated probability or independent attestation."
+        }
+      }
+    },
+    {
+      "id": "verify",
+      "label": "Catch the lost write",
+      "description": "The owned regression loses saved clips. Final state and modeled persistent writes differ under the same declared sequence.",
+      "data": {
+        "schema_version": 1,
+        "title": "A decision that survives",
+        "kind": "lab",
+        "narrative": {
+          "description": "Artifact inspection, conservative probe ranking and a real execution of our owned worker scripts under simulated Chrome APIs. This model does not establish real Chromium suspension; see the release verification record for separately observed browser cases.",
+          "label": "Owned synthetic lab / controlled JavaScript model",
+          "reference": {
+            "bindings": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "effects": [
+              {
+                "channel": "modeled-chrome-storage-local",
+                "name": "set",
+                "value": {
+                  "clips": [
+                    {
+                      "id": "0001",
+                      "text": "Café · 東京 · a decision that survives"
+                    }
+                  ],
+                  "nextId": 2
+                }
+              }
+            ],
+            "evidence_kind": "controlled-javascript-model",
+            "final": {
+              "action": "read",
+              "clips": [
+                {
+                  "id": "0001",
+                  "text": "Café · 東京 · a decision that survives"
+                }
+              ],
+              "model_boot": 2,
+              "ok": true
+            },
+            "limits": [
+              "Chrome APIs are simulated; this does not prove real Chromium worker suspension."
+            ],
+            "observations": [
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "save",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "restart",
+                "model_boot": 2
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 2,
+                "ok": true
+              }
+            ],
+            "sequence": [
+              {
+                "type": "read"
+              },
+              {
+                "text": "Café · 東京 · a decision that survives",
+                "type": "save"
+              },
+              {
+                "type": "read"
+              },
+              {
+                "type": "restart"
+              },
+              {
+                "type": "read"
+              }
+            ]
+          },
+          "regression": {
+            "bindings": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "31b8bc2777a370b01d778200c83f2a5568883f6efef84c2bc0506923e518b155",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "effects": [],
+            "evidence_kind": "controlled-javascript-model",
+            "final": {
+              "action": "read",
+              "clips": [],
+              "model_boot": 2,
+              "ok": true
+            },
+            "limits": [
+              "Chrome APIs are simulated; this does not prove real Chromium worker suspension."
+            ],
+            "observations": [
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "save",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "restart",
+                "model_boot": 2
+              },
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 2,
+                "ok": true
+              }
+            ],
+            "sequence": [
+              {
+                "type": "read"
+              },
+              {
+                "text": "Café · 東京 · a decision that survives",
+                "type": "save"
+              },
+              {
+                "type": "read"
+              },
+              {
+                "type": "restart"
+              },
+              {
+                "type": "read"
+              }
+            ]
+          }
+        },
+        "verification": {
+          "bindings": {
+            "candidate": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "31b8bc2777a370b01d778200c83f2a5568883f6efef84c2bc0506923e518b155",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "reference": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            }
+          },
+          "cases": [
+            {
+              "differences": [
+                {
+                  "candidate": {
+                    "clips": [],
+                    "error": null,
+                    "ok": true
+                  },
+                  "path": "/output",
+                  "reference": {
+                    "clips": [
+                      {
+                        "id": "0001",
+                        "text": "Café · 東京 · a decision that survives"
+                      }
+                    ],
+                    "error": null,
+                    "ok": true
+                  }
+                },
+                {
+                  "candidate": [],
+                  "path": "/state",
+                  "reference": [
+                    {
+                      "id": "0001",
+                      "text": "Café · 東京 · a decision that survives"
+                    }
+                  ]
+                },
+                {
+                  "candidate": [],
+                  "path": "/effects",
+                  "reference": [
+                    {
+                      "channel": "modeled-chrome-storage-local",
+                      "name": "set",
+                      "value": {
+                        "clips": [
+                          {
+                            "id": "0001",
+                            "text": "Café · 東京 · a decision that survives"
+                          }
+                        ],
+                        "nextId": 2
+                      }
+                    }
+                  ]
+                }
+              ],
+              "id": "retained-clips",
+              "reasons": [
+                "behavior_mismatch"
+              ],
+              "status": "fail"
+            }
+          ],
+          "comparability": {
+            "reasons": [],
+            "status": "comparable"
+          },
+          "contract": {
+            "schema_version": 1,
+            "trace_order": "total",
+            "volatile_paths": []
+          },
+          "receipt_sha256": {
+            "candidate": "aff7983b022bac8384aa9b3b820e1441f080be8707f5679a3bca6cdf2e4ab594",
+            "reference": "25c4966208a7f56b6a10ff8cf23f92cb41f83d91f478eaa7d3649730ab28e67d"
+          },
+          "schema_version": 1,
+          "scope": "Finite supplied receipts under the declared contract. Passing does not attest runtime execution or establish whole-program equivalence.",
+          "status": "fail",
+          "summary": {
+            "extra": 0,
+            "fail": 1,
+            "missing": 0,
+            "pass": 0,
+            "unknown": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "reduce",
+      "label": "Shrink the reproduction",
+      "description": "Stable mismatch: save → restart → read. One-minimal under tested removals; no global-shortest claim.",
+      "data": {
+        "schema_version": 1,
+        "title": "A decision that survives",
+        "kind": "lab",
+        "narrative": {
+          "description": "Artifact inspection, conservative probe ranking and a real execution of our owned worker scripts under simulated Chrome APIs. This model does not establish real Chromium suspension; see the release verification record for separately observed browser cases.",
+          "label": "Owned synthetic lab / controlled JavaScript model",
+          "reference": {
+            "bindings": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "effects": [
+              {
+                "channel": "modeled-chrome-storage-local",
+                "name": "set",
+                "value": {
+                  "clips": [
+                    {
+                      "id": "0001",
+                      "text": "Café · 東京 · a decision that survives"
+                    }
+                  ],
+                  "nextId": 2
+                }
+              }
+            ],
+            "evidence_kind": "controlled-javascript-model",
+            "final": {
+              "action": "read",
+              "clips": [
+                {
+                  "id": "0001",
+                  "text": "Café · 東京 · a decision that survives"
+                }
+              ],
+              "model_boot": 2,
+              "ok": true
+            },
+            "limits": [
+              "Chrome APIs are simulated; this does not prove real Chromium worker suspension."
+            ],
+            "observations": [
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "save",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "restart",
+                "model_boot": 2
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 2,
+                "ok": true
+              }
+            ],
+            "sequence": [
+              {
+                "type": "read"
+              },
+              {
+                "text": "Café · 東京 · a decision that survives",
+                "type": "save"
+              },
+              {
+                "type": "read"
+              },
+              {
+                "type": "restart"
+              },
+              {
+                "type": "read"
+              }
+            ]
+          },
+          "regression": {
+            "bindings": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "31b8bc2777a370b01d778200c83f2a5568883f6efef84c2bc0506923e518b155",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "effects": [],
+            "evidence_kind": "controlled-javascript-model",
+            "final": {
+              "action": "read",
+              "clips": [],
+              "model_boot": 2,
+              "ok": true
+            },
+            "limits": [
+              "Chrome APIs are simulated; this does not prove real Chromium worker suspension."
+            ],
+            "observations": [
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "save",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "restart",
+                "model_boot": 2
+              },
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 2,
+                "ok": true
+              }
+            ],
+            "sequence": [
+              {
+                "type": "read"
+              },
+              {
+                "text": "Café · 東京 · a decision that survives",
+                "type": "save"
+              },
+              {
+                "type": "read"
+              },
+              {
+                "type": "restart"
+              },
+              {
+                "type": "read"
+              }
+            ]
+          }
+        },
+        "reduction": {
+          "budget": 80,
+          "fingerprint": "retained-clips-after-worker-context-reset",
+          "minimality": "one-minimal",
+          "oracle_calls": 22,
+          "original_length": 5,
+          "reason": null,
+          "receipts": [
+            {
+              "attempt": 1,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 5,
+              "reset_applied": false,
+              "sequence_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "stage": "baseline",
+              "status": "mismatch"
+            },
+            {
+              "attempt": 2,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 5,
+              "reset_applied": false,
+              "sequence_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "stage": "baseline",
+              "status": "mismatch"
+            },
+            {
+              "attempt": 3,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 3,
+              "reset_applied": false,
+              "sequence_sha256": "7878cc19dbccac6c8314698ee49eb2aa79bf32f5674f6517dbb712a1b298be88",
+              "stage": "remove",
+              "status": "equivalent"
+            },
+            {
+              "attempt": 4,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 3,
+              "reset_applied": false,
+              "sequence_sha256": "7878cc19dbccac6c8314698ee49eb2aa79bf32f5674f6517dbb712a1b298be88",
+              "stage": "remove",
+              "status": "equivalent"
+            },
+            {
+              "attempt": 5,
+              "fingerprint": "requires-final-read",
+              "length": 2,
+              "reset_applied": false,
+              "sequence_sha256": "0f83db9c110460218004a9cee48b74758acb06606dc3729228b66a56cb5f1b3b",
+              "stage": "remove",
+              "status": "invalid"
+            },
+            {
+              "attempt": 6,
+              "fingerprint": "requires-final-read",
+              "length": 2,
+              "reset_applied": false,
+              "sequence_sha256": "0f83db9c110460218004a9cee48b74758acb06606dc3729228b66a56cb5f1b3b",
+              "stage": "remove",
+              "status": "invalid"
+            },
+            {
+              "attempt": 7,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 4,
+              "reset_applied": false,
+              "sequence_sha256": "fa506758a2c6a7fa53c3b13ce8da784639cae4084e61435e06d15455bf0cac0c",
+              "stage": "remove",
+              "status": "mismatch"
+            },
+            {
+              "attempt": 8,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 4,
+              "reset_applied": false,
+              "sequence_sha256": "fa506758a2c6a7fa53c3b13ce8da784639cae4084e61435e06d15455bf0cac0c",
+              "stage": "remove",
+              "status": "mismatch"
+            },
+            {
+              "attempt": 9,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 3,
+              "reset_applied": false,
+              "sequence_sha256": "7878cc19dbccac6c8314698ee49eb2aa79bf32f5674f6517dbb712a1b298be88",
+              "stage": "remove",
+              "status": "equivalent"
+            },
+            {
+              "attempt": 10,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 3,
+              "reset_applied": false,
+              "sequence_sha256": "7878cc19dbccac6c8314698ee49eb2aa79bf32f5674f6517dbb712a1b298be88",
+              "stage": "remove",
+              "status": "equivalent"
+            },
+            {
+              "attempt": 11,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 3,
+              "reset_applied": false,
+              "sequence_sha256": "62b10f77c170eed398c06211773b9ac71c30949162edb7b5c01fe546b61cca37",
+              "stage": "remove",
+              "status": "mismatch"
+            },
+            {
+              "attempt": 12,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 3,
+              "reset_applied": false,
+              "sequence_sha256": "62b10f77c170eed398c06211773b9ac71c30949162edb7b5c01fe546b61cca37",
+              "stage": "remove",
+              "status": "mismatch"
+            },
+            {
+              "attempt": 13,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 2,
+              "reset_applied": false,
+              "sequence_sha256": "46de47688dcead18bc8822b8b2f15e0899a79f8c6a82295a3341c2c6b4428b01",
+              "stage": "remove",
+              "status": "equivalent"
+            },
+            {
+              "attempt": 14,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 2,
+              "reset_applied": false,
+              "sequence_sha256": "46de47688dcead18bc8822b8b2f15e0899a79f8c6a82295a3341c2c6b4428b01",
+              "stage": "remove",
+              "status": "equivalent"
+            },
+            {
+              "attempt": 15,
+              "fingerprint": "requires-final-read",
+              "length": 1,
+              "reset_applied": false,
+              "sequence_sha256": "82ec6bda1ffc63f4360738df12e6aa2a5c259317aaf3d22e3d233961dda66523",
+              "stage": "remove",
+              "status": "invalid"
+            },
+            {
+              "attempt": 16,
+              "fingerprint": "requires-final-read",
+              "length": 1,
+              "reset_applied": false,
+              "sequence_sha256": "82ec6bda1ffc63f4360738df12e6aa2a5c259317aaf3d22e3d233961dda66523",
+              "stage": "remove",
+              "status": "invalid"
+            },
+            {
+              "attempt": 17,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 2,
+              "reset_applied": false,
+              "sequence_sha256": "46de47688dcead18bc8822b8b2f15e0899a79f8c6a82295a3341c2c6b4428b01",
+              "stage": "remove",
+              "status": "equivalent"
+            },
+            {
+              "attempt": 18,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 2,
+              "reset_applied": false,
+              "sequence_sha256": "46de47688dcead18bc8822b8b2f15e0899a79f8c6a82295a3341c2c6b4428b01",
+              "stage": "remove",
+              "status": "equivalent"
+            },
+            {
+              "attempt": 19,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 2,
+              "reset_applied": false,
+              "sequence_sha256": "26d236e42479f4606cc4c19f2e4cf1624621a389a077ae42a85865dc6d6dca65",
+              "stage": "remove",
+              "status": "equivalent"
+            },
+            {
+              "attempt": 20,
+              "fingerprint": "retained-clips-after-worker-context-reset",
+              "length": 2,
+              "reset_applied": false,
+              "sequence_sha256": "26d236e42479f4606cc4c19f2e4cf1624621a389a077ae42a85865dc6d6dca65",
+              "stage": "remove",
+              "status": "equivalent"
+            },
+            {
+              "attempt": 21,
+              "fingerprint": "requires-final-read",
+              "length": 2,
+              "reset_applied": false,
+              "sequence_sha256": "250e58eeea0979f1aec5e5931ca89c9531640917ba54156746d521cf083ece76",
+              "stage": "remove",
+              "status": "invalid"
+            },
+            {
+              "attempt": 22,
+              "fingerprint": "requires-final-read",
+              "length": 2,
+              "reset_applied": false,
+              "sequence_sha256": "250e58eeea0979f1aec5e5931ca89c9531640917ba54156746d521cf083ece76",
+              "stage": "remove",
+              "status": "invalid"
+            }
+          ],
+          "reduced_length": 3,
+          "reset_applied": false,
+          "reset_calls": 0,
+          "reset_configured": false,
+          "schema_version": 1,
+          "sequence": [
+            {
+              "text": "Café · 東京 · a decision that survives",
+              "type": "save"
+            },
+            {
+              "type": "restart"
+            },
+            {
+              "type": "read"
+            }
+          ],
+          "stability_runs": 2,
+          "status": "reduced",
+          "tests": 22
+        }
+      }
+    },
+    {
+      "id": "verify-control",
+      "label": "Inspect a passing control",
+      "description": "A self-comparison checks the positive verifier path for this finite receipt. It is a control, not proof of an independently rebuilt app.",
+      "data": {
+        "schema_version": 1,
+        "title": "A decision that survives",
+        "kind": "lab",
+        "narrative": {
+          "description": "Artifact inspection, conservative probe ranking and a real execution of our owned worker scripts under simulated Chrome APIs. This model does not establish real Chromium suspension; see the release verification record for separately observed browser cases.",
+          "label": "Owned synthetic lab / controlled JavaScript model",
+          "reference": {
+            "bindings": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "effects": [
+              {
+                "channel": "modeled-chrome-storage-local",
+                "name": "set",
+                "value": {
+                  "clips": [
+                    {
+                      "id": "0001",
+                      "text": "Café · 東京 · a decision that survives"
+                    }
+                  ],
+                  "nextId": 2
+                }
+              }
+            ],
+            "evidence_kind": "controlled-javascript-model",
+            "final": {
+              "action": "read",
+              "clips": [
+                {
+                  "id": "0001",
+                  "text": "Café · 東京 · a decision that survives"
+                }
+              ],
+              "model_boot": 2,
+              "ok": true
+            },
+            "limits": [
+              "Chrome APIs are simulated; this does not prove real Chromium worker suspension."
+            ],
+            "observations": [
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "save",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "restart",
+                "model_boot": 2
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 2,
+                "ok": true
+              }
+            ],
+            "sequence": [
+              {
+                "type": "read"
+              },
+              {
+                "text": "Café · 東京 · a decision that survives",
+                "type": "save"
+              },
+              {
+                "type": "read"
+              },
+              {
+                "type": "restart"
+              },
+              {
+                "type": "read"
+              }
+            ]
+          },
+          "regression": {
+            "bindings": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "31b8bc2777a370b01d778200c83f2a5568883f6efef84c2bc0506923e518b155",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "effects": [],
+            "evidence_kind": "controlled-javascript-model",
+            "final": {
+              "action": "read",
+              "clips": [],
+              "model_boot": 2,
+              "ok": true
+            },
+            "limits": [
+              "Chrome APIs are simulated; this does not prove real Chromium worker suspension."
+            ],
+            "observations": [
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "save",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "read",
+                "clips": [
+                  {
+                    "id": "0001",
+                    "text": "Café · 東京 · a decision that survives"
+                  }
+                ],
+                "model_boot": 1,
+                "ok": true
+              },
+              {
+                "action": "restart",
+                "model_boot": 2
+              },
+              {
+                "action": "read",
+                "clips": [],
+                "model_boot": 2,
+                "ok": true
+              }
+            ],
+            "sequence": [
+              {
+                "type": "read"
+              },
+              {
+                "text": "Café · 東京 · a decision that survives",
+                "type": "save"
+              },
+              {
+                "type": "read"
+              },
+              {
+                "type": "restart"
+              },
+              {
+                "type": "read"
+              }
+            ]
+          }
+        },
+        "verification": {
+          "schema_version": 1,
+          "status": "pass",
+          "cases": [
+            {
+              "id": "retained-clips",
+              "status": "pass",
+              "reasons": [],
+              "differences": []
+            }
+          ],
+          "summary": {
+            "pass": 1,
+            "fail": 0,
+            "unknown": 0,
+            "missing": 0,
+            "extra": 0
+          },
+          "contract": {
+            "schema_version": 1,
+            "trace_order": "total",
+            "volatile_paths": []
+          },
+          "comparability": {
+            "status": "comparable",
+            "reasons": []
+          },
+          "receipt_sha256": {
+            "reference": "25c4966208a7f56b6a10ff8cf23f92cb41f83d91f478eaa7d3649730ab28e67d",
+            "candidate": "25c4966208a7f56b6a10ff8cf23f92cb41f83d91f478eaa7d3649730ab28e67d"
+          },
+          "bindings": {
+            "reference": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            },
+            "candidate": {
+              "reset_sha256": "1ccf44b7a954d43ba12d4dbafbc3a49548c55ff886e9a67f76e02c60c74d2679",
+              "scenario_sha256": "0927316a4c3bd8aa81aa31ca0a7aa0272f631986da0a2f89343078dd99e4b4fb",
+              "target_sha256": "785035e14c31fd820807a2cf6d5bef9abcd373451e34d3c5bd174a33927ee71a",
+              "toolchain_sha256": "192da9383baeb624441bee8d8a4b9871e205e5ff70a675b8bf3b831e37f81d3f",
+              "verifier_sha256": "721fd3ab5f93c470c6798ee8c745e03c186773280dcf97c46ae0eacd751bfda0"
+            }
+          },
+          "scope": "Finite supplied receipts under the declared contract. Passing does not attest runtime execution or establish whole-program equivalence."
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+name: Task or capability request
+description: Propose a concrete investigation or reconstruction task.
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: The result you need
+      description: Describe the receiving project and usable output, rather than only a target/tool name.
+    validations:
+      required: true
+  - type: textarea
+    id: blocker
+    attributes:
+      label: Current blocker
+      description: What cannot be determined, implemented or verified with the current skill?
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Shareable example and available tools
+      description: Include an owned/public fixture, platform versions, host tools and an observable success condition. Avoid private data.

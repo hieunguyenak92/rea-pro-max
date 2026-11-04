@@ -1,0 +1,4 @@
+export default [
+  { ignores: ['node_modules/**', 'dist/**', 'rpm-lab/**', '.rpm/**', 'skills/rea-pro-max/assets/vendor/**'] },
+  { files: ['**/*.mjs', '**/*.js', '**/*.cjs'], languageOptions: { ecmaVersion: 'latest', sourceType: 'module', globals: Object.fromEntries(['console','process','Buffer','URL','URLSearchParams','setTimeout','clearTimeout','setInterval','clearInterval','fetch','structuredClone','crypto','document','window','navigator','Blob','location','localStorage','chrome','browser','require','module','__dirname','performance','AbortController','TextEncoder','TextDecoder','Node','Option'].map(name => [name,'readonly'])) }, rules: { 'no-undef': 'error', 'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }], 'no-unreachable': 'error', 'no-dupe-args': 'error', 'no-constant-condition': 'error' } },
+];
