@@ -1,0 +1,290 @@
+[
+  {
+    "id": "P01",
+    "target": "web",
+    "title": "Recover and rebuild search (W01)",
+    "prompt": "Use REA Pro Max to understand search in this local webapp and implement the behavior in my project. Preserve Unicode handling, filters and result order. Run the original and candidate on the same visible cases, then test withheld input variants and explain any remaining difference.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P02",
+    "target": "web",
+    "title": "Understand offline persistence (W02)",
+    "prompt": "Use REA Pro Max to determine which edits survive reload, a fresh tab and a browser restart in this disposable offline notes app. Implement the verified behavior in my project and run reconnect cases, including repeated delivery of the same queued edit.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P03",
+    "target": "web",
+    "title": "Distinguish filtering and cancellation (W03)",
+    "prompt": "Use REA Pro Max to find whether this app filters locally or asks a server, and how it prevents an older response from replacing newer search results. Reproduce the behavior in my app and test out-of-order responses under controlled delays.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P04",
+    "target": "web",
+    "title": "Explain a changed web build (W04)",
+    "prompt": "Use REA Pro Max to compare these two web builds for the saved-filter feature. Separate code/layout changes from changed behavior, identify a scenario that distinguishes the builds, and give me a short runnable reproduction plus a compatible update in my project.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P05",
+    "target": "mv3",
+    "title": "Rebuild a persistent clipping feature (X01)",
+    "prompt": "Use REA Pro Max to investigate how this extension sends selected text from the page to its popup and stores it. Rebuild that feature in my sample extension, then close the popup, let the worker terminate and verify the saved result after the normal waking action.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P06",
+    "target": "mv3",
+    "title": "Resolve same-named messages (X02)",
+    "prompt": "Use REA Pro Max to trace this feature across page script, content script, popup and service worker. Several contexts use the same message name. Establish the observed producer/consumer pairs and show which links remain candidates, then implement the verified message contract in my extension.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P07",
+    "target": "mv3",
+    "title": "Handle async messaging errors (X03)",
+    "prompt": "Use REA Pro Max to understand this extension's delayed response, cancellation and missing-receiver behavior. Implement a compatible flow in my extension and test popup closure, worker reactivation and an unavailable receiver without leaving the user waiting indefinitely.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P08",
+    "target": "mv3",
+    "title": "Minimize a persistence regression (X04)",
+    "prompt": "Use REA Pro Max to find why this updated extension loses saved choices. Compare the two exact builds, locate a stable differentiating sequence, reduce it while preserving the same failure, and patch the sample implementation to pass that case.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P09",
+    "target": "electron",
+    "title": "Rebuild file export across IPC (E01)",
+    "prompt": "Use REA Pro Max on this packaged Electron app to understand export from the renderer through preload and IPC to the main process. Add the same declared behavior to my project, then compare output bytes and error handling while the original app is closed.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P10",
+    "target": "electron",
+    "title": "Recover cancellation semantics (E02)",
+    "prompt": "Use REA Pro Max to determine what happens when this desktop background job is cancelled and immediately restarted. Rebuild its progress/completion behavior and test reordered notifications, duplicate events and a cancellation near completion.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P11",
+    "target": "electron",
+    "title": "Identify persisted process ownership (E03)",
+    "prompt": "Use REA Pro Max to identify which process owns these saved settings and which values are only renderer memory. Implement the verified settings behavior in my project, restart the relevant processes and compare the result under a fresh data directory.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P12",
+    "target": "electron",
+    "title": "Recover a serialization change (E04)",
+    "prompt": "Use REA Pro Max to compare the exported records from these two Electron builds. Recover the finite serialization contract needed by my importer, implement a compatible adapter and reduce a failing record or action sequence to a small reproduction.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P13",
+    "target": "tauri",
+    "title": "Tauri command boundary",
+    "prompt": "Use REA Pro Max to map this Tauri feature from webview invocation into its Rust command and result. Implement the corresponding feature in my Tauri project and verify success, invalid input and a capability-denied case.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P14",
+    "target": "tauri",
+    "title": "Tauri event lifecycle",
+    "prompt": "Use REA Pro Max to understand this Tauri app's job events when a window closes and reopens. Rebuild the required lifecycle in my project and verify that completed jobs and listeners are handled exactly as the observed contract requires.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P15",
+    "target": "android",
+    "title": "Android offline workflow",
+    "prompt": "Use REA Pro Max to understand this APK's offline filters and saved records. Separate manifest/DEX inferences from emulator observations, then implement the verified behavior in my Android sample and exercise restart and reconnect cases.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P16",
+    "target": "android",
+    "title": "Android JVM/native handoff",
+    "prompt": "Use REA Pro Max to trace this Android operation from its managed method into the relevant native boundary. Recover the input/output behavior my replacement component needs, implement it in the sample and compare valid, empty and malformed inputs.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P17",
+    "target": "react-native",
+    "title": "React Native/Hermes feature slice",
+    "prompt": "Use REA Pro Max to identify this React Native build and Hermes bytecode profile before tracing the selected feature. Recover the bridge/native contract that can be established, implement it in my sample and test the same user-visible cases.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P18",
+    "target": "react-native",
+    "title": "React Native release regression",
+    "prompt": "Use REA Pro Max to compare these release builds for this crash or state regression. Use only matching source maps/symbols, retain unresolved frames and produce a reproducible compatibility case plus a patch in the receiving project.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P19",
+    "target": "flutter",
+    "title": "Flutter platform channel",
+    "prompt": "Use REA Pro Max to inspect this Flutter artifact's engine/snapshot profile and trace the selected platform-channel behavior where supported. Implement the verified request/result contract in my sample and compare error and restart cases.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P20",
+    "target": "flutter",
+    "title": "Flutter asset/state restoration",
+    "prompt": "Use REA Pro Max to understand the selected asset loading and state restoration behavior in this Flutter app. Deliver a working equivalent feature for my sample and clearly distinguish artifact facts, runtime observations and unsupported snapshot recovery.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P21",
+    "target": "apple",
+    "title": "Swift/Objective-C action path",
+    "prompt": "Use REA Pro Max to investigate this app action through its supported Swift/Objective-C boundaries. Recover the finite behavior needed by my project, implement it in my sample and verify matching outcomes under controlled inputs.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P22",
+    "target": "apple",
+    "title": "Apple state/crash continuity",
+    "prompt": "Use REA Pro Max to correlate this crash or lost-state scenario with the matching app build and symbols. Give me a small reproducible case and a verified fix in the receiving sample, keeping missing-symbol or unresolved-dispatch questions visible.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P23",
+    "target": "managed",
+    "title": "Managed file-format interoperability",
+    "prompt": "Use REA Pro Max to understand the selected file records emitted by this .NET utility. Implement an independent reader/writer for the finite contract my project needs and test it against hidden valid and invalid vectors.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P24",
+    "target": "managed",
+    "title": "Managed/native boundary",
+    "prompt": "Use REA Pro Max to explain and reproduce this component's managed-to-native call boundary. Preserve argument/result representation and observable errors in a working sample, and report any ABI facts that remain unverified.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P25",
+    "target": "native",
+    "title": "Native algorithm extraction",
+    "prompt": "Use REA Pro Max to investigate this bounded algorithm in the supplied native executable and implement a compatible module in my project. Verify unseen edge inputs and return a reduced counterexample for any difference.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P26",
+    "target": "native",
+    "title": "Native legacy replacement",
+    "prompt": "Use REA Pro Max to recover the selected legacy conversion behavior needed by my pipeline. Build an independent replacement, compare bytes/errors on a declared input set and keep unsupported format variants explicit.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P27",
+    "target": "wasm",
+    "title": "WASM interface replacement",
+    "prompt": "Use REA Pro Max to inspect this WASM module and its JavaScript glue. Implement the selected compatible interface in my project and compare imports/exports, memory representation and behavior under the same test cases.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P28",
+    "target": "wasm",
+    "title": "WASM component ownership",
+    "prompt": "Use REA Pro Max to investigate this component's WIT/resource boundary where supported. Build a small compatible adapter and test resource creation, release and invalid-use behavior without conflating core-module metadata with component semantics.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P29",
+    "target": "cross-target",
+    "title": "Find the next useful experiment",
+    "prompt": "Use REA Pro Max to distinguish these plausible mechanisms for the selected behavior. Choose the next admissible probe under this budget, state its predicted outcomes, execute the supported experiment and preserve missing predictions as unknown.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P30",
+    "target": "cross-target",
+    "title": "Challenge a confident explanation",
+    "prompt": "Use REA Pro Max to look for a controlled observation that would disprove the current explanation of this feature. Run it when permitted, update the case if it contradicts the claim and tell me which facts survive.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P31",
+    "target": "cross-target",
+    "title": "Reduce a behavioral mismatch",
+    "prompt": "Use REA Pro Max to reduce this stable original-versus-candidate mismatch. Preserve valid setup, preconditions and the same failure oracle, rerun accepted reductions and give me the smaller reproduction with its tested minimality limit.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P32",
+    "target": "cross-target",
+    "title": "Compare without hiding differences",
+    "prompt": "Use REA Pro Max to compare these behaviors with only the permitted nondeterministic fields normalized. Keep ordering, missing writes, duplicate effects and errors visible, and separate a true mismatch from an unsupported observation.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P33",
+    "target": "cross-target",
+    "title": "Verify independent operation",
+    "prompt": "Use REA Pro Max to check that my reconstructed feature works independently. Close the original, use a separate profile/data directory and enforce the declared dependency boundary, then run the same finite behavioral cases.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P34",
+    "target": "cross-target",
+    "title": "Resume an investigation safely",
+    "prompt": "Use REA Pro Max to continue this saved case against the supplied current build. Reuse only observations whose artifact, scenario, reset and tool/verifier identities still apply, and rerun the probes invalidated by changes.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P35",
+    "target": "cross-target",
+    "title": "Handle missing tools precisely",
+    "prompt": "Use REA Pro Max to investigate this artifact with the capabilities actually available. Complete the supported static work, identify the exact blocked runtime claim and provide the next concrete prerequisite without presenting unexecuted analysis as verified.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  },
+  {
+    "id": "P36",
+    "target": "cross-target",
+    "title": "Deliver a verified feature handoff",
+    "prompt": "Use REA Pro Max to finish the selected reconstruction in my existing repository. Follow its architecture, run the feature and its finite comparison cases, then hand over the code, run path, case bundle and remaining unknowns so another developer can continue.",
+    "status": "task-template",
+    "scope": "Use available host tools; template availability does not certify a runtime provider."
+  }
+]
