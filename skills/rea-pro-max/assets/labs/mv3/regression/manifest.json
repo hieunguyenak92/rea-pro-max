@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "REA Pro Max \u2014 volatile regression fixture",
+  "version": "0.1.0",
+  "description": "Synthetic local fixture: popup/content message boundaries and persistent clips.",
+  "permissions": [
+    "storage"
+  ],
+  "background": {
+    "service_worker": "worker.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://127.0.0.1/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ]
+}
