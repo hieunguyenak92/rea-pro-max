@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 — 2026-11-04
+
+- Canonicalize admitted workspace roots with the native filesystem resolver so Windows short-path aliases and native-resolved absolute inputs identify the same workspace.
+- Reject existing output entries explicitly before exclusive export creation, including dangling symlinks on Windows. Retain exclusive creation and the scoped-parent checks.
+
 ## 0.2.0 — 2026-11-04
 
 - Add an independent local stdio MCP server with12 tools and bundled officialSDK2.4.0 runtime; current-discovery and legacy clients are exercised.

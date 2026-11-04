@@ -55,7 +55,11 @@ function denied(result) {
 }
 
 async function linkOrSkip(t, target, path, type) {
-  try { await symlink(target, path, type); return true; }
+  try {
+    await symlink(target, path, type);
+    assert.equal((await lstat(path)).isSymbolicLink(), true, 'The admitted fixture must be an actual symbolic link.');
+    return true;
+  }
   catch (error) {
     if (['EPERM', 'EACCES', 'ENOSYS'].includes(error.code)) { t.skip('Host does not permit creating symlinks.'); return false; }
     throw error;

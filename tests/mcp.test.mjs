@@ -42,7 +42,7 @@ function behavior(target = 'a') {
 for (const modern of [false, true]) test(`real stdio lists the exact catalog and validates schema (${modern ? 'modern' : 'legacy'})`, async t => {
   const directory = workspace(t); const client = await connect(t, directory, modern);
   assert.equal(Boolean(client.getDiscoverResult()), modern);
-  assert.equal(client.getServerVersion().version, '0.2.0');
+  assert.equal(client.getServerVersion().version, '0.2.1');
   assert.match(client.getInstructions().slice(0, 512), /host agent implements/u);
   const catalog = await client.listTools(); assert.deepEqual(catalog.tools.map(tool => tool.name).sort(), names.toSorted());
   for (const tool of catalog.tools) { assert.equal(tool.inputSchema.type, 'object'); assert.equal(tool.inputSchema.additionalProperties, false); }
