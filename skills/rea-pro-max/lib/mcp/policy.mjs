@@ -26,7 +26,9 @@ export class WorkspacePolicy {
     const selected = lstatSync(workspace);
     if (!selected.isDirectory() || selected.isSymbolicLink()) throw new RpmError('invalid_workspace', 'Workspace must be an existing regular directory, not a symlink.');
     // OS parent aliases such as /var -> /private/var are resolved once at admission.
-    this.selectedRoot = resolve(workspace); this.root = realpathSync(workspace); this.limits = limits;
+    // Use the native canonical form consistently with client realpath results.
+    // In particular, Windows' JS realpath walk can retain 8.3 parent aliases.
+    this.selectedRoot = resolve(workspace); this.root = realpathSync.native(workspace); this.limits = limits;
   }
   resolveInput(request, type = 'artifact') {
     if (typeof request !== 'string' || !request.trim() || request.length > 4096 || request.includes('\0')) throw new RpmError('invalid_path', 'Supply a nonempty local path of at most4096 characters.');
@@ -70,6 +72,10 @@ export class WorkspacePolicy {
     this.checkComponents(dirname(path));
     if (!lstatSync(dirname(path)).isDirectory()) throw new RpmError('invalid_output_path', 'Output parent must be an existing regular directory.');
     checkCancelled(context);
+    // A dangling link is still an existing output. Windows may otherwise follow
+    // it when opening with O_CREAT | O_EXCL; keep that flag for atomic creation.
+    try { lstatSync(path); throw new RpmError('output_exists', 'Output already exists, including symlinks. Choose a new filename.'); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
     let descriptor;
     try { descriptor = openSync(path, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | (constants.O_NOFOLLOW || 0), 0o600); }
     catch (error) { if (error.code === 'EEXIST') throw new RpmError('output_exists', 'Output already exists, including symlinks. Choose a new filename.'); throw error; }

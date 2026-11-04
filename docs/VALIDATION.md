@@ -2,7 +2,9 @@
 
 Recorded 2026-11-04. This record separates executable engine checks, a controlled model and actual app observations. No comparison with another reverse-engineering product was run.
 
-## v0.2.0 — MCP and documentation
+## v0.2.1 — MCP and documentation
+
+The first v0.2.0 Windows CI run exposed native/short-path workspace aliases and dangling-symlink export behavior. Version0.2.1 canonicalizes the workspace with the native resolver and rejects existing export entries before exclusive creation. The existing real-client security cases exercise both behaviors.
 
 The independent local stdio server exposes12 tools through the bundled official SDK2.4.0 runtime. Official clients exercise both the legacy initialization path and the current2026-07-28 discovery path. The v0.2 suite passes **105 tests**, including22 MCP workflow/security cases. This is protocol/client integration evidence, not a claim that a commercial LLM completed a live task in every named host.
 
