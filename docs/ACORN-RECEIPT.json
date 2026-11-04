@@ -1,0 +1,7 @@
+{
+  "package": "acorn",
+  "version": "8.15.0",
+  "source": "https://registry.npmjs.org/acorn/-/acorn-8.15.0.tgz",
+  "integrity": "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==",
+  "runtime": "vendored ESM distribution; code not executed during acquisition"
+}
