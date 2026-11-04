@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   toolkit:
     name: Node ${{ matrix.node }} / ${{ matrix.os }}
@@ -17,7 +21,9 @@ jobs:
       fail-fast: false
       matrix:
         node: [22, 24]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # Keep CI on the standard Intel pool after ARM capacity cancellations.
+        # Local release checks separately cover macOS arm64.
+        os: [ubuntu-latest, macos-15-intel, windows-latest]
     steps:
       - name: Keep source bytes identical across operating systems
         run: git config --global core.autocrlf false
