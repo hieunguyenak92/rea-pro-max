@@ -1,0 +1,9 @@
+node_modules/
+.rpm/
+rpm-lab/
+dist/
+*.tmp
+.DS_Store
+__pycache__/
+
+.rpm-*
