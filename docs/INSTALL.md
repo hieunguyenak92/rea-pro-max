@@ -1,8 +1,42 @@
 # Install and run REA Pro Max
 
-The runtime toolkit needs **Node.js 22 or later**. It uses Node built-ins and the bundled Acorn parser. A runtime npm install, model API key and upstream REA server are not required. Claude Code or Codex needs filesystem and terminal access; runtime investigations additionally need appropriate browser, app or device tools.
+The runtime toolkit needs **Node.js 22 or later**. It uses Node built-ins, the bundled Acorn parser and a bundled official MCP SDK runtime for the MCP entry point. A runtime npm install, model API key and upstream REA server are not required. Claude Code or Codex needs filesystem and terminal access; runtime investigations additionally need appropriate browser, app or device tools.
+
+## Choose your package layout
+
+There are two layouts. Resolve script paths from the one you downloaded:
+
+| Download | Skill root | CLI/MCP scripts |
+| --- | --- | --- |
+| Git clone or GitHub automatic **Source code** archive | `<checkout>/skills/rea-pro-max/` | `<checkout>/skills/rea-pro-max/scripts/` |
+| Packaged **skill ZIP** asset from Releases | The extracted `rea-pro-max/` folder itself | `<extracted>/rea-pro-max/scripts/` |
+
+The checkout commands in this guide and the READMEs use `skills/rea-pro-max/scripts/...`. For the packaged skill ZIP, open its extracted `rea-pro-max/` folder and run:
+
+```sh
+cd /absolute/path/to/extracted/rea-pro-max
+node scripts/rea-pro-max.mjs version
+node scripts/rea-pro-max.mjs demo --out ./rpm-lab
+```
+
+The ZIP's MCP entry is correspondingly:
+
+```sh
+node /absolute/path/to/extracted/rea-pro-max/scripts/mcp-server.mjs --workspace /absolute/path/to/your-workspace
+```
+
+When registering MCP, use that exact extracted script location in the host command. When installing the skill, copy the **whole extracted `rea-pro-max` folder** into the host's skill directory, retaining `SKILL.md`, `scripts`, `lib`, `references` and `assets`. For example, from a Codex receiving project's root:
+
+```sh
+mkdir -p .agents/skills
+test ! -e .agents/skills/rea-pro-max && cp -R "/absolute/path/to/extracted/rea-pro-max" .agents/skills/rea-pro-max
+```
+
+For Claude Code, use `.claude/skills` instead. GitHub's automatic Source code archives contain the repository layout; choose the matching row above.
 
 ## Try the owned lab first
+
+These commands use the Git checkout layout:
 
 ```sh
 git clone https://github.com/hieunguyenak92/rea-pro-max.git rea-pro-max
@@ -15,9 +49,21 @@ Open `rpm-lab/report.html` with your browser's Open File command. The standalone
 
 This lab executes our owned worker scripts in a controlled JavaScript model using simulated Chrome APIs. It demonstrates actual kernel results, not actual Chromium suspension. [VALIDATION.md](VALIDATION.md) records separately exercised runtime claims and their limits.
 
+## Connect through MCP
+
+The local server entry for the Git checkout layout is:
+
+```sh
+node /absolute/path/to/rea-pro-max/skills/rea-pro-max/scripts/mcp-server.mjs --workspace /absolute/path/to/your-workspace
+```
+
+Choose an existing absolute workspace containing the intended targets and exports. The server uses local stdio and exposes 12 tools. It admits client-selected file paths only inside that workspace; it does not launch arbitrary targets or execute a supplied oracle. Its owned lab uses fixed bundled code and simulated Chrome APIs.
+
+See [MCP.md](MCP.md) for Claude Code/Codex registration, generic stdio configuration, the exact tool catalog, session lifetime and troubleshooting. Registration instructions are for you to run; the product does not automatically edit another application's configuration. The skill and CLI remain available without MCP registration.
+
 ## Add the skill to Claude Code or Codex
 
-Copy the **entire** `skills/rea-pro-max` directory, including `lib`, `scripts`, `references` and `assets`. Copying only `SKILL.md` removes its executable machinery.
+For a Git checkout, copy the **entire** `skills/rea-pro-max` directory, including `lib`, `scripts`, `references` and `assets`. Copying only `SKILL.md` removes its executable machinery.
 
 | Host | Project location | Personal location |
 | --- | --- | --- |
@@ -110,10 +156,10 @@ Keep your case/report files in the receiving workspace, outside the installed sk
 Development tools are separate from runtime installation:
 
 ```sh
-npm ci
+npm ci --ignore-scripts
 npm test
 npm run lint
 npm run check:docs
 ```
 
-`npm ci` downloads development dependencies, including Electron, and may run their install scripts. It is unnecessary for ordinary CLI or skill use. See [VALIDATION.md](VALIDATION.md) for the checks actually completed for a release; available commands alone are not evidence they passed.
+`npm ci --ignore-scripts` downloads development dependencies without their install scripts. Electron runtime checks may require a separate explicit Electron installation step. Ordinary `npm ci` can run dependency install scripts. It is unnecessary for ordinary CLI or skill use. See [VALIDATION.md](VALIDATION.md) for the checks actually completed for a release; available commands alone are not evidence they passed.

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-04T14:50:11.527Z",
+  "generated_at": "2026-11-04T15:57:19.184Z",
   "evidence_kind": "recorded-owned-controlled-model",
   "states": [
     {
@@ -956,7 +956,7 @@
           "capabilities": [
             "owned-model"
           ],
-          "created_at": "2026-11-04T14:50:11.463Z",
+          "created_at": "2026-11-04T15:57:19.134Z",
           "goal": "Find which declared persistence mechanism retains clips across a worker restart.",
           "hypotheses": [
             {
@@ -984,7 +984,7 @@
               }
             }
           ],
-          "id": "rpm_95219b56-7d93-48fe-8135-c595f4ac4d2b",
+          "id": "rpm_1a80be01-e149-4563-a9b8-598cf96bbc17",
           "observations": [],
           "probes": [
             {
@@ -1283,7 +1283,7 @@
           "capabilities": [
             "owned-model"
           ],
-          "created_at": "2026-11-04T14:50:11.463Z",
+          "created_at": "2026-11-04T15:57:19.134Z",
           "goal": "Find which declared persistence mechanism retains clips across a worker restart.",
           "hypotheses": [
             {
@@ -1311,7 +1311,7 @@
               }
             }
           ],
-          "id": "rpm_95219b56-7d93-48fe-8135-c595f4ac4d2b",
+          "id": "rpm_1a80be01-e149-4563-a9b8-598cf96bbc17",
           "observations": [
             {
               "authority": "reported",

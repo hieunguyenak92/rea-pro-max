@@ -11,7 +11,7 @@ import { inspectArtifact } from '../lib/analysis/inspect.mjs';
 import { writeReport } from '../lib/report.mjs';
 import { DEFAULT_SEQUENCE, FIXTURE_BINDINGS, demonstrationCase, simulateWorker, behaviorDocument, mismatchOracle } from '../lib/lab.mjs';
 const skill = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const VERSION = '0.1.0';
+import { VERSION } from '../lib/version.mjs';
 function argumentsOf(tokens) {
   const positionals = [], flags = {};
   for (let i = 0; i < tokens.length; i++) {
@@ -59,8 +59,9 @@ async function main(tokens) {
   if (Object.hasOwn(expected, command) && p.length !== expected[command]) throw new RpmError('arguments', `Command ${command} expects ${expected[command]} positional arguments.`);
   for (const [key, value] of Object.entries(f)) if (value === true && key !== 'help') throw new RpmError('arguments', `Provide a value for --${key}.`);
   if (!command || command === 'help' || command === '--help') {
-    console.log(`REA Pro Max ${VERSION}\n\ninspect TARGET --out inspection.json\nreport DATA.json --out report.html\ncase init --inspection inspection.json --goal TEXT --out case.json\ncase revise CASE.json --patch patch.json --revision NUMBER\ncase observe CASE.json --receipt observation.json --revision NUMBER\nplan CASE.json [--bindings bindings.json] [--budget NUMBER] [--out plan.json]\nverify --reference reference.json --candidate candidate.json [--contract contract.json] [--out verdict.json]\nshrink --input actions.json --oracle ./owned-oracle.mjs [--max-tests NUMBER] [--out reduction.json]\ndemo --out NEW_DIRECTORY\nprompts [--target TARGET]\n\nInspect reads artifacts without executing them. Shrink explicitly executes the supplied oracle module. Reports are local standalone HTML. Cases support one writer at a time.`); return;
+    console.log(`REA Pro Max ${VERSION}\n\ninspect TARGET --out inspection.json\nreport DATA.json --out report.html\ncase init --inspection inspection.json --goal TEXT --out case.json\ncase revise CASE.json --patch patch.json --revision NUMBER\ncase observe CASE.json --receipt observation.json --revision NUMBER\nplan CASE.json [--bindings bindings.json] [--budget NUMBER] [--out plan.json]\nverify --reference reference.json --candidate candidate.json [--contract contract.json] [--out verdict.json]\nshrink --input actions.json --oracle ./owned-oracle.mjs [--max-tests NUMBER] [--out reduction.json]\ndemo --out NEW_DIRECTORY\nprompts [--target TARGET]\nmcp --workspace ABSOLUTE_DIRECTORY\n\nInspect reads artifacts without executing them. Shrink explicitly executes the supplied oracle module. Reports are local standalone HTML. Cases support one writer at a time.`); return;
   }
+  if (command === 'mcp') { accepted(f, ['workspace']); if (p.length) throw new RpmError('arguments', 'mcp takes --workspace DIRECTORY.'); const { startServer } = await import('./mcp-server.mjs'); await startServer(requireValue(f.workspace, '--workspace DIRECTORY')); return; }
   if (command === 'version') { accepted(f, []); console.log(VERSION); return; }
   if (command === 'inspect') { accepted(f, ['out']); output(await inspectArtifact(resolve(requireValue(p[0], 'TARGET'))), f.out); return; }
   if (command === 'report') { accepted(f, ['out']); const data = readJson(requireValue(p[0], 'DATA.json')); const payload = data.artifact ? { schema_version: 1, kind: 'inspection', title: 'Artifact boundaries', inspection: data } : data; console.log(writeReport(payload, resolve(requireValue(f.out, '--out REPORT.html')))); return; }

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "builder": "esbuild",
+  "builder_version": "0.28.2",
+  "format": "esm",
+  "platform": "node",
+  "target": "node22",
+  "bundle_sha256": "aad704e4613da3638fc1f2166f0585bc4a8d74b6be09ff3a808a2e4edc0a731c",
+  "bytes": 776456,
+  "packages": [
+    {
+      "name": "@modelcontextprotocol/core",
+      "version": "2.4.0",
+      "license": "Apache-2.0",
+      "licenses": [
+        {
+          "file": "mcp-licenses/modelcontextprotocol-core/LICENSE",
+          "sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a"
+        }
+      ]
+    },
+    {
+      "name": "@modelcontextprotocol/server",
+      "version": "2.4.0",
+      "license": "Apache-2.0",
+      "licenses": [
+        {
+          "file": "mcp-licenses/modelcontextprotocol-server/LICENSE",
+          "sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a"
+        }
+      ]
+    },
+    {
+      "name": "zod",
+      "version": "4.6.7",
+      "license": "MIT",
+      "licenses": [
+        {
+          "file": "mcp-licenses/zod/LICENSE",
+          "sha256": "3f1189b28e3866e0d979968d466b78f813f76827cfdca1fbb124cc0a5c8841f8"
+        }
+      ]
+    }
+  ]
+}

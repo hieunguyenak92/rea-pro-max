@@ -1,8 +1,16 @@
 # Privacy and execution boundaries
 
-REA Pro Max's bundled CLI performs local file processing. It contains no telemetry client, upload endpoint, analytics beacon or model API call. A standard `inspect`, case, `plan`, `verify`, `report`, `prompts` or owned-model `demo` operation does not make network requests.
+REA Pro Max's bundled CLI and MCP server perform local processing. It contains no telemetry client, upload endpoint, analytics beacon or model API call. A standard `inspect`, case, `plan`, `verify`, `report`, `prompts` or owned-model `demo` operation does not make network requests. The MCP server uses local stdio, opens no network listener and uses the same local machinery.
 
 This boundary applies to this toolkit. Claude Code, Codex, browser/app tools, MCP servers, downloaded dependencies and any external provider operate under their own settings and data policies. Adding a skill does not make a hosted AI session local or change your account's retention policy.
+
+## MCP workspace and session boundary
+
+The MCP server requires an existing explicit workspace. Its client-selected input and export paths must resolve inside that workspace; symlink components and special files are rejected. Export is an explicit tool operation to a new path, without overwriting an existing file. This is an admission policy for the toolkit's tools, not an operating-system sandbox for Node or a restriction on your host's other tools.
+
+Inspection/case/plan/verdict/lab handles live in a bounded in-memory cache, limited to16 artifacts and32MiB of serialized data. Restarted or evicted handles are unavailable; export a case and import it to resume. There is no automatic persistent session database or background upload.
+
+`run_owned_lab` executes only fixed bundled owned scripts under simulated Chrome APIs. The MCP catalog has no arbitrary shell, generic oracle module, target launcher or browser/device controller. The direct CLI's explicit `shrink --oracle` operation has a different execution boundary, described below.
 
 ## What is read and written
 
