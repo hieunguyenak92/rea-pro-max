@@ -1,10 +1,10 @@
 # REA Pro Max
 
-## Understand the mechanism. Rebuild the behavior. Prove the result.
+## Recover the behavior. Ship the proof.
 
 **Turn an unfamiliar feature into a working implementation you can explain, exercise and verify.**
 
-REA Pro Max is an independent reverse-engineering toolkit with a local MCP server, an agent skill and a direct CLI. Built for Claude Code, Codex and compatible MCP clients, it connects artifact analysis to experiments, implementation and finite behavioral verification.
+REA Pro Max is an independent reverse-engineering toolkit with a local MCP server, an agent skill and a direct CLI. Built for Claude Code, Codex and compatible MCP clients, it connects artifact analysis to experiments, implementation and finite behavioral verification. Version 0.3 closes a practical loop for a documented MV3 protocol: run a real extension, reproduce its persistence failure, repair a receiving project and replay the same actions with retained evidence.
 
 [English](README.md) · [Tiếng Việt](docs/i18n/vi.md) · [한국어](docs/i18n/ko.md) · [日本語](docs/i18n/ja.md) · [Español](docs/i18n/es.md) · [Português](docs/i18n/pt-BR.md) · [简体中文](docs/i18n/zh-CN.md) · [ไทย](docs/i18n/th.md) · [Français](docs/i18n/fr.md)
 
@@ -79,7 +79,7 @@ The same kernel serves both tool paths. The host agent connects the investigatio
 
 ### 1. Connect your agent through MCP
 
-REA Pro Max exposes 12 focused tools over local stdio. The server receives an explicit existing workspace; client-selected files and exports stay inside that boundary.
+REA Pro Max exposes 15 focused tools over local stdio. The server receives an explicit existing workspace; client-selected files and exports stay inside that boundary.
 
 Claude Code registration, using your actual absolute paths:
 
@@ -92,6 +92,14 @@ Codex registration:
 ```sh
 codex mcp add rea-pro-max -- node "/absolute/path/to/rea-pro-max/skills/rea-pro-max/scripts/mcp-server.mjs" --workspace "/absolute/path/to/your-workspace"
 ```
+
+To enable the opt-in Chromium provider, append an explicit executable path when registering the server:
+
+```sh
+codex mcp add rea-pro-max -- node "/absolute/path/to/rea-pro-max/skills/rea-pro-max/scripts/mcp-server.mjs" --workspace "/absolute/path/to/your-workspace" --browser "/absolute/path/to/chromium"
+```
+
+Runtime is disabled when `--browser` is omitted. The selected browser is launched with a disposable profile; it is not an OS or network sandbox.
 
 These commands are setup instructions for you to run; the product does not automatically modify another application's configuration. Reconnect the client, confirm the tool list and ask it to call `get_capabilities`. See [MCP setup, configuration examples and execution policy](docs/MCP.md).
 
@@ -123,6 +131,22 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs inspect ./rpm-lab/fixtures/mv3/r
 node skills/rea-pro-max/scripts/rea-pro-max.mjs report inspection.json --out inspection.html
 node skills/rea-pro-max/scripts/rea-pro-max.mjs prompts --target mv3
 ```
+
+## A save that survives a real worker restart
+
+A warm demo can hide a persistence bug. The v0.3 recovery project makes it observable: the starter saves successfully, survives reopening its page, then loses the acknowledged value when Chromium actually stops and wakes the worker.
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
+node skills/rea-pro-max/scripts/rea-pro-max.mjs runtime doctor --browser "$RPM_BROWSER"
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./recovery-work/reference --candidate ./recovery-work/starter --scenario ./recovery-work/scenario.json --browser "$RPM_BROWSER" --out ./before.json
+```
+
+Set `RPM_BROWSER` to the absolute executable path of an installed Chromium/Chrome for Testing build that supports unpacked extensions. No browser is silently downloaded. The first replay intentionally exits `2`: its mismatch identifies the failing action and retains both executions. Ask your agent to repair `starter/worker.js` against `starter/contract.json`, then replay with a new output path. The `recovered/` directory is an independently authored, runnable worked example of the receiving implementation.
+
+**The loop ends with source you can run, plus evidence you can inspect.** It does not automatically reconstruct arbitrary extensions. This provider currently exercises the documented `rpm-kv-v1` message protocol and selected reset boundaries. Raw responses preserve boot IDs; comparison excludes only that declared observational field. Message receipts do not attest unobserved UI, network or file effects.
+
+MCP users can enable the same kernel by appending `--browser "/absolute/path/to/chromium"` when registering the server. Runtime is disabled by default. `capture_feature` records one target; `replay_feature` compares reference and candidate in separate disposable profiles. The host agent still writes the repair. [Full recovery workflow and limits](docs/RECOVERY.md) · [Exact verification record](docs/VALIDATION.md).
 
 ## A lab with a question worth answering
 
@@ -162,7 +186,7 @@ The Acorn-based reader separates relevant web, MV3 and extracted Electron contex
 
 That distinction matters when the same message string appears in several contexts. A name match suggests a relationship to investigate; runtime delivery still needs an observation. Dynamic expressions, missing imports and unsupported syntax remain visible as unknowns.
 
-`inspect` parses the admitted artifact without executing its JavaScript. Inventory and graph limits keep scope bounded; exceeding a hard limit tells you to narrow the input.
+`inspect` parses the admitted artifact without executing its JavaScript. Explicit include/exclude prefixes let you select the relevant files; coverage records identify admitted, omitted and unparsed sources. A reachable TypeScript/JSX file remains visible as unsupported instead of silently disappearing. Source evidence can be read as a bounded snippet after checking its file hash. Inventory and graph limits keep scope bounded; exceeding a hard limit tells you to narrow the input.
 
 ### 2. Choose a test for its ability to distinguish explanations
 
@@ -194,7 +218,7 @@ A finite pass concerns the supplied comparable cases. It does not establish whol
 
 The CLI reducer removes actions within a declared oracle-call budget. It repeats checks, supports reset before each attempt and keeps the original mismatch fingerprint. Invalid candidates, unstable outcomes, unknown results and exhausted budgets remain visible.
 
-Tested one-minimality applies to the removal operations actually checked. It is not a guarantee of the globally shortest reproduction. The generic `shrink` CLI explicitly executes your owned `.mjs` oracle; the MCP server does not expose arbitrary module execution.
+Tested one-minimality applies to the removal operations actually checked. It is not a guarantee of the globally shortest reproduction. The generic `shrink` CLI explicitly executes your owned `.mjs` oracle in a fresh child process for each trial, with a configurable deadline and bounded output. A fresh process resets module memory; an optional oracle `reset()` owns external state. This is an execution boundary, not an OS sandbox. MCP does not expose arbitrary oracle execution.
 
 ### 6. Make the investigation portable
 
@@ -202,15 +226,15 @@ The workbench is a standalone HTML viewer with working search, context filters, 
 
 MCP returns bounded summaries and session handles, then pages the selected sections. Export saves JSON or HTML to a new workspace path. Session handles live only for the server process; exported case files can be imported when resuming an investigation.
 
-## What v0.2 supports
+## What v0.3 supports
 
 | Area | Built-in capability | Boundary |
 | --- | --- | --- |
 | JavaScript/web artifacts | Bounded source inventory, AST analysis, contexts and candidate relationships | Local files/extracted sources; dynamic behavior requires host observations. |
-| Manifest V3 | Declared popup/content/worker contexts and static communication/storage candidates | Actual delivery, worker lifetime and persistence require qualified browser evidence. |
+| Manifest V3 | Static contexts plus optional actual Chromium capture/replay for the documented `rpm-kv-v1` message protocol | Requires an explicit Chromium executable and an extension implementing that protocol. Other extensions need an appropriate adapter. |
 | Extracted Electron | Main/preload/renderer and candidate IPC boundaries | Installed package extraction and runtime controls are separate prerequisites. |
 | Investigation kernel | Cases, probe ranking, finite verification and bounded reduction | Works on declared models/receipts; evidence quality remains explicit. |
-| MCP | Local stdio, 12 tools, workspace-scoped input/export and bounded session state | No HTTP service, arbitrary shell/oracle execution, browser controller or target launcher. |
+| MCP | Local stdio, 15 tools, workspace-scoped input/export, source snippets and bounded session state | Runtime capture/replay is disabled until `--browser` is configured. No arbitrary shell/oracle tool. |
 | Native/managed/mobile and other families | Task prompts for appropriate host tools; limited format classification where implemented | No bundled universal decompiler, mobile runtime or semantic recovery engine. |
 
 ## MCP tool catalog
@@ -220,6 +244,9 @@ MCP returns bounded summaries and session handles, then pages the selected secti
 | `get_capabilities` | Inspect version, scope, workspace, limits and execution policy. |
 | `inspect_artifact` | Analyze an admitted artifact and retain the complete result behind a handle. |
 | `read_artifact` | Page selected sections without dumping the entire graph into every response. |
+| `read_source_evidence` | Retrieve a bounded, hash-checked source snippet for an evidence record. |
+| `capture_feature` | With runtime enabled, capture a declared MV3 message/reset scenario in actual Chromium. |
+| `replay_feature` | Run reference and receiving extensions separately; retain finite verdict and mismatch evidence. |
 | `create_case` | Start from an inspection's actual target identity and a chosen goal. |
 | `revise_case` | Validate a bounded model update against the expected revision. |
 | `record_observation` | Append provenance-bearing observations with explicit revision checks. |
@@ -240,7 +267,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs case init --inspection inspectio
 node skills/rea-pro-max/scripts/rea-pro-max.mjs case revise case.json --patch experiment.json --revision 1
 node skills/rea-pro-max/scripts/rea-pro-max.mjs plan case.json --bindings bindings.json --budget 10 --out plan.json
 node skills/rea-pro-max/scripts/rea-pro-max.mjs verify --reference reference.json --candidate candidate.json --contract contract.json --out verdict.json
-node skills/rea-pro-max/scripts/rea-pro-max.mjs shrink --input actions.json --oracle ./owned-oracle.mjs --max-tests 100 --out reduced.json
+node skills/rea-pro-max/scripts/rea-pro-max.mjs shrink --input actions.json --oracle ./owned-oracle.mjs --max-tests 100 --timeout-ms 10000 --out reduced.json
 ```
 
 Prepare the patch, bindings, receipts, contract and owned oracle before running their commands. [Case format](skills/rea-pro-max/references/case-format.md) and [verification format](skills/rea-pro-max/references/verification.md) specify the data. The agent normally writes these files for your task.
@@ -261,7 +288,7 @@ Templates direct the host agent; they are not provider implementations or task-s
 
 The demo emits `inspection.json`, `case.json`, `planner.json`, `reference.json`, `candidate.json`, `verification.json`, `reduction.json`, `lab.json` and `report.html`. A rebuild handoff should additionally contain runnable source, its launch command, the selected contract, operations actually exercised and remaining limits.
 
-The bundled CLI/MCP server has no telemetry uploads or model API calls. MCP uses local stdio and no network listener. Your AI host and external runtime tools retain their own data policies. Reports can contain paths, code and observed values; review them before sharing. See [privacy and execution boundaries](docs/PRIVACY.md).
+The bundled CLI/MCP server has no telemetry uploads or model API calls. MCP uses local stdio. Optional runtime operations launch Chromium with a loopback debugging endpoint and a disposable profile; the selected extension/browser can make network requests under their own permissions. Your AI host and external runtime tools retain their own data policies. Reports can contain paths, code and observed values; review them before sharing. See [privacy and execution boundaries](docs/PRIVACY.md).
 
 ## FAQ
 
@@ -273,13 +300,13 @@ The bundled CLI/MCP server has no telemetry uploads or model API calls. MCP uses
 
 **Are MCP and the skill both required?** No. MCP exposes structured tools; the skill supplies the workflow. The CLI remains directly usable, and upstream REA is not required.
 
-**Is the lab a real Chromium worker test?** No. Its Chrome APIs are simulated. The verification record identifies separate real-engine observations and explicitly unverified claims.
+**Is the lab a real Chromium worker test?** The original `demo` and `run_owned_lab` use simulated Chrome APIs. The separate v0.3 runtime capture/replay path runs actual Chromium. Its lifecycle receipts distinguish page reopen, forced worker stop and qualified natural idle; see the exact browser/version evidence in the verification record.
 
 **Does `pass` prove the entire rebuilt app is equivalent?** No. It covers the declared comparable finite cases and contract. Missing/incomplete evidence can produce `unknown`.
 
 **Will my case survive an MCP restart?** Export it before shutdown, then use `import_case` in a new session. Session handles are process-local and bounded.
 
-**Is target code executed during inspection?** No. The CLI's generic `shrink` command does execute your supplied oracle. MCP's execution tool is restricted to the owned lab.
+**Is target code executed during inspection?** No. `runtime capture`, `recovery replay` and the opt-in MCP runtime tools explicitly execute the selected extension. The CLI's generic `shrink` executes your supplied oracle. Read the execution policy before choosing the operation.
 
 ## Troubleshooting
 

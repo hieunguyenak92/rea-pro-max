@@ -1,0 +1,609 @@
+{
+  "schema_version": 1,
+  "protocol": "rpm-kv-v1",
+  "authorship": "Acceptance cases authored separately from the receiving implementation. Public fixtures; not a permanently secret or blinded benchmark.",
+  "scope": "Serial message semantics. Every case starts with a fresh isolated profile. Runtime providers must qualify worker restart independently; modeled tests do not establish browser lifecycle.",
+  "cases": [
+    {
+      "id": "acknowledged-save-survives-restart",
+      "reset": "fresh-profile",
+      "actions": [
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "note",
+            "value": "A decision worth keeping.",
+            "requestId": "save-1"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "key": "note",
+              "value": "A decision worth keeping."
+            }
+          }
+        },
+        {
+          "kind": "page-reopen"
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "get",
+            "key": "note"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "found": true,
+              "value": "A decision worth keeping."
+            }
+          }
+        },
+        {
+          "kind": "worker-restart"
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "get",
+            "key": "note"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "found": true,
+              "value": "A decision worth keeping."
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "snapshot"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "entries": [
+                {
+                  "key": "note",
+                  "value": "A decision worth keeping."
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "retry-must-not-resurrect-a-removed-value",
+      "reset": "fresh-profile",
+      "actions": [
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "draft",
+            "value": "original",
+            "requestId": "put-1"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "key": "draft",
+              "value": "original"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "remove",
+            "key": "draft",
+            "requestId": "remove-1"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 2,
+              "key": "draft",
+              "removed": true
+            }
+          }
+        },
+        {
+          "kind": "worker-restart"
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "draft",
+            "value": "original",
+            "requestId": "put-1"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "key": "draft",
+              "value": "original"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "get",
+            "key": "draft"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 2,
+              "found": false,
+              "value": null
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "remove",
+            "key": "draft",
+            "requestId": "remove-1"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 2,
+              "key": "draft",
+              "removed": true
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "snapshot"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 2,
+              "entries": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "request-id-conflict-crosses-operations-and-restarts",
+      "reset": "fresh-profile",
+      "actions": [
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "draft",
+            "value": "first",
+            "requestId": "shared"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "key": "draft",
+              "value": "first"
+            }
+          }
+        },
+        {
+          "kind": "worker-restart"
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "draft",
+            "value": "second",
+            "requestId": "shared"
+          },
+          "expected": {
+            "ok": false,
+            "error": {
+              "code": "request_conflict"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "remove",
+            "key": "draft",
+            "requestId": "shared"
+          },
+          "expected": {
+            "ok": false,
+            "error": {
+              "code": "request_conflict"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "get",
+            "key": "draft"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "found": true,
+              "value": "first"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "unicode-and-prototype-keys-are-data",
+      "reset": "fresh-profile",
+      "actions": [
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "__proto__",
+            "value": "safe",
+            "requestId": "u-1"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "key": "__proto__",
+              "value": "safe"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "Café",
+            "value": "東京 🌙",
+            "requestId": "u-2"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 2,
+              "key": "Café",
+              "value": "東京 🌙"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "Café",
+            "value": "",
+            "requestId": "u-3"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 3,
+              "key": "Café",
+              "value": ""
+            }
+          }
+        },
+        {
+          "kind": "worker-restart"
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "get",
+            "key": "Café"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 3,
+              "found": true,
+              "value": "東京 🌙"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "get",
+            "key": "Café"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 3,
+              "found": true,
+              "value": ""
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "snapshot"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 3,
+              "entries": [
+                {
+                  "key": "Café",
+                  "value": "東京 🌙"
+                },
+                {
+                  "key": "Café",
+                  "value": ""
+                },
+                {
+                  "key": "__proto__",
+                  "value": "safe"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "invalid-inputs-do-not-mutate",
+      "reset": "fresh-profile",
+      "actions": [
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "known",
+            "value": "value",
+            "requestId": "valid"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "key": "known",
+              "value": "value"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": null,
+          "expected": {
+            "ok": false,
+            "error": {
+              "code": "invalid_message"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": [],
+          "expected": {
+            "ok": false,
+            "error": {
+              "code": "invalid_message"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "missing"
+          },
+          "expected": {
+            "ok": false,
+            "error": {
+              "code": "unsupported_operation"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "",
+            "value": "oops",
+            "requestId": "bad-1"
+          },
+          "expected": {
+            "ok": false,
+            "error": {
+              "code": "invalid_key"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "known",
+            "value": null,
+            "requestId": "bad-2"
+          },
+          "expected": {
+            "ok": false,
+            "error": {
+              "code": "invalid_value"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "remove",
+            "key": "known"
+          },
+          "expected": {
+            "ok": false,
+            "error": {
+              "code": "invalid_request_id"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "get",
+            "key": "known",
+            "unexpected": true
+          },
+          "expected": {
+            "ok": false,
+            "error": {
+              "code": "invalid_message"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "get",
+            "key": "known"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "found": true,
+              "value": "value"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "snapshot"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "entries": [
+                {
+                  "key": "known",
+                  "value": "value"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "absent-remove-and-same-value-put-are-distinct-mutations",
+      "reset": "fresh-profile",
+      "actions": [
+        {
+          "kind": "message",
+          "message": {
+            "type": "remove",
+            "key": "missing",
+            "requestId": "delete-1"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "key": "missing",
+              "removed": false
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "x",
+            "value": "v",
+            "requestId": "put-1"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 2,
+              "key": "x",
+              "value": "v"
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "put",
+            "key": "x",
+            "value": "v",
+            "requestId": "put-2"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 3,
+              "key": "x",
+              "value": "v"
+            }
+          }
+        },
+        {
+          "kind": "worker-restart"
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "remove",
+            "key": "missing",
+            "requestId": "delete-1"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 1,
+              "key": "missing",
+              "removed": false
+            }
+          }
+        },
+        {
+          "kind": "message",
+          "message": {
+            "type": "get",
+            "key": "x"
+          },
+          "expected": {
+            "ok": true,
+            "result": {
+              "revision": 3,
+              "found": true,
+              "value": "v"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

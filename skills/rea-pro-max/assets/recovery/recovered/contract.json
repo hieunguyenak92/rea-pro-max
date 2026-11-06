@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "protocol": "rpm-kv-v1",
+  "entry_page": "runner.html",
+  "boot_evidence": "Top-level boot_id is a fresh crypto.randomUUID() created once when worker.js initializes. Do not treat page reload or a stable DevTools target handle as worker restart proof.",
+  "domain": {
+    "key": {
+      "type": "string",
+      "min_utf16_units": 1,
+      "max_utf16_units": 128,
+      "normalization": "none"
+    },
+    "value": {
+      "type": "string",
+      "min_utf16_units": 0,
+      "max_utf16_units": 4096,
+      "normalization": "none"
+    },
+    "requestId": {
+      "type": "string",
+      "min_utf16_units": 1,
+      "max_utf16_units": 128
+    },
+    "max_keys": 128,
+    "max_unique_mutations": 256
+  },
+  "operations": {
+    "boot": {
+      "input": {
+        "type": "boot"
+      },
+      "result": {
+        "protocol": "rpm-kv-v1"
+      }
+    },
+    "put": {
+      "input": {
+        "type": "put",
+        "key": "string",
+        "value": "string",
+        "requestId": "string"
+      },
+      "result": {
+        "revision": "integer",
+        "key": "string",
+        "value": "string"
+      }
+    },
+    "get": {
+      "input": {
+        "type": "get",
+        "key": "string"
+      },
+      "result": {
+        "revision": "integer",
+        "found": "boolean",
+        "value": "string if found; null otherwise"
+      }
+    },
+    "remove": {
+      "input": {
+        "type": "remove",
+        "key": "string",
+        "requestId": "string"
+      },
+      "result": {
+        "revision": "integer",
+        "key": "string",
+        "removed": "boolean"
+      }
+    },
+    "snapshot": {
+      "input": {
+        "type": "snapshot"
+      },
+      "result": {
+        "revision": "integer",
+        "entries": "array of {key,value}, sorted by ECMAScript string comparison"
+      }
+    }
+  },
+  "success_envelope": {
+    "ok": true,
+    "result": "operation result",
+    "boot_id": "string, current worker initialization"
+  },
+  "error_envelope": {
+    "ok": false,
+    "error": {
+      "code": "stable error code"
+    },
+    "boot_id": "string, current worker initialization"
+  },
+  "errors": [
+    "invalid_message",
+    "unsupported_operation",
+    "invalid_key",
+    "invalid_value",
+    "invalid_request_id",
+    "request_conflict",
+    "request_limit",
+    "entry_limit",
+    "storage_failure"
+  ],
+  "rules": [
+    "Only the named fields for each operation are accepted. Missing/invalid type gives unsupported_operation; a non-object/array/null or extra field gives invalid_message.",
+    "Fresh profile starts at revision 0 with no entries or request history.",
+    "Every accepted new put/remove increments revision once, including a same-value put or remove of an absent key. Reads, rejected messages and duplicate requests do not increment revision.",
+    "Mutation IDs span put and remove. An exact duplicate type/key/value tuple returns its original successful result without reapplying it; a different tuple under the same ID returns request_conflict.",
+    "Both values and request history survive a worker restart. A duplicate response uses the current boot_id with the original operation result.",
+    "The first 256 distinct successful mutation IDs are retained. Further new mutations return request_limit. A duplicate of a retained ID still works at the limit.",
+    "At most 128 live keys. New-key put at the limit returns entry_limit. Updating/removing an existing key remains valid subject to request_limit.",
+    "Keys and values are stored byte-for-byte as JavaScript strings; no trimming, case folding or Unicode normalization. Keys like __proto__ are ordinary data.",
+    "A successful mutation is acknowledged only after its state and request receipt have been persisted together. Failure returns storage_failure and does not acknowledge success.",
+    "Boot ID changes on actual worker initialization. It is observational metadata excluded only from behavior comparison, never discarded from runtime evidence.",
+    "Scope is serial message semantics and persistence after completed acknowledgement. Mid-write forced termination, storage corruption/migration and arbitrary concurrent external writers are not covered."
+  ]
+}

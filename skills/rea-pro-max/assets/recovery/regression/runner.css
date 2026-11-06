@@ -1,0 +1,15 @@
+:root { font: 15px/1.5 system-ui, sans-serif; color: #e5edf7; background: #101722; color-scheme: dark; }
+body { margin: 0; min-width: 360px; }
+main { max-width: 640px; margin: auto; padding: 28px; }
+.eyebrow { color: #7dd3fc; font-size: 11px; letter-spacing: .12em; }
+h1 { margin: 10px 0; font-size: 32px; letter-spacing: -.04em; }
+p { color: #b6c3d5; }
+label { display: block; margin: 18px 0 6px; }
+input, textarea { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #35465d; border-radius: 7px; background: #172333; font: inherit; }
+textarea { min-height: 95px; resize: vertical; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+button { padding: 9px 14px; border: 1px solid #405570; border-radius: 7px; background: #21364c; color: inherit; cursor: pointer; }
+button:first-child { background: #a5e3f8; color: #102537; border-color: #a5e3f8; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
+pre { min-height: 60px; max-height: 260px; overflow: auto; padding: 16px; border: 1px solid #26374b; border-radius: 7px; background: #0d1420; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.note { font-size: 12px; }

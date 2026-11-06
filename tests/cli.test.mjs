@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { digest } from '../skills/rea-pro-max/lib/common.mjs';
+import { createCase, reviseCase } from '../skills/rea-pro-max/lib/case.mjs';
 import { behaviorDocument, simulateWorker } from '../skills/rea-pro-max/lib/lab.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -147,7 +148,9 @@ test('uncertain, unstable and budget-limited reductions exit 3 and retain the re
   const directory = workspace(t); const input = save(directory, 'actions.json', ['save', 'read']);
   const scenarios = [
     ['unknown', 'export const oracle = () => ({status:"unknown"});', [], 'unknown'],
-    ['flaky', 'let count = 0; export const oracle = () => ({status: ++count % 2 ? "mismatch" : "equivalent", fingerprint:"same-failure"});', [], 'flaky_oracle'],
+    ['flaky', `import { existsSync, writeFileSync, unlinkSync } from 'node:fs';
+const marker = new URL('./flaky.marker', import.meta.url);
+export const oracle = () => { if (existsSync(marker)) { unlinkSync(marker); return {status:"equivalent"}; } writeFileSync(marker, '1'); return {status:"mismatch", fingerprint:"same-failure"}; };`, [], 'flaky_oracle'],
     ['budget', 'export const oracle = () => ({status:"mismatch", fingerprint:"same-failure"});', ['--max-tests', '1'], 'budget_exhausted'],
   ];
   for (const [name, source, options, expected] of scenarios) {
@@ -155,6 +158,23 @@ test('uncertain, unstable and budget-limited reductions exit 3 and retain the re
     const result = parse(run(['shrink', '--input', input, '--oracle', module, ...options], 3));
     assert.equal(result.status, expected); assert.equal(result.minimality, 'not-established'); assert.ok(result.reason);
   }
+});
+
+test('CLI refuses observations bound to a superseded case target', t => {
+  const directory = workspace(t); let record = createCase({ goal: 'Target binding', target: { kind: 'mv3', sha256: hash('a') } });
+  record = reviseCase(record, { hypotheses: [{ id: 'stored', label: 'Stored', predictions: { restart: 'retained' } }], probes: [{ id: 'restart', label: 'Restart', cost: 1, requires: [], effects: [], reset: 'fresh', steps: ['restart'] }] }, record.revision);
+  record = reviseCase(record, { target: { kind: 'mv3', sha256: hash('f') } }, record.revision);
+  const source = save(directory, 'case.json', record);
+  const bindings = save(directory, 'old-bindings.json', { target_sha256: hash('a'), scenario_sha256: hash('b'), reset_sha256: hash('c'), toolchain_sha256: hash('d') });
+  const result = run(['plan', source, '--bindings', bindings], 1);
+  assert.equal(JSON.parse(result.stderr).error, 'binding_mismatch');
+});
+
+test('hung CLI oracles are terminated and become an unknown reduction', t => {
+  const directory = workspace(t); const input = save(directory, 'actions.json', ['save', 'read']);
+  const oracle = join(directory, 'hung.mjs'); writeFileSync(oracle, 'process.on("SIGTERM", () => {}); export const oracle = () => { for (;;) {} };\n');
+  const started = Date.now(); const result = parse(run(['shrink', '--input', input, '--oracle', oracle, '--timeout-ms', '100', '--max-tests', '2'], 3));
+  assert.ok(Date.now() - started < 5000); assert.equal(result.status, 'unknown'); assert.match(result.reason, /qualified|oracle|unknown/iu);
 });
 
 test('behavior receipts bind the actual requested sequence instead of the default scenario', async () => {
@@ -185,7 +205,7 @@ test('CLI invoked through a symlinked parent directory still executes its entryp
   catch (error) { if (['EPERM', 'EACCES'].includes(error.code)) { t.skip('Directory symlink privilege is unavailable.'); return; } throw error; }
   const result = spawnSync(process.execPath, [join(alias, 'scripts/rea-pro-max.mjs'), 'help'], { cwd: directory, encoding: 'utf8', timeout: 20000 });
   assert.equal(result.error, undefined); assert.equal(result.status, 0); assert.equal(result.stderr, '');
-  assert.match(result.stdout, /REA Pro Max 0\.2\.1/u);
+  assert.match(result.stdout, /REA Pro Max 0\.3\.0/u);
 });
 
 test('malformed JSON, ambiguous options and extra positional arguments are rejected', t => {
@@ -199,11 +219,21 @@ test('malformed JSON, ambiguous options and extra positional arguments are rejec
 });
 
 test('help, version and prompt inventory are available without external services', () => {
-  assert.match(run(['help']).stdout, /REA Pro Max 0\.2\.1/u);
-  assert.equal(run(['version']).stdout.trim(), '0.2.1');
+  assert.match(run(['help']).stdout, /REA Pro Max 0\.3\.0/u);
+  assert.equal(run(['version']).stdout.trim(), '0.3.0');
   const prompts = parse(run(['prompts'])); assert.ok(prompts.length >= 5);
   const target = prompts[0].target; const selected = parse(run(['prompts', '--target', target]));
   assert.ok(selected.length); assert.equal(selected.every(item => item.target === target), true);
+});
+
+test('recovery init delivers runnable receiving work and preserves existing directories', t => {
+  const directory = workspace(t); const out = join(directory, 'recovery');
+  const result = parse(run(['recovery', 'init', '--out', out]));
+  for (const variant of Object.values(result.targets)) { assert.equal(read(join(variant, 'manifest.json')).manifest_version, 3); assert.ok(readFileSync(join(variant, 'worker.js'), 'utf8').length > 100); }
+  assert.equal(read(result.scenario).actions.some(action => action.kind === 'worker-stop'), true);
+  const before = readFileSync(join(out, 'starter/worker.js'));
+  assert.equal(JSON.parse(run(['recovery', 'init', '--out', out], 1).stderr).error, 'output_exists');
+  assert.deepEqual(readFileSync(join(out, 'starter/worker.js')), before);
 });
 
 

@@ -1,8 +1,8 @@
 # REA Pro Max MCP
 
-REA Pro Max v0.2 exposes its investigation kernel as **12 local MCP tools**. An agent can inspect a scoped artifact, read selected evidence, maintain an explicit case, rank experiments, compare behavior receipts and export a portable result.
+REA Pro Max v0.3 exposes its shared kernel as **15 local MCP tools**. An agent can inspect a scoped artifact, read hash-checked source snippets, maintain a case, rank experiments, compare receipts and export a portable result. Explicitly enabled runtime tools can capture and replay the documented MV3 protocol in actual Chromium.
 
-The server uses the bundled official MCP SDK runtime over **stdio**. It opens no HTTP port, requires no service account and does not call a model API. Node.js22+ is required; runtime npm installation is unnecessary. Client availability and permissions remain subject to your installed host.
+The server uses the bundled official MCP SDK runtime over **stdio**. It requires no service account and does not call a model API. Static operations open no network listener; optional runtime execution launches a disposable browser with a loopback debugging endpoint. Node.js22+ is required; runtime npm installation is unnecessary. Client availability and permissions remain subject to your installed host.
 
 ## Start with an explicit workspace
 
@@ -70,7 +70,41 @@ and which runtime claims remain unverified.
 
 `run_owned_lab` executes only the project's bundled reference/regression worker fixtures under a controlled JavaScript model with simulated Chrome APIs. It does not execute an arbitrary selected target or establish real Chromium suspension.
 
-For your own artifact, ask the agent to call `inspect_artifact` with a workspace-contained path, page the relevant evidence and create a case for the selected feature. Actual browser/app/device experiments use your host's separate tools. REA Pro Max's MCP server does not launch those targets.
+For your own artifact, ask the agent to call `inspect_artifact` with a workspace-contained path, read coverage and selected evidence, then create a case for the feature. The opt-in runtime provider below supports the documented `rpm-kv-v1` MV3 protocol. Other browser/app/device experiments need appropriate host tools or an adapter.
+
+## Opt in to actual Chromium capture and replay
+
+Runtime is **disabled by default**. To enable it, append an explicit executable path when the client launches the server:
+
+```sh
+node /absolute/path/to/rea-pro-max/skills/rea-pro-max/scripts/mcp-server.mjs --workspace /absolute/path/to/your-workspace --browser "/absolute/path/to/chromium"
+```
+
+The same trailing `--browser` arguments can be added to the Claude Code/Codex registration commands above or to the JSON `args` array. Use an installed Chromium/Chrome for Testing build that supports unpacked extensions. The product does not download a browser or use a personal profile. Call `get_capabilities` to confirm that runtime execution is enabled.
+
+Prepare the owned task from the checkout:
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
+```
+
+Keep that directory inside the configured workspace. Then ask the agent:
+
+```text
+Use REA Pro Max to replay recovery-work/reference against recovery-work/starter
+with recovery-work/scenario.json. Read the first mismatch and lifecycle evidence.
+Repair starter/worker.js against starter/contract.json, preserving the protocol,
+then replay with fresh profiles and export the final result as a new JSON file.
+Deliver the runnable feature and remaining unknowns.
+```
+
+`capture_feature` records one extension. `replay_feature` records reference and candidate independently, then calls the same finite verifier as the CLI. A valid fail/unknown is a domain result the agent should investigate. The toolkit does not itself call a model to rewrite the candidate; the host agent performs the edit. The bundled `recovered/` folder is an independently authored worked example.
+
+The provider is specific to **`rpm-kv-v1`**, a documented local message contract implemented by the owned fixtures and receiving projects. Scenario actions are `message`, `page-reopen`, `worker-stop`, `idle` and `storage-snapshot`. It is not general browser automation or automatic reconstruction of arbitrary extensions. [Scenario shape, outputs and limits](RECOVERY.md).
+
+Every runtime run copies the admitted artifact bytes into a temporary snapshot, launches a fresh profile and records browser/provider/target/scenario/reset identities. Forced worker stop and natural idle have different receipts. Boot IDs remain in raw evidence; only the declared top-level boot metadata is excluded from message comparison. Missing reset proof produces incomplete/unknown evidence. Message output receipts do not attest unobserved UI, network or file effects.
+
+A fresh profile is **not an OS or network sandbox**. The selected browser and extension execute with their normal process permissions and may make permitted network requests. Cancellation and deadlines trigger cleanup; inspect the recorded cleanup status. Read [PRIVACY.md](PRIVACY.md) and [VALIDATION.md](VALIDATION.md) for the boundary and exact observations.
 
 ## Exact tool catalog
 
@@ -79,8 +113,11 @@ Arguments below describe the product's input names. The schemas discovered throu
 | Tool | Arguments | Effect |
 | --- | --- | --- |
 | `get_capabilities` | `{}` | Returns version, workspace, target scope, limits and execution policy. |
-| `inspect_artifact` | `path` | Static analysis; stores an inspection and returns a handle/summary. |
+| `inspect_artifact` | `path`, optional `include`, `exclude` | Static analysis; exact relative file/directory prefixes select scope. Read coverage for omitted/unparsed files. |
 | `read_artifact` | `handle`, `section`, `offset`, `limit`, optional `query` | Reads a bounded section/page of a retained artifact. |
+| `read_source_evidence` | Inspection handle, evidence ID, optional character bound; see discovered schema | Reads a hash-checked snippet for an evidence record; stale source is rejected. |
+| `capture_feature` | `extension_path`, `scenario_path`, optional `timeout_ms` | With runtime enabled, executes one declared MV3 scenario in a disposable Chromium profile. |
+| `replay_feature` | `reference_path`, `candidate_path`, `scenario_path`, optional `timeout_ms` | Runs both extensions in separate profiles; retains verdict, full captures and first mismatch. |
 | `create_case` | `inspection_handle`, `goal`, `capabilities` | Creates an in-memory case using the inspection's actual target identity. |
 | `revise_case` | `case_handle`, `expected_revision`, `patch` | Validates and commits a model revision. |
 | `record_observation` | `case_handle`, `expected_revision`, `observation` | Retains the receipt's source, authority and bindings. |
@@ -142,11 +179,11 @@ Updates and imports must fit these limits; a rejected change does not replace th
 
 - Client-selected input/export paths must resolve inside the configured workspace. Symlink components and special files are rejected; existing output files are not overwritten.
 - Session retention is bounded to16 artifacts and32MiB of serialized data. Older/evicted handles may need re-import or re-inspection.
-- At most2 heavy inspection/lab operations run concurrently; excess requests return `server_busy` and can be retried. Input JSON files are bounded to4MiB. Read pages are bounded to64KiB; a single oversized record may need export rather than inline reading.
+- At most2 heavy inspection/lab/runtime operations run concurrently; excess requests return `server_busy` and can be retried. Input JSON files are bounded to4MiB. Read pages are bounded to64KiB; a single oversized record may need export rather than inline reading.
 - Static artifact analysis also has its own inventory, source-byte, AST and graph limits.
 - Prompt browsing is paginated, with at most10 templates per response.
 - Session state is in memory. No hidden background database or automatic case upload is used.
-- There is no arbitrary shell, target execution, browser control, generic oracle execution or native/mobile provider tool in this server.
+- No arbitrary shell, generic oracle execution or native/mobile provider tool is exposed. Target execution is limited to the optional typed MV3 provider and requires a browser configured at startup. The executable cannot be selected through tool-call arguments.
 
 The workspace policy restricts paths admitted by these tools; it is not an operating-system sandbox for Node or for other tools in your AI host. Bundled trusted lab assets are an explicit internal exception to client workspace intake. They do not grant arbitrary access to the skill directory.
 

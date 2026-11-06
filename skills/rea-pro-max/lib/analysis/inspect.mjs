@@ -5,6 +5,7 @@ import { classifyBytes, compareText, decodeText, inventory, resolveLocal } from 
 
 const jsExtensions = new Set(['.js', '.mjs', '.cjs']);
 const htmlExtensions = new Set(['.html', '.htm']);
+const unsupportedSourceExtensions = new Set(['.ts', '.tsx', '.jsx', '.mts', '.cts', '.mjsx', '.cjsx']);
 const id = (prefix, value) => `${prefix}_${digest(value)}`;
 
 function htmlScripts(text) {
@@ -30,6 +31,7 @@ export async function inspectArtifact(inputPath, options = {}) {
   const contexts = new Map(), nodes = new Map(), edges = new Map(), evidence = new Map(), findings = new Map(), unknowns = new Map();
   const parsed = new Map();
   const analyzed = new Set();
+  const processedSources = new Set();
   const queued = new Set();
   const queue = [];
   const boundaryOperations = [];
@@ -226,6 +228,7 @@ export async function inspectArtifact(inputPath, options = {}) {
       if (htmlExtensions.has(extension)) {
         let text;
         try { text = decodeText(source); } catch (error) { unknown(error.code, error.message, file); continue; }
+        processedSources.add(file);
         unknown('html_discovery_bounded', 'HTML source scanning covers declared script tags; it is not a browser parse/execution oracle or a complete dynamic loader model.', file);
         for (const script of htmlScripts(text)) {
           const evidenceId = proof(file, script.start, script.end, 'html-script-declaration');
@@ -235,7 +238,7 @@ export async function inspectArtifact(inputPath, options = {}) {
           } else if (script.content.trim()) acceptJavascript(ctx, file, parse(file, script.content, script.contentStart), moduleId);
         }
       } else if (jsExtensions.has(extension)) {
-        try { acceptJavascript(ctx, file, parse(file), moduleId); }
+        try { const result = parse(file); acceptJavascript(ctx, file, result, moduleId); if (result.source_type) processedSources.add(file); }
         catch (error) { if (error instanceof RpmError && error.code === 'invalid_encoding') unknown(error.code, error.message, file); else throw error; }
       }
     }
@@ -254,6 +257,15 @@ export async function inspectArtifact(inputPath, options = {}) {
   }
   await drain();
 
+  // Resolved imports can point at syntax that the bounded Acorn lane does not parse.
+  // Keep the module in the graph, but make the missing semantic coverage explicit.
+  const visitedFiles = new Set([...analyzed].map(key => key.slice(key.lastIndexOf('\0') + 1)));
+  const unparsedFiles = scope.entries.filter(source => !processedSources.has(source.path)).map(source => source.path);
+  for (const file of unparsedFiles) {
+    const extension = extname(file).toLowerCase();
+    if (unsupportedSourceExtensions.has(extension)) unknown('unsupported_source_extension', `The admitted source ${file} was not parsed. Supported JavaScript extensions are .js, .mjs and .cjs; TypeScript/JSX syntax requires a future bounded parser lane.`, file, { extension, reachable: visitedFiles.has(file), supported_extensions: [...jsExtensions].sort(compareText) });
+  }
+
   for (const sender of boundaryOperations.filter(operation => ['message-send', 'ipc-send'].includes(operation.kind) && operation.channel !== null)) for (const receiver of boundaryOperations.filter(operation => ['message-listener', 'ipc-handler'].includes(operation.kind) && operation.channel === sender.channel)) {
     if (sender.context.id === receiver.context.id) continue;
     let compatible = false;
@@ -269,10 +281,11 @@ export async function inspectArtifact(inputPath, options = {}) {
   }
   return {
     schema_version: 1,
-    artifact: { kind: artifactKind, path: scope.path, sha256: scope.sha256, file_count: scope.files.size, bytes: scope.bytes },
+    artifact: { kind: artifactKind, path: scope.path, source_root: scope.root, input_file: scope.inputFile, sha256: scope.sha256, file_count: scope.files.size, bytes: scope.bytes },
     contexts: [...contexts.values()].sort((a, b) => compareText(a.id, b.id)), nodes: [...nodes.values()].sort((a, b) => compareText(a.id, b.id)), edges: [...edges.values()].sort((a, b) => compareText(a.id, b.id)), evidence: [...evidence.values()].sort((a, b) => compareText(a.id, b.id)), findings: [...findings.values()].sort((a, b) => compareText(a.id, b.id)), unknowns: [...unknowns.values()].sort((a, b) => compareText(digest(a), digest(b))),
     capabilities: [...capabilities].sort(compareText),
     limits: { coverage: 'bounded-static', target_executed: false, max_files: scope.limits.maxFiles, max_file_bytes: scope.limits.maxFileBytes, max_total_bytes: scope.limits.maxTotalBytes, max_ast_nodes: scope.limits.maxAstNodes, max_directory_depth: scope.limits.maxDepth, max_contexts: scope.limits.maxContexts, max_nodes: scope.limits.maxNodes, max_edges: scope.limits.maxEdges, max_evidence: scope.limits.maxEvidence, max_analysis_occurrences: scope.limits.maxAnalysisOccurrences, max_diagnostics: scope.limits.maxDiagnostics, analyzed_occurrences: analyzed.size, parser: `acorn-${parserVersion}` },
+    coverage: { admitted_files: scope.entries.map(file => file.path), visited_files: [...visitedFiles].sort(compareText), analyzed_files: [...processedSources].sort(compareText), unparsed_files: unparsedFiles.sort(compareText), omitted_files: scope.scope.omitted, scope: scope.scope, max_visited_entries: scope.limits.maxVisitedEntries, max_omissions: scope.limits.maxOmissions },
   };
 }
 

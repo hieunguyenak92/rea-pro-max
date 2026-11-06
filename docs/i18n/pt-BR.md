@@ -14,6 +14,24 @@ Um conjunto independente de ferramentas de engenharia reversa com MCP local, ski
 
 *Relatório real do modelo JavaScript com APIs do Chrome simuladas; não comprova o ciclo de vida do Chromium real.*
 
+## Um salvamento que resiste ao reinício real do worker
+
+Uma demo numa sessão ativa pode esconder perda de dados. A v0.3 cria um projeto receptor executável: o starter salva e passa pela reabertura da página, mas perde o valor confirmado quando o Chromium realmente encerra e desperta o worker.
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
+node skills/rea-pro-max/scripts/rea-pro-max.mjs runtime doctor --browser "$RPM_BROWSER"
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./recovery-work/reference --candidate ./recovery-work/starter --scenario ./recovery-work/scenario.json --browser "$RPM_BROWSER" --out ./before.json
+```
+
+Defina `RPM_BROWSER` como o caminho absoluto do executável instalado do Chromium/Chrome for Testing que aceite extensões descompactadas. Nenhum navegador é baixado automaticamente. O primeiro replay termina intencionalmente com exit `2`, identifica a ação divergente e preserva ambas as execuções. Peça ao agente para corrigir `starter/worker.js` conforme `starter/contract.json` e repita com outra saída. `recovered/` é um exemplo receptor executável escrito de forma independente.
+
+**A entrega é código que você pode executar e evidência que pode inspecionar.** Este provedor verifica o protocolo de mensagens documentado `rpm-kv-v1` e os limites de reset selecionados; não reconstrói automaticamente qualquer extensão. Os boot IDs continuam na evidência bruta; só esse campo observacional declarado é excluído da comparação. Recibos de mensagens não comprovam efeitos de UI, rede ou arquivos não observados.
+
+O MCP oferece **15 ferramentas**. O runtime vem desativado; acrescente `--browser "/absolute/path/to/chromium"` ao registrar o servidor para habilitar `capture_feature` e `replay_feature`. Eles usam perfis temporários separados; o agente do ambiente escreve a correção. `read_source_evidence` lê trechos limitados com hash verificado. include/exclude e coverage mostram arquivos admitidos, omitidos e não analisados; análise semântica de TypeScript/JSX ainda não é fornecida.
+
+[Fluxo de recuperação e limites, em inglês](../RECOVERY.md) · [Verificação por versão](../VALIDATION.md). `shrink` executa o oracle num processo filho novo por tentativa, com prazo. A função `reset()` cuida do estado externo. Perfil novo e processo filho não são sandbox do sistema ou de rede.
+
 ## Uma interface convincente é só o começo
 
 A dificuldade vem depois do clique: qual contexto recebe a mensagem, onde o estado persiste, o que o cancelamento interrompe, qual erro chega a quem chamou e por que a função reconstruída falha na segunda tentativa.
@@ -40,7 +58,7 @@ No Codex, selecione a skill ou acrescente `$rea-pro-max` no início da mesma tar
 
 ## Uma ferramenta. Três formas de começar.
 
-**A v0.2 adiciona MCP local com 12 ferramentas**, permitindo que o agente invoque diretamente o núcleo de análise e verificação. A skill fornece o procedimento; a CLI permite executar e inspecionar resultados de forma independente. O runtime inclui parser e SDK oficial do MCP, sem instalação npm para uso.
+**A v0.3 oferece MCP local com 15 ferramentas**, captura/replay opcional no Chromium real e trechos de código com hash verificado. A skill conduz o agente até uma implementação executável; a CLI compartilha o núcleo e dispensa instalação npm no uso.
 
 ### Conecte MCP ao Claude Code ou Codex
 
@@ -81,6 +99,9 @@ A demo abaixo funciona sem MCP. Escolha skill, MCP ou CLI conforme seu ambiente;
 | `get_capabilities` | Consulta versão, workspace, escopo, limites e política de execução. |
 | `inspect_artifact` | Analisa estaticamente o alvo admitido e mantém o resultado completo por um handle. |
 | `read_artifact` | Lê seções ou páginas sem repetir todo o grafo. |
+| `read_source_evidence` | Lê trecho limitado por evidência, com hash verificado. |
+| `capture_feature` | Captura cenário MV3 em Chromium real quando o runtime está habilitado. |
+| `replay_feature` | Executa referência e receptor separadamente; preserva veredito e divergência. |
 | `create_case` | Cria um caso com a identidade real do alvo inspecionado. |
 | `revise_case` | Valida o patch e a revisão esperada antes de atualizar. |
 | `record_observation` | Mantém observações, origem, autoridade e bindings declarados. |
@@ -93,7 +114,7 @@ A demo abaixo funciona sem MCP. Escolha skill, MCP ou CLI conforme seu ambiente;
 
 Handles são identificadores opacos na memória do processo. O cache é limitado; após reinício ou remoção, importe o caso salvo ou analise novamente. Use `read_artifact` para ler o necessário. Os schemas descobertos pelo cliente definem os argumentos exatos.
 
-MCP restringe caminhos escolhidos pelo cliente ao workspace, rejeita links simbólicos e não sobrescreve saídas. É uma política de admissão das ferramentas, não um sandbox do sistema operacional para Node ou outras ferramentas do ambiente. Não expõe shell, inicialização de apps, controle de navegador nem execução arbitrária de oráculos. `run_owned_lab` roda apenas código próprio fixo.
+MCP limita os caminhos ao workspace, rejeita links simbólicos e não sobrescreve saídas. Somente com `--browser` configurado ao iniciar o servidor, ferramentas específicas executam extensões MV3 do protocolo em perfis temporários. Não há shell nem oracle arbitrário. É política de ferramentas, não sandbox do sistema ou de rede.
 
 ## Execute o mecanismo antes de confiar na promessa
 
@@ -134,13 +155,13 @@ O planejador escolhe a próxima pergunta; não executa o teste. O verificador co
 
 ## Escopo definido, limites visíveis
 
-**Análise integrada na v0.2:** arquivos JavaScript e fontes extraídas de web, Manifest V3 e Electron. Expressões dinâmicas, sintaxe não suportada, imports ausentes e limites de recursos ficam explícitos.
+**Análise integrada na v0.3:** arquivos JavaScript e fontes extraídas de web, Manifest V3 e Electron. Expressões dinâmicas, sintaxe não suportada, imports ausentes e limites de recursos ficam explícitos.
 
 **Núcleo independente de provedores:** gestão de casos, priorização de experimentos, comparação finita, redução de sequências e relatórios locais. `shrink` executa explicitamente o módulo oráculo `.mjs` que você fornece e controla.
 
 **Fluxos avançados com ferramentas do ambiente:** prompts para native, managed, Android, Apple, React Native, Flutter, Tauri e WebAssembly. A análise profunda depende de ferramentas adequadas realmente disponíveis. Não inclui decompilador universal, runtime mobile, extrator para qualquer pacote ou motor de recuperação semântica. Detectar um formato ou ter um template não equivale a uma integração verificada.
 
-A CLI não faz requisições de rede nem envia telemetria. Seu ambiente de IA e ferramentas externas seguem políticas de dados próprias. Os relatórios podem conter caminhos, código e valores sensíveis. Leia [privacidade e limites de execução](../PRIVACY.md), em inglês, antes de compartilhá-los.
+CLI/MCP não envia telemetria nem chama API de modelo. As operações estáticas são locais; o runtime opcional usa depuração loopback e o navegador ou a extensão podem acessar a rede conforme suas permissões. O ambiente de IA mantém suas próprias políticas. [Privacidade e execução, em inglês](../PRIVACY.md).
 
 ## O que fica com você
 

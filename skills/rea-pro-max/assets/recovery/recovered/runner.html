@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Save that survives — REA Pro Max fixture</title>
+  <link rel="stylesheet" href="runner.css">
+</head>
+<body>
+  <main>
+    <p class="eyebrow">REA PRO MAX · OWNED RECOVERY FIXTURE</p>
+    <h1>Save that survives.</h1>
+    <p>A small local extension for observing storage, retries and worker restarts. No network requests.</p>
+    <label for="key">Key</label><input id="key" value="note" maxlength="128">
+    <label for="value">Value</label><textarea id="value" maxlength="4096">A decision worth keeping.</textarea>
+    <div class="actions"><button id="save">Save</button><button id="read">Read</button><button id="remove">Remove</button><button id="snapshot">Snapshot</button></div>
+    <p id="status" role="status">Ready. Choose an action to contact the worker.</p>
+    <pre id="response" aria-label="Worker response">{}</pre>
+    <p class="note">A page reload is not a worker restart. The response includes the worker's boot ID so qualified runtime checks can distinguish them.</p>
+  </main>
+  <script src="runner.js"></script>
+</body>
+</html>

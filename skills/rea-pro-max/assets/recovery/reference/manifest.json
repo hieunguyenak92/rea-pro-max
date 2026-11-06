@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "REA Pro Max \u00b7 Durable Reference",
+  "version": "1.0.0",
+  "description": "Owned local key/value recovery fixture. No network or external host access.",
+  "permissions": [
+    "storage"
+  ],
+  "background": {
+    "service_worker": "worker.js"
+  },
+  "action": {
+    "default_popup": "runner.html"
+  }
+}

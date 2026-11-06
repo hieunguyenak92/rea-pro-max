@@ -14,7 +14,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const entry = join(root, 'skills/rea-pro-max/scripts/mcp-server.mjs');
 const fixture = join(root, 'skills/rea-pro-max/assets/labs/mv3/reference');
 const hash = char => char.repeat(64);
-const names = ['get_capabilities', 'inspect_artifact', 'read_artifact', 'create_case', 'revise_case', 'record_observation', 'rank_probes', 'verify_behavior', 'export_artifact', 'run_owned_lab', 'list_task_prompts', 'import_case'];
+const names = ['get_capabilities', 'inspect_artifact', 'read_artifact', 'create_case', 'revise_case', 'record_observation', 'rank_probes', 'verify_behavior', 'export_artifact', 'run_owned_lab', 'list_task_prompts', 'import_case', 'read_source_evidence', 'capture_feature', 'replay_feature'];
 function workspace(t) {
   const directory = mkdtempSync(join(tmpdir(), 'rpm-mcp-test-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
@@ -42,7 +42,7 @@ function behavior(target = 'a') {
 for (const modern of [false, true]) test(`real stdio lists the exact catalog and validates schema (${modern ? 'modern' : 'legacy'})`, async t => {
   const directory = workspace(t); const client = await connect(t, directory, modern);
   assert.equal(Boolean(client.getDiscoverResult()), modern);
-  assert.equal(client.getServerVersion().version, '0.2.1');
+  assert.equal(client.getServerVersion().version, '0.3.0');
   assert.match(client.getInstructions().slice(0, 512), /host agent implements/u);
   const catalog = await client.listTools(); assert.deepEqual(catalog.tools.map(tool => tool.name).sort(), names.toSorted());
   for (const tool of catalog.tools) { assert.equal(tool.inputSchema.type, 'object'); assert.equal(tool.inputSchema.additionalProperties, false); }
@@ -62,6 +62,10 @@ test('inspection, pages, revisioned cases and conservative observed plans flow t
   assert.ok(inspected.summary.counts.evidence > 0); assert.equal(inspected.nodes, undefined);
   const page = await call(client, 'read_artifact', { handle: inspected.handle, section: 'evidence', limit: 1 });
   assert.equal(page.items.length, 1); assert.ok(page.items[0].sha256); assert.equal(page.next_offset, page.total > 1 ? 1 : null);
+  const source = await call(client, 'read_source_evidence', { inspection_handle: inspected.handle, evidence_id: page.items[0].id, max_chars: 20 });
+  assert.equal(source.sha256, page.items[0].sha256); assert.ok(source.source.length <= 20);
+  const disabled = await client.callTool({ name: 'capture_feature', arguments: { extension_path: 'target', scenario_path: 'missing.json' } });
+  assert.equal(disabled.structuredContent.error.code, 'runtime_disabled');
   const context = await call(client, 'read_artifact', { handle: inspected.handle, section: 'contexts', query: 'service-worker' });
   assert.ok(context.items.length > 0); assert.ok(context.items.every(item => item.kind === 'service-worker'));
   const initial = await call(client, 'create_case', { inspection_handle: inspected.handle, goal: 'Find the clip persistence mechanism', capabilities: ['owned-model'] });

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "name": "An acknowledged save survives a worker restart",
+  "page": "runner.html",
+  "actions": [
+    { "id": "save", "kind": "message", "message": { "type": "put", "key": "note", "value": "A decision worth keeping.", "requestId": "save-1" } },
+    { "id": "reopen", "kind": "page-reopen" },
+    { "id": "warm-read", "kind": "message", "message": { "type": "get", "key": "note" } },
+    { "id": "restart", "kind": "worker-stop" },
+    { "id": "cold-read", "kind": "message", "message": { "type": "get", "key": "note" } },
+    { "id": "retry", "kind": "message", "message": { "type": "put", "key": "note", "value": "A decision worth keeping.", "requestId": "save-1" } },
+    { "id": "snapshot", "kind": "message", "message": { "type": "snapshot" } }
+  ]
+}

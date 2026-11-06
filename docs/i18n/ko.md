@@ -14,6 +14,24 @@ Claude Code, Codex, 호환 MCP 클라이언트를 위한 독립적인 리버스 
 
 *Chrome API를 모사한 JavaScript 모델의 실제 보고서입니다. 실제 Chromium 수명주기 증거는 아닙니다.*
 
+## 실제 워커 재시작을 견디는 저장 기능
+
+따뜻한 세션에서 성공한 데모도 데이터 손실을 숨길 수 있습니다. v0.3은 실행 가능한 수신 프로젝트를 만듭니다. starter는 저장과 페이지 재열기를 통과하지만, Chromium이 워커를 실제로 중지하고 깨우면 확인된 값을 잃습니다.
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
+node skills/rea-pro-max/scripts/rea-pro-max.mjs runtime doctor --browser "$RPM_BROWSER"
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./recovery-work/reference --candidate ./recovery-work/starter --scenario ./recovery-work/scenario.json --browser "$RPM_BROWSER" --out ./before.json
+```
+
+`RPM_BROWSER`를 압축을 푼 확장 프로그램을 지원하는 설치된 Chromium/Chrome for Testing 실행 파일의 절대 경로로 지정하세요. 브라우저를 자동 다운로드하지 않습니다. 첫 replay는 의도적으로 exit `2`를 반환하며 실패한 작업과 두 실행의 증거를 보존합니다. 에이전트에게 `starter/contract.json`에 따라 `starter/worker.js`를 수정하게 하고 새 출력 파일로 다시 실행하세요. `recovered/`는 독립적으로 작성된 실행 가능한 수신 구현 예제입니다.
+
+**결과는 실행 가능한 코드와 검토할 수 있는 증거입니다.** 이 제공자는 현재 문서화된 `rpm-kv-v1` 메시지 프로토콜과 선택한 초기화 경계만 검사합니다. 임의 확장 프로그램을 자동 복원하지 않습니다. 원시 증거에는 boot ID가 남으며 비교에서 선언된 관찰 필드만 제외됩니다. 메시지 receipt는 관찰하지 않은 UI·네트워크·파일 효과를 입증하지 않습니다.
+
+MCP는 **15개 도구**를 제공합니다. 런타임은 기본 비활성화이며 서버 등록 시 `--browser "/absolute/path/to/chromium"`을 추가하면 `capture_feature`와 `replay_feature`가 활성화됩니다. 각각 임시 프로필을 사용하며 호스트 에이전트가 수정을 작성합니다. `read_source_evidence`는 해시를 확인한 제한된 소스 조각을 읽습니다. include/exclude와 coverage는 읽은 파일, 제외한 파일, 파싱하지 않은 파일을 명시합니다. TypeScript/JSX 의미 분석은 아직 제공하지 않습니다.
+
+[복원 흐름과 제한 — 영어](../RECOVERY.md) · [버전별 검증](../VALIDATION.md). `shrink`는 시도마다 새 자식 프로세스에서 기한을 두고 oracle을 실행합니다. 외부 상태는 oracle의 `reset()`이 담당합니다. 새 프로필과 자식 프로세스는 OS나 네트워크 샌드박스가 아닙니다.
+
 ## 설득력 있는 화면은 시작에 불과합니다
 
 진짜 어려움은 클릭 다음에 있습니다. 어떤 컨텍스트가 메시지를 받는지, 상태가 어디에 남는지, 취소가 무엇을 중단하는지, 호출자에게 어떤 오류가 돌아오는지, 재구현한 기능이 두 번째 시도에서 왜 실패하는지를 알아야 합니다.
@@ -40,7 +58,7 @@ Codex에서는 스킬을 선택하거나 같은 작업 앞에 `$rea-pro-max`를 
 
 ## 하나의 도구 모음, 세 가지 시작 방법
 
-**v0.2는 12개 도구를 갖춘 로컬 MCP를 추가합니다.** 에이전트가 분석·검증 커널을 직접 호출할 수 있습니다. 스킬은 작업 절차를 제공하고 CLI는 결과를 독립적으로 실행·확인하게 합니다. 파서와 공식 MCP SDK 런타임이 포함되어 사용 시 npm 설치가 필요 없습니다.
+**v0.3은 15개 도구의 로컬 MCP**, 선택적 실제 Chromium 캡처/replay와 해시 확인 소스 조각을 제공합니다. 스킬은 에이전트의 실행 가능한 구현 전달을 지원하며 CLI는 같은 커널을 사용합니다. 런타임 npm 설치는 필요 없습니다.
 
 ### Claude Code 또는 Codex에 MCP 연결
 
@@ -81,6 +99,9 @@ Claude Code에서는 `/rea-pro-max`, Codex에서는 스킬 선택 또는 `$rea-p
 | `get_capabilities` | 버전, 워크스페이스, 범위, 제한, 실행 정책 확인. |
 | `inspect_artifact` | 범위 안의 아티팩트를 정적으로 분석하고 핸들 뒤에 전체 결과 저장. |
 | `read_artifact` | 전체 그래프를 반복하지 않고 필요한 섹션/페이지 읽기. |
+| `read_source_evidence` | 증거 ID에 해당하는 제한된 소스 조각을 해시 확인 후 읽기. |
+| `capture_feature` | 런타임 활성화 시 실제 Chromium에서 MV3 시나리오 캡처. |
+| `replay_feature` | 참조와 수신 프로젝트를 별도로 실행하고 판정·불일치 보존. |
 | `create_case` | 실제 검사 대상 식별자로 케이스 생성. |
 | `revise_case` | 패치와 예상 리비전을 검증한 뒤 갱신. |
 | `record_observation` | 출처·권한 수준·바인딩을 포함한 관찰 저장. |
@@ -93,7 +114,7 @@ Claude Code에서는 `/rea-pro-max`, Codex에서는 스킬 선택 또는 `$rea-p
 
 핸들은 프로세스 메모리의 불투명 식별자입니다. 캐시는 제한되어 있으며 재시작 또는 퇴거 후에는 저장한 케이스를 가져오거나 다시 분석해야 합니다. `read_artifact`로 필요한 부분을 읽으세요. 실제 클라이언트가 발견한 스키마가 정확한 인자 계약입니다.
 
-MCP는 클라이언트가 지정한 입출력 경로를 워크스페이스 안으로 제한하고 심볼릭 링크와 기존 출력 덮어쓰기를 거부합니다. 이는 도구의 입장 정책이며 Node나 호스트의 다른 도구를 위한 OS 샌드박스가 아닙니다. 임의 셸·앱 실행·브라우저 제어·오라클 모듈 실행 도구는 없습니다. `run_owned_lab`은 고정된 자체 코드만 실행합니다.
+MCP는 클라이언트 경로를 워크스페이스 안으로 제한하고 심볼릭 링크와 출력 덮어쓰기를 거부합니다. 시작 시 `--browser`를 설정해야 전용 도구가 임시 프로필에서 프로토콜 기반 MV3 확장을 실행합니다. 임의 셸이나 oracle 도구는 없습니다. 이는 도구 정책이며 OS/네트워크 샌드박스가 아닙니다.
 
 ## 약속을 믿기 전에 직접 실행해 보세요
 
@@ -134,13 +155,13 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs prompts --target mv3
 
 ## 명확한 범위가 결과의 신뢰도를 만듭니다
 
-**v0.2 내장 분석:** JavaScript 파일과 추출된 웹·Manifest V3·Electron 소스입니다. 동적 표현식, 미지원 구문, 누락된 import, 자원 제한은 결과에 명시됩니다.
+**v0.3 내장 분석:** JavaScript 파일과 추출된 웹·Manifest V3·Electron 소스입니다. 동적 표현식, 미지원 구문, 누락된 import, 자원 제한은 결과에 명시됩니다.
 
 **제공자 독립 커널:** 케이스 관리, 실험 순위, 유한한 동작 비교, 시퀀스 축소, 로컬 보고서입니다. `shrink`는 사용자가 제공한 `.mjs` 오라클 모듈을 명시적으로 실행합니다.
 
 **호스트 도구를 이용한 고급 작업:** native·managed·Android·Apple·React Native·Flutter·Tauri·WebAssembly 프롬프트를 포함합니다. 심층 분석에는 실제로 사용 가능한 적절한 도구가 필요합니다. 범용 디컴파일러, 모바일 런타임, 만능 패키지 추출기, 의미 복원 엔진은 내장되어 있지 않습니다. 형식 감지나 프롬프트만으로 통합 지원을 주장하지 않습니다.
 
-CLI는 네트워크 요청이나 텔레메트리 업로드를 하지 않습니다. AI 호스트와 외부 도구에는 각각의 데이터 정책이 적용됩니다. 보고서에는 민감한 경로·코드·관찰값이 포함될 수 있습니다. 공유 전에 영어 [개인정보 및 실행 경계](../PRIVACY.md)를 확인하세요.
+CLI/MCP에는 텔레메트리 업로드나 모델 API 호출이 없습니다. 정적 작업은 로컬 처리이며 선택적 런타임은 루프백 디버깅 연결을 사용합니다. 확장 프로그램과 브라우저는 자체 권한으로 네트워크에 접근할 수 있습니다. AI 호스트의 정책은 별도입니다. [개인정보와 실행 경계 — 영어](../PRIVACY.md).
 
 ## 작업 후 남는 것
 

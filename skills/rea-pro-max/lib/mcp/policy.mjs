@@ -1,6 +1,6 @@
-import { constants, closeSync, fstatSync, lstatSync, openSync, readSync, realpathSync, unlinkSync, writeSync } from 'node:fs';
+import { constants, closeSync, lstatSync, openSync, realpathSync, unlinkSync, writeSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
-import { RpmError, hashBytes } from '../common.mjs';
+import { RpmError, hashBytes, readJson as readBoundedJson } from '../common.mjs';
 
 export const MCP_LIMITS = Object.freeze({ maxArtifacts: 16, maxCacheBytes: 32 * 1024 * 1024, maxJsonBytes: 4 * 1024 * 1024, maxResponseBytes: 64 * 1024, maxPage: 50, maxPromptPage: 10, maxQueryChars: 200, maxToolInputElements: 50_000, maxInputBufferBytes: 4 * 1024 * 1024, maxConcurrentHeavy: 2 });
 export function checkCancelled(context) {
@@ -53,17 +53,9 @@ export class WorkspacePolicy {
   }
   readJson(request) {
     const path = this.resolveInput(request, 'json');
-    const descriptor = openSync(path, constants.O_RDONLY | (constants.O_NOFOLLOW || 0));
-    try {
-      const before = fstatSync(descriptor);
-      if (!before.isFile() || before.size > this.limits.maxJsonBytes) throw new RpmError('input_bounds', 'JSON input exceeds the admitted regular-file byte limit.');
-      const buffer = Buffer.alloc(before.size + 1); let length = 0;
-      while (length < buffer.length) { const count = readSync(descriptor, buffer, length, buffer.length - length, length); if (!count) break; length += count; }
-      const after = fstatSync(descriptor);
-      if (length !== before.size || after.size !== before.size || after.mtimeMs !== before.mtimeMs) throw new RpmError('input_changed', 'JSON input changed during reading. Retry against a stable copy.');
-      try { return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(buffer.subarray(0, length))); }
-      catch { throw new RpmError('invalid_json', 'Input must contain valid UTF-8 JSON.'); }
-    } finally { closeSync(descriptor); }
+    // Path admission remains the workspace boundary; the shared reader owns the
+    // descriptor, size, identity and UTF-8 checks so CLI and MCP cannot drift.
+    return readBoundedJson(path, this.limits.maxJsonBytes);
   }
   writeNew(request, content, context) {
     if (typeof request !== 'string' || !request.trim() || request.length > 4096 || isAbsolute(request) || request.includes('\0')) throw new RpmError('invalid_output_path', 'Use a relative new output filename within the configured workspace.');

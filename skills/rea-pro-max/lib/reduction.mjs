@@ -1,8 +1,11 @@
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { RpmError, canonical, digest } from './common.mjs';
 
 const copy = value => JSON.parse(canonical(value));
+const ISOLATED_RESET = Symbol('isolated-reset');
 
-/** Bounded oracle-call reduction. The caller owns per-call timeout and external effects. */
+/** Bounded in-process reduction for an oracle the caller already controls. */
 export async function minimizeSequence(sequence, oracle, { maxTests = 100, stabilityRuns = 2, reset } = {}) {
   if (!Array.isArray(sequence) || sequence.length > 10000) throw new RpmError('invalid_sequence', 'Use an array of at most 10000 events.');
   if (typeof oracle !== 'function' || (reset !== undefined && typeof reset !== 'function')) throw new RpmError('invalid_oracle', 'Provide an oracle function and optional reset function.');
@@ -17,6 +20,7 @@ export async function minimizeSequence(sequence, oracle, { maxTests = 100, stabi
     try {
       if (reset) { resetCalls++; await reset(); resetApplied = true; }
       oracleCalls++; result = await oracle(copy(input));
+      if (result?.[ISOLATED_RESET] === true) { resetCalls++; resetApplied = true; }
       if (!result || typeof result !== 'object' || !['mismatch', 'equivalent', 'invalid', 'unknown'].includes(result.status) || (result.status === 'mismatch' && (typeof result.fingerprint !== 'string' || !result.fingerprint.trim() || result.fingerprint.length > 1024))) {
         result = { status: 'unknown', detail: 'Oracle returned an unsupported result.' };
       }
@@ -60,4 +64,36 @@ export async function minimizeSequence(sequence, oracle, { maxTests = 100, stabi
     granularity = Math.min(current.length, chunks * 2);
   }
   return finish(current.length < original.length ? 'reduced' : 'unchanged', 'one-minimal');
+}
+
+/**
+ * Run a caller-selected oracle in a fresh child process for every trial. This is
+ * an execution boundary, not a sandbox: the oracle still has the user's local
+ * permissions, but a hung process can be terminated and its output is bounded.
+ */
+export async function minimizeSequenceIsolated(sequence, modulePath, options = {}) {
+  if (typeof modulePath !== 'string' || !modulePath.trim()) throw new RpmError('invalid_oracle', 'Provide an oracle module path.');
+  const timeoutMs = options.timeoutMs ?? 10_000;
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 120_000) throw new RpmError('invalid_oracle_timeout', 'Use an oracle timeout from 100 to 120000 milliseconds.');
+  const runner = fileURLToPath(new URL('../scripts/oracle-runner.mjs', import.meta.url));
+  const oracle = async input => {
+    const result = spawnSync(process.execPath, [runner, modulePath], {
+      input: canonical(input), encoding: 'utf8', timeout: timeoutMs, killSignal: 'SIGKILL', maxBuffer: 256 * 1024,
+      cwd: process.cwd(), windowsHide: true,
+    });
+    if (result.error) return { status: 'unknown', detail: `Isolated oracle failed: ${String(result.error.message).slice(0, 500)}` };
+    if (result.signal) return { status: 'unknown', detail: `Isolated oracle terminated by ${result.signal}.` };
+    if (result.status !== 0) return { status: 'unknown', detail: `Isolated oracle exited ${result.status}: ${String(result.stderr).slice(0, 400)}` };
+    try {
+      const envelope = JSON.parse(result.stdout);
+      if (!envelope || typeof envelope !== 'object' || typeof envelope.reset_applied !== 'boolean') throw new Error('Invalid oracle envelope');
+      return { ...envelope.result, [ISOLATED_RESET]: envelope.reset_applied };
+    }
+    catch { return { status: 'unknown', detail: 'Isolated oracle returned invalid JSON.' }; }
+  };
+  const result = await minimizeSequence(sequence, oracle, options);
+  result.reset_applied = result.receipts.length > 0 && result.receipts.every(receipt => receipt.reset_applied);
+  result.reset_configured = result.reset_calls > 0;
+  result.execution = { boundary: 'fresh child process per trial', timeout_ms: timeoutMs, sandbox: false, note: 'Fresh process state does not reset external files, databases or services; the supplied module reset() owns those effects.' };
+  return result;
 }

@@ -3,7 +3,7 @@ import { constants } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { digest, hashBytes, RpmError } from '../common.mjs';
 
-export const DEFAULT_LIMITS = Object.freeze({ maxFiles: 256, maxFileBytes: 2 * 1024 * 1024, maxTotalBytes: 16 * 1024 * 1024, maxAstNodes: 100_000, maxDepth: 32, maxContexts: 128, maxNodes: 5000, maxEdges: 10000, maxEvidence: 5000, maxAnalysisOccurrences: 1024, maxDiagnostics: 2000 });
+export const DEFAULT_LIMITS = Object.freeze({ maxFiles: 256, maxFileBytes: 2 * 1024 * 1024, maxTotalBytes: 16 * 1024 * 1024, maxAstNodes: 100_000, maxDepth: 32, maxContexts: 128, maxNodes: 5000, maxEdges: 10000, maxEvidence: 5000, maxAnalysisOccurrences: 1024, maxDiagnostics: 2000, maxVisitedEntries: 4096, maxOmissions: 2048 });
 export const compareText = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 export const posix = path => path.split(sep).join('/');
 
@@ -17,6 +17,30 @@ function checkedLimits(options) {
     }
   }
   return result;
+}
+
+function checkedScope(options) {
+  const normalize = (value, label) => {
+    if (value === undefined) return [];
+    if (!Array.isArray(value) || value.length > 256 || value.some(item => typeof item !== 'string' || !item.trim() || item.length > 4096)) throw new RpmError('invalid_scope', `${label} must be up to256 nonempty relative paths.`);
+    return [...new Set(value.map(item => {
+      if (item !== item.trim() || item.startsWith('/') || /^[a-z]:/iu.test(item) || item.includes('\\') || item.includes('\0') || /[*?\[\]{}]/u.test(item) || item.split('/').some(part => part === '..')) throw new RpmError('invalid_scope', `${label} entries must be bounded relative paths without globs.`);
+      const normalized = item.replace(/^\.\//u, '').replace(/\/+/gu, '/').replace(/\/$/u, '');
+      if (!normalized || normalized.split('/').some(part => part === '.')) throw new RpmError('invalid_scope', `${label} entries must name a relative file or directory.`);
+      return normalized;
+    }))].sort(compareText);
+  };
+  const include = normalize(options.include, 'include');
+  const exclude = normalize(options.exclude, 'exclude');
+  return { include, exclude, explicit: options.include !== undefined || options.exclude !== undefined };
+}
+
+function underScope(path, prefixes) {
+  return !prefixes.length || prefixes.some(prefix => path === prefix || path.startsWith(`${prefix}/`));
+}
+
+function intersectsScope(path, prefixes) {
+  return !path || underScope(path, prefixes) || prefixes.some(prefix => prefix.startsWith(`${path}/`));
 }
 
 
@@ -43,25 +67,42 @@ export async function inventory(inputPath, options = {}) {
   if (typeof inputPath !== 'string' || !inputPath) throw new RpmError('missing_target', 'Supply an artifact file or extracted application directory.');
   const selectedPath = resolve(inputPath);
   const limits = checkedLimits(options);
+  const selection = checkedScope(options);
   const initial = await lstat(selectedPath);
   if (initial.isSymbolicLink()) throw new RpmError('symlink_input', 'A selected artifact symlink is not followed.');
   // The selected artifact establishes the scope; canonicalize OS/user parent aliases once.
   const path = await realpath(selectedPath);
-  if (!initial.isDirectory() && !initial.isFile()) throw new RpmError('unsupported_input', 'Use a regular artifact file or directory.');
+  const canonicalStat = await lstat(path);
+  if ((!initial.isDirectory() && !initial.isFile()) || canonicalStat.isSymbolicLink() || initial.isDirectory() !== canonicalStat.isDirectory() || initial.isFile() !== canonicalStat.isFile() || initial.dev !== canonicalStat.dev || initial.ino !== canonicalStat.ino) throw new RpmError('input_changed', 'Artifact identity changed during admission; retry against a stable path.');
   const root = initial.isDirectory() ? path : dirname(path);
   const files = new Map();
-  let bytes = 0;
-  async function visit(absolute, depth) {
+  const omitted = [];
+  let bytes = 0, visited = 0;
+  function omit(name, reason, kind = 'entry') {
+    if (omitted.length >= limits.maxOmissions) throw new RpmError('artifact_bounds', 'Artifact omissions exceed the admitted bound; choose a narrower scope.', { max_omissions: limits.maxOmissions });
+    omitted.push({ path: name, reason, kind });
+  }
+  async function visit(absolute, depth, hint) {
+    if (++visited > limits.maxVisitedEntries) throw new RpmError('artifact_bounds', 'Artifact traversal exceeds the admitted entry bound; choose a narrower scope.', { max_visited_entries: limits.maxVisitedEntries });
     if (depth > limits.maxDepth) throw new RpmError('artifact_bounds', 'Artifact directory depth exceeds the admitted bound.', { max_depth: limits.maxDepth });
-    const stat = await lstat(absolute);
     const name = posix(relative(root, absolute));
+    // Explicitly omitted entries are never followed, even when they are links.
+    // Directory-level records describe an omitted subtree without enumerating it.
+    const kind = hint?.isDirectory() ? 'directory' : hint?.isFile() ? 'file' : 'entry';
+    if (name && selection.exclude.some(prefix => name === prefix || name.startsWith(`${prefix}/`))) { omit(name, 'excluded', kind); return; }
+    if (!intersectsScope(name, selection.include)) { omit(name, 'outside_include', kind); return; }
+    const stat = await lstat(absolute);
     if (stat.isSymbolicLink()) throw new RpmError('symlink_input', 'Artifact symlinks are not followed.', { file: name });
     if (stat.isDirectory()) {
-      const children = await readdir(absolute);
-      for (const child of children.sort(compareText)) await visit(resolve(absolute, child), depth + 1);
+      const children = await readdir(absolute, { withFileTypes: true });
+      if (children.length > limits.maxVisitedEntries - visited) throw new RpmError('artifact_bounds', 'Artifact directory exceeds the remaining traversal budget; choose a narrower root.', { file: name, max_visited_entries: limits.maxVisitedEntries });
+      const after = await lstat(absolute);
+      if (!after.isDirectory() || after.isSymbolicLink() || after.dev !== stat.dev || after.ino !== stat.ino) throw new RpmError('input_changed', 'Artifact directory changed during traversal.', { file: name });
+      for (const child of children.sort((a, b) => compareText(a.name, b.name))) await visit(resolve(absolute, child.name), depth + 1, child);
       return;
     }
     if (!stat.isFile()) throw new RpmError('unsupported_input', 'Special files are not admitted.', { file: name });
+    if (!underScope(name, selection.include)) { omit(name, 'outside_include', 'file'); return; }
     if (files.size >= limits.maxFiles || stat.size > limits.maxFileBytes || bytes + stat.size > limits.maxTotalBytes) throw new RpmError('artifact_bounds', 'Artifact exceeds file-count or byte limits; select a narrower extracted scope.', { file: name, max_files: limits.maxFiles, max_file_bytes: limits.maxFileBytes, max_total_bytes: limits.maxTotalBytes });
     const body = await readRegularFile(absolute, stat, name);
     if (body.byteLength > limits.maxFileBytes || bytes + body.byteLength > limits.maxTotalBytes) throw new RpmError('artifact_bounds', 'Artifact changed beyond the admitted byte bound during reading.', { file: name });
@@ -70,8 +111,11 @@ export async function inventory(inputPath, options = {}) {
   }
   await visit(path, 0);
   const entries = [...files.values()].sort((a, b) => compareText(a.path, b.path));
-  const sha256 = initial.isFile() ? entries[0].sha256 : digest(entries.map(file => ({ path: file.path, sha256: file.sha256, bytes: file.size })));
-  return { path, root, inputFile: initial.isFile() ? basename(path) : null, files, entries, sha256, bytes, limits };
+  if (initial.isFile() && !entries.length) throw new RpmError('empty_scope', 'The explicitly selected file was omitted by the scope policy.');
+  const fileDigest = entries.length ? digest(entries.map(file => ({ path: file.path, sha256: file.sha256, bytes: file.size }))) : digest([]);
+  const sha256 = selection.explicit ? digest({ files: entries.map(file => ({ path: file.path, sha256: file.sha256, bytes: file.size })), scope: { include: selection.include, exclude: selection.exclude } }) : initial.isFile() ? entries[0].sha256 : fileDigest;
+  const scope = { include: selection.include, exclude: selection.exclude, explicit: selection.explicit, omitted, visited_entries: visited, policy_sha256: digest({ include: selection.include, exclude: selection.exclude }) };
+  return { path, root, inputFile: initial.isFile() ? basename(path) : null, files, entries, sha256, bytes, limits, scope };
 }
 
 export function decodeText(file) {

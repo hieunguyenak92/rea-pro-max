@@ -14,6 +14,24 @@ Claude Code、Codex、互換MCPクライアントのための独立したリバ�
 
 *Chrome APIを模擬したJavaScriptモデルの実レポートです。実際のChromiumライフサイクルの証拠ではありません。*
 
+## 実際のworker再起動を越えて保存を維持する
+
+同じセッションで動くデモでも、データ消失を隠している場合があります。v0.3は実行可能な受け入れプロジェクトを作ります。starterは保存とページの再表示を通過しますが、Chromiumがworkerを実際に停止して起動し直すと、確認済みの値を失います。
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
+node skills/rea-pro-max/scripts/rea-pro-max.mjs runtime doctor --browser "$RPM_BROWSER"
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./recovery-work/reference --candidate ./recovery-work/starter --scenario ./recovery-work/scenario.json --browser "$RPM_BROWSER" --out ./before.json
+```
+
+`RPM_BROWSER`には、展開済み拡張を読み込める、インストール済みChromium/Chrome for Testing実行ファイルの絶対パスを指定します。ブラウザーは自動ダウンロードされません。最初のreplayは意図的にexit `2`となり、不一致の操作と両方の実行証拠を残します。エージェントに`starter/contract.json`に従って`starter/worker.js`を修正させ、新しい出力先で再実行してください。`recovered/`は独立して作成された、実行可能な受け入れ実装の例です。
+
+**成果物は、実行できるコードと確認できる証拠です。** このproviderは現在、文書化された`rpm-kv-v1`メッセージプロトコルと選択したリセット境界を検査します。任意の拡張を自動復元するものではありません。boot IDは生の証拠に残し、比較では宣言済みの観測フィールドだけを除外します。メッセージreceiptは未観測のUI・ネットワーク・ファイル効果を証明しません。
+
+MCPは**15ツール**です。runtimeは既定で無効です。サーバー登録時に`--browser "/absolute/path/to/chromium"`を加えると`capture_feature`と`replay_feature`が使えます。それぞれ一時プロファイルで実行し、修正コードはホストエージェントが書きます。`read_source_evidence`はハッシュ確認済みのソース断片を返します。include/excludeとcoverageは採用・除外・未解析ファイルを明示し、TypeScript/JSXの意味解析はまだ提供しません。
+
+[復元手順と制限・英語](../RECOVERY.md) · [バージョン別検証](../VALIDATION.md)。`shrink`は各試行を期限付きの新しい子プロセスで実行します。外部状態のリセットはoracleの`reset()`が担当します。新しいプロファイルや子プロセスはOS・ネットワークのサンドボックスではありません。
+
 ## 見た目が整った画面は、まだ出発点です
 
 難しさはクリックの先にあります。どのコンテキストがメッセージを受け取るのか。状態はどこに残るのか。キャンセルは何を止めるのか。どのエラーが呼び出し元に返るのか。なぜ再構築した機能は2回目に失敗するのか。
@@ -40,7 +58,7 @@ Codexではスキルを選択するか、同じ依頼の先頭に`$rea-pro-max`�
 
 ## 一つのツールキット。三つの始め方。
 
-**v0.2では12ツールのローカルMCPを追加しました。** エージェントから解析・検証カーネルを直接呼び出せます。スキルは作業手順を、CLIは独立した実行と確認を提供します。パーサーと公式MCP SDKランタイムを同梱し、利用時のnpmインストールは不要です。
+**v0.3は15ツールのローカルMCP**、任意設定の実Chromium capture/replay、ハッシュ確認済みソース断片を提供します。スキルは実行可能な実装の納品を導き、CLIは同じカーネルを使います。利用時のnpmインストールは不要です。
 
 ### Claude CodeまたはCodexへMCPを接続
 
@@ -81,6 +99,9 @@ Claude Codeでは`/rea-pro-max`、Codexではスキル選択または`$rea-pro-m
 | `get_capabilities` | バージョン、ワークスペース、範囲、制限、実行方針を確認。 |
 | `inspect_artifact` | 範囲内の静的解析を行い、完全な結果をハンドルで保持。 |
 | `read_artifact` | グラフ全体を繰り返さず、必要なセクションやページを読む。 |
+| `read_source_evidence` | 証拠IDに対応する、ハッシュ確認済みの短いソースを読む。 |
+| `capture_feature` | runtime有効時、実ChromiumでMV3シナリオを記録。 |
+| `replay_feature` | 参照と受け入れ拡張を別々に実行し、判定と不一致を保存。 |
 | `create_case` | 解析した対象の実際の識別情報からケースを作成。 |
 | `revise_case` | パッチと期待リビジョンを検証して更新。 |
 | `record_observation` | 出典・authority・bindingsを保った観測を記録。 |
@@ -93,7 +114,7 @@ Claude Codeでは`/rea-pro-max`、Codexではスキル選択または`$rea-pro-m
 
 ハンドルはプロセス内メモリーの不透明な識別子です。キャッシュには上限があり、再起動や退避後は保存したケースをインポートするか再解析します。`read_artifact`で必要な部分を読みます。実行中クライアントが取得するスキーマが正確な引数契約です。
 
-MCPはクライアント指定の入出力パスをワークスペース内に限定し、シンボリックリンクや既存出力の上書きを拒否します。これはツールの受け入れ方針であり、Nodeやホストの他ツールに対するOSサンドボックスではありません。任意シェル、アプリ起動、ブラウザー操作、任意オラクル実行は提供しません。`run_owned_lab`は固定の同梱コードだけを実行します。
+MCPはクライアント指定パスをworkspace内に限定し、シンボリックリンクと既存出力の上書きを拒否します。起動時に`--browser`を設定した場合に限り、専用ツールが一時プロファイルでプロトコル対応MV3拡張を実行します。任意shellやoracle実行ツールはありません。これはツール方針であり、OS・ネットワークサンドボックスではありません。
 
 ## 約束を信じる前に、仕組みを動かしてください
 
@@ -134,13 +155,13 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs prompts --target mv3
 
 ## 範囲を明確にし、結果の意味を保つ
 
-**v0.2の内蔵解析：** JavaScriptファイル、および展開済みWeb・Manifest V3・Electronソース。動的な式、未対応構文、欠落import、リソース制限は結果に明示されます。
+**v0.3の内蔵解析：** JavaScriptファイル、および展開済みWeb・Manifest V3・Electronソース。動的な式、未対応構文、欠落import、リソース制限は結果に明示されます。
 
 **プロバイダー非依存カーネル：** ケース管理、実験順位付け、有限の動作比較、列の縮小、ローカルレポート。`shrink`は指定した自作の`.mjs`オラクルを明示的に実行します。
 
 **ホストツールを使う高度なワークフロー：** native・managed・Android・Apple・React Native・Flutter・Tauri・WebAssembly向けプロンプトもあります。深い解析には利用可能な適切なツールが必要です。汎用デコンパイラー、モバイルランタイム、万能なパッケージ展開器、意味復元エンジンは内蔵していません。形式検出やテンプレートだけでは、動作する統合とは呼べません。
 
-CLIはネットワーク要求やテレメトリー送信を行いません。AIホストと外部ツールには各サービスのデータポリシーが適用されます。レポートに機密のパス・コード・観測値が含まれる可能性があります。共有前に英語の[プライバシーと実行境界](../PRIVACY.md)を確認してください。
+CLI/MCPはテレメトリーを送信せず、モデルAPIも呼びません。静的操作はローカル処理です。任意設定のruntimeはloopbackデバッグ接続を使い、拡張やブラウザーは自身の権限でネットワークへアクセスできます。AIホストの方針は別です。[プライバシーと実行境界・英語](../PRIVACY.md)。
 
 ## 手元に残る成果物
 

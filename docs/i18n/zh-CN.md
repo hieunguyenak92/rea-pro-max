@@ -14,6 +14,24 @@
 
 *这是使用模拟 Chrome API 的 JavaScript 模型所生成的真实报告，不是真实 Chromium 生命周期的证据。*
 
+## 让保存经得住真正的 worker 重启
+
+活跃会话中的演示可能掩盖数据丢失。v0.3 创建可运行的接收项目：starter 能保存，也能通过重新打开页面的检查，但 Chromium 真正停止并唤醒 worker 后，已确认的值就会丢失。
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
+node skills/rea-pro-max/scripts/rea-pro-max.mjs runtime doctor --browser "$RPM_BROWSER"
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./recovery-work/reference --candidate ./recovery-work/starter --scenario ./recovery-work/scenario.json --browser "$RPM_BROWSER" --out ./before.json
+```
+
+将 `RPM_BROWSER` 设为已安装且支持加载解压扩展的 Chromium/Chrome for Testing 可执行文件绝对路径。工具不会自动下载浏览器。首次 replay 会有意返回 exit `2`，指出不一致操作，并保留两次执行的证据。让智能体依据 `starter/contract.json` 修复 `starter/worker.js`，再用新的输出路径重放。`recovered/` 是独立编写、可以运行的接收实现示例。
+
+**交付物是可以运行的代码，以及可以核验的证据。** 该 provider 目前只检查文档化的 `rpm-kv-v1` 消息协议和选定的重置边界，不会自动重建任意扩展。原始证据保留 boot ID；比较时仅排除这一已声明的观察字段。消息 receipt 不证明未观察的 UI、网络或文件副作用。
+
+MCP 提供 **15 个工具**。运行时默认关闭；注册服务器时追加 `--browser "/absolute/path/to/chromium"`，即可启用 `capture_feature` 与 `replay_feature`。它们使用独立临时 profile；宿主智能体仍负责修复代码。`read_source_evidence` 返回有大小限制且经过 hash 检查的源码片段。include/exclude 和 coverage 会列明纳入、排除、未解析的文件；尚未提供 TypeScript/JSX 语义解析。
+
+[恢复流程与限制（英文）](../RECOVERY.md) · [按版本验证](../VALIDATION.md)。`shrink` 每次尝试都在有期限的新子进程中执行 oracle；外部状态由 oracle 的 `reset()` 负责。新 profile 和子进程不是操作系统或网络沙箱。
+
 ## 一个像样的界面，只是起点
 
 真正困难的是点击之后发生了什么：哪个上下文接收消息，状态保存在哪里，取消操作究竟中断什么，调用方会收到哪种错误，以及为什么重建的功能到了第二次使用就出问题。
@@ -40,7 +58,7 @@ REA Pro Max 把这些问题带入实现过程。分析已分发的 JavaScript，
 
 ## 一套工具，三种起步方式
 
-**v0.2 新增本地 MCP，提供 12 个工具**，让智能体直接调用分析与验证内核。技能提供任务流程，CLI 支持独立运行和查看结果。运行时已打包解析器和官方 MCP SDK，使用时无需安装 npm 依赖。
+**v0.3 提供 15 个本地 MCP 工具**，增加可选的真实 Chromium capture/replay，以及经过 hash 检查的源码片段。技能引导智能体交付可运行实现；CLI 共用同一内核，使用时无需安装 npm 依赖。
 
 ### 将 MCP 连接到 Claude Code 或 Codex
 
@@ -81,6 +99,9 @@ node /absolute/path/to/rea-pro-max/skills/rea-pro-max/scripts/mcp-server.mjs --w
 | `get_capabilities` | 查看版本、workspace、范围、限制和执行策略。 |
 | `inspect_artifact` | 静态分析范围内的目标，通过句柄保留完整结果。 |
 | `read_artifact` | 按节或分页读取，避免反复返回整个图。 |
+| `read_source_evidence` | 按证据读取有大小限制且经过 hash 检查的源码片段。 |
+| `capture_feature` | 启用运行时后，在真实 Chromium 中采集 MV3 场景。 |
+| `replay_feature` | 分别执行参考与接收扩展，保留判定和不一致证据。 |
 | `create_case` | 根据实际检查目标的身份创建 case。 |
 | `revise_case` | 验证补丁与预期 revision 后再更新。 |
 | `record_observation` | 保留观察、来源、authority 与声明的 bindings。 |
@@ -93,7 +114,7 @@ node /absolute/path/to/rea-pro-max/skills/rea-pro-max/scripts/mcp-server.mjs --w
 
 句柄是进程内存中的不透明标识。缓存有上限；重启或条目被淘汰后，应导入保存的 case 或重新分析。使用 `read_artifact` 读取所需部分。客户端发现的实际 schema 是准确的参数契约。
 
-MCP 将客户端选择的输入输出路径限制在 workspace 内，拒绝符号链接，不覆盖已有输出。这是工具的路径准入策略，不是针对 Node 或宿主其他工具的操作系统沙箱。没有任意 shell、应用启动器、浏览器控制或任意 oracle 执行工具。`run_owned_lab` 只执行固定的自有代码。
+MCP 将客户端路径限制在 workspace 内，拒绝符号链接且不覆盖输出。仅在服务器启动时配置 `--browser` 后，专用工具才会在临时 profile 中执行符合协议的 MV3 扩展。没有任意 shell 或 oracle 工具。这是工具策略，不是操作系统或网络沙箱。
 
 ## 相信承诺之前，先运行它的机制
 
@@ -134,13 +155,13 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs prompts --target mv3
 
 ## 边界清楚，结果才有明确含义
 
-**v0.2 内置分析：** JavaScript 文件，以及已提取的 Web、Manifest V3、Electron 源码。动态表达式、不支持的语法、缺失 import 和资源限制会明确出现在结果中。
+**v0.3 内置分析：** JavaScript 文件，以及已提取的 Web、Manifest V3、Electron 源码。动态表达式、不支持的语法、缺失 import 和资源限制会明确出现在结果中。
 
 **与 provider 无关的内核：** case 管理、实验排序、有限行为比较、序列缩减和本地报告。`shrink` 会明确执行你提供并控制的 `.mjs` oracle 模块。
 
 **通过宿主工具开展的高级工作流：** 提示词库包含 native、managed、Android、Apple、React Native、Flutter、Tauri 和 WebAssembly 任务。深度分析取决于实际可用且适合目标的工具。本版本没有内置通用反编译器、移动运行时、万能包提取器或语义恢复引擎。格式检测或任务模板不等于经过验证的集成。
 
-CLI 不发起网络请求，也不上传遥测数据。AI 宿主和外部工具遵循各自的数据政策。报告可能包含敏感路径、代码和观察值。分享前请阅读英文[隐私与执行边界](../PRIVACY.md)。
+CLI/MCP 不上传遥测，也不调用模型 API。静态操作在本地处理；可选运行时使用 loopback 调试连接，浏览器或扩展可按自身权限访问网络。AI 宿主遵循自己的政策。请阅读[隐私与执行边界（英文）](../PRIVACY.md)。
 
 ## 最终留下什么
 

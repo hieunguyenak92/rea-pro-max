@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-11-06
+
+- Add optional dependency-free actual Chromium capture/replay for the documented `rpm-kv-v1` MV3 protocol, with disposable profiles/snapshots, distinct reset receipts, retained raw evidence and explicit cleanup status.
+- Add an owned persistence recovery project with reference, intentionally faulty starter, independently authored runnable receiving example and replay scenario. The host agent performs the repair; the toolkit executes and verifies the selected finite behavior.
+- Extend local MCP to15 tools with hash-checked source evidence and opt-in capture/replay; browser execution requires explicit startup configuration.
+- Report unsupported imported source coverage and bounded include/exclude scope; harden JSON admission and CLI current-target bindings.
+- Run explicit CLI oracle trials in fresh child processes with bounded output and deadlines; preserve external-reset and sandbox limits.
+- Synchronize all nine README languages with recovery usage, execution boundaries and exact support scope. Final measured checks are recorded in [VALIDATION.md](docs/VALIDATION.md).
+
 ## 0.2.1 — 2026-11-04
 
 - Canonicalize admitted workspace roots with the native filesystem resolver so Windows short-path aliases and native-resolved absolute inputs identify the same workspace.

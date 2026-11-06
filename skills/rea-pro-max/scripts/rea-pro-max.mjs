@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 import { mkdirSync, cpSync, lstatSync, realpathSync } from 'node:fs';
 import { dirname, resolve, join, extname } from 'node:path';
-import { pathToFileURL, fileURLToPath } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { RpmError, pathExists, readJson, writeJsonAtomic } from '../lib/common.mjs';
 import { createCase, reviseCase, addObservation, validateCase } from '../lib/case.mjs';
 import { rankProbes } from '../lib/planner.mjs';
 import { compareBehavior } from '../lib/verification.mjs';
-import { minimizeSequence } from '../lib/reduction.mjs';
+import { minimizeSequence, minimizeSequenceIsolated } from '../lib/reduction.mjs';
 import { inspectArtifact } from '../lib/analysis/inspect.mjs';
+import { readEvidenceSource } from '../lib/analysis/source.mjs';
+import { captureMv3, runtimeDoctor } from '../lib/runtime/mv3.mjs';
+import { replayFeature } from '../lib/runtime/replay.mjs';
+import { initializeRecovery } from '../lib/recovery.mjs';
 import { writeReport } from '../lib/report.mjs';
 import { DEFAULT_SEQUENCE, FIXTURE_BINDINGS, demonstrationCase, simulateWorker, behaviorDocument, mismatchOracle } from '../lib/lab.mjs';
 const skill = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -59,11 +63,33 @@ async function main(tokens) {
   if (Object.hasOwn(expected, command) && p.length !== expected[command]) throw new RpmError('arguments', `Command ${command} expects ${expected[command]} positional arguments.`);
   for (const [key, value] of Object.entries(f)) if (value === true && key !== 'help') throw new RpmError('arguments', `Provide a value for --${key}.`);
   if (!command || command === 'help' || command === '--help') {
-    console.log(`REA Pro Max ${VERSION}\n\ninspect TARGET --out inspection.json\nreport DATA.json --out report.html\ncase init --inspection inspection.json --goal TEXT --out case.json\ncase revise CASE.json --patch patch.json --revision NUMBER\ncase observe CASE.json --receipt observation.json --revision NUMBER\nplan CASE.json [--bindings bindings.json] [--budget NUMBER] [--out plan.json]\nverify --reference reference.json --candidate candidate.json [--contract contract.json] [--out verdict.json]\nshrink --input actions.json --oracle ./owned-oracle.mjs [--max-tests NUMBER] [--out reduction.json]\ndemo --out NEW_DIRECTORY\nprompts [--target TARGET]\nmcp --workspace ABSOLUTE_DIRECTORY\n\nInspect reads artifacts without executing them. Shrink explicitly executes the supplied oracle module. Reports are local standalone HTML. Cases support one writer at a time.`); return;
+    console.log(`REA Pro Max ${VERSION}\n\ninspect TARGET --out inspection.json\nreport DATA.json --out report.html\ncase init --inspection inspection.json --goal TEXT --out case.json\ncase revise CASE.json --patch patch.json --revision NUMBER\ncase observe CASE.json --receipt observation.json --revision NUMBER\nplan CASE.json [--bindings bindings.json] [--budget NUMBER] [--out plan.json]\nverify --reference reference.json --candidate candidate.json [--contract contract.json] [--out verdict.json]\nshrink --input actions.json --oracle ./owned-oracle.mjs [--max-tests NUMBER] [--timeout-ms NUMBER] [--out reduction.json]\nruntime doctor --browser ABSOLUTE_CHROMIUM\nruntime capture --extension DIRECTORY --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--timeout-ms NUMBER] [--out CAPTURE.json]\ndemo --out NEW_DIRECTORY\nprompts [--target TARGET]\nmcp --workspace ABSOLUTE_DIRECTORY\n\nInspect reads artifacts without executing them. Runtime capture executes only an explicitly selected MV3 extension in a disposable Chromium profile and records provider evidence; it is not an OS or network sandbox. Shrink runs the explicitly supplied oracle in a fresh child process per trial. Reports are local standalone HTML. Cases support one writer at a time.`); return;
   }
-  if (command === 'mcp') { accepted(f, ['workspace']); if (p.length) throw new RpmError('arguments', 'mcp takes --workspace DIRECTORY.'); const { startServer } = await import('./mcp-server.mjs'); await startServer(requireValue(f.workspace, '--workspace DIRECTORY')); return; }
+  if (command === 'mcp') { accepted(f, ['workspace', 'browser']); if (p.length) throw new RpmError('arguments', 'mcp takes --workspace DIRECTORY.'); const { startServer } = await import('./mcp-server.mjs'); await startServer(requireValue(f.workspace, '--workspace DIRECTORY'), f.browser); return; }
+  if (command === 'runtime') {
+    const action = p.shift();
+    if (action === 'doctor') { if (p.length) throw new RpmError('arguments', 'runtime doctor takes no positional arguments.'); accepted(f, ['browser']); output(await runtimeDoctor(resolve(requireValue(f.browser, '--browser ABSOLUTE_CHROMIUM')))); return; }
+    if (action === 'capture') {
+      if (p.length) throw new RpmError('arguments', 'runtime capture takes named options only.');
+      accepted(f, ['extension', 'browser', 'scenario', 'timeout-ms', 'out']);
+      const capture = await captureMv3({ extensionPath: resolve(requireValue(f.extension, '--extension DIRECTORY')), executablePath: resolve(requireValue(f.browser, '--browser ABSOLUTE_CHROMIUM')), scenario: readJson(requireValue(f.scenario, '--scenario FILE')), timeoutMs: f['timeout-ms'] ? Number(f['timeout-ms']) : undefined });
+      output(capture, f.out); process.exitCode = capture.complete ? 0 : 3; return;
+    }
+    throw new RpmError('arguments', 'Use runtime doctor or runtime capture.');
+  }
+  if (command === 'recovery') {
+    const action = p.shift(); if (p.length) throw new RpmError('arguments', 'recovery commands take named options only.');
+    if (action === 'init') { accepted(f, ['out']); output(initializeRecovery(requireValue(f.out, '--out NEW_DIRECTORY'))); return; }
+    if (action === 'replay') {
+      accepted(f, ['reference', 'candidate', 'browser', 'scenario', 'timeout-ms', 'out']);
+      const result = await replayFeature({ referencePath: resolve(requireValue(f.reference, '--reference DIRECTORY')), candidatePath: resolve(requireValue(f.candidate, '--candidate DIRECTORY')), executablePath: resolve(requireValue(f.browser, '--browser ABSOLUTE_CHROMIUM')), scenario: readJson(requireValue(f.scenario, '--scenario FILE')), timeoutMs: f['timeout-ms'] ? Number(f['timeout-ms']) : undefined });
+      output(result, f.out); process.exitCode = result.status === 'fail' ? 2 : result.status === 'unknown' ? 3 : 0; return;
+    }
+    throw new RpmError('arguments', 'Use recovery init or recovery replay.');
+  }
   if (command === 'version') { accepted(f, []); console.log(VERSION); return; }
-  if (command === 'inspect') { accepted(f, ['out']); output(await inspectArtifact(resolve(requireValue(p[0], 'TARGET'))), f.out); return; }
+  if (command === 'inspect') { accepted(f, ['out', 'scope']); const scope = f.scope ? readJson(f.scope) : {}; if (Object.keys(scope).some(key => !['include', 'exclude'].includes(key))) throw new RpmError('invalid_scope', 'Scope JSON contains include/exclude relative prefixes only.'); output(await inspectArtifact(resolve(requireValue(p[0], 'TARGET')), scope), f.out); return; }
+  if (command === 'source') { if (p.length !== 1) throw new RpmError('arguments', 'source takes one inspection JSON path.'); accepted(f, ['evidence', 'max-chars']); output(await readEvidenceSource(readJson(p[0]), requireValue(f.evidence, '--evidence ID'), { maxChars: f['max-chars'] ? Number(f['max-chars']) : 4000 })); return; }
   if (command === 'report') { accepted(f, ['out']); const data = readJson(requireValue(p[0], 'DATA.json')); const payload = data.artifact ? { schema_version: 1, kind: 'inspection', title: 'Artifact boundaries', inspection: data } : data; console.log(writeReport(payload, resolve(requireValue(f.out, '--out REPORT.html')))); return; }
   if (command === 'demo') { accepted(f, ['out']); output(await generateDemo(requireValue(f.out, '--out NEW_DIRECTORY'))); return; }
   if (command === 'case') {
@@ -75,13 +101,12 @@ async function main(tokens) {
     const after = action === 'revise' ? reviseCase(before, readJson(requireValue(f.patch, '--patch FILE')), revision) : action === 'observe' ? addObservation(before, readJson(requireValue(f.receipt, '--receipt FILE')), revision) : null;
     if (!after) throw new RpmError('arguments', 'Use case init/revise/observe.'); writeJsonAtomic(file, after); output(after); return;
   }
-  if (command === 'plan') { accepted(f, ['bindings', 'budget', 'out']); const record = loadCase(p[0]); const bindings = f.bindings ? readJson(f.bindings) : undefined; output(rankProbes({ ...record, bindings, budget: f.budget ? Number(f.budget) : Infinity }), f.out); return; }
+  if (command === 'plan') { accepted(f, ['bindings', 'budget', 'out']); const record = loadCase(p[0]); const bindings = f.bindings ? readJson(f.bindings) : undefined; if (bindings?.target_sha256 !== undefined && bindings.target_sha256 !== record.target.sha256) throw new RpmError('binding_mismatch', 'Plan bindings must target the current case artifact. Historical observations remain stored but are not applied to a revised target.'); output(rankProbes({ ...record, bindings, budget: f.budget ? Number(f.budget) : Infinity }), f.out); return; }
   if (command === 'verify') { accepted(f, ['reference', 'candidate', 'contract', 'out']); const result = compareBehavior(readJson(requireValue(f.reference, '--reference FILE')), readJson(requireValue(f.candidate, '--candidate FILE')), f.contract ? readJson(f.contract) : {}); output(result, f.out); process.exitCode = result.status === 'fail' ? 2 : result.status === 'unknown' ? 3 : 0; return; }
   if (command === 'shrink') {
-    accepted(f, ['input', 'oracle', 'max-tests', 'out']); const file = resolve(requireValue(f.oracle, '--oracle MODULE.mjs')); const stat = lstatSync(file);
+    accepted(f, ['input', 'oracle', 'max-tests', 'timeout-ms', 'out']); const file = resolve(requireValue(f.oracle, '--oracle MODULE.mjs')); const stat = lstatSync(file);
     if (!stat.isFile() || stat.isSymbolicLink() || extname(file) !== '.mjs' || stat.size > 1024 * 1024) throw new RpmError('oracle_input', 'Use a regular owned .mjs oracle module up to1MiB.');
-    const module = await import(pathToFileURL(file).href); if (typeof module.oracle !== 'function') throw new RpmError('oracle_input', 'The module must export async oracle(sequence).');
-    const result = await minimizeSequence(readJson(requireValue(f.input, '--input FILE')), module.oracle, { maxTests: f['max-tests'] ? Number(f['max-tests']) : 100, stabilityRuns: 2, reset: module.reset });
+    const result = await minimizeSequenceIsolated(readJson(requireValue(f.input, '--input FILE')), file, { maxTests: f['max-tests'] ? Number(f['max-tests']) : 100, timeoutMs: f['timeout-ms'] ? Number(f['timeout-ms']) : 10_000, stabilityRuns: 2 });
     output(result, f.out); process.exitCode = ['reduced', 'unchanged'].includes(result.status) && result.minimality === 'one-minimal' ? 0 : 3; return;
   }
   if (command === 'prompts') { accepted(f, ['target']); const data = readJson(join(skill, 'assets/prompts.json')); output(f.target ? data.filter(item => item.target === f.target) : data); return; }

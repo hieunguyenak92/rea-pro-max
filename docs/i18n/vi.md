@@ -14,6 +14,24 @@ Bộ công cụ reverse engineering độc lập với MCP cục bộ, skill cho
 
 *Ảnh report thật từ mô hình JavaScript có Chrome API mô phỏng; đây không phải bằng chứng vòng đời Chromium thật.*
 
+## Lưu dữ liệu qua một lần khởi động lại worker thật
+
+Demo chạy ổn trong một phiên có thể che giấu lỗi mất dữ liệu. Luồng v0.3 tạo project nhận chạy được: starter lưu thành công và qua bước mở lại trang, nhưng mất giá trị đã xác nhận khi Chromium thực sự dừng rồi khởi tạo lại worker.
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
+node skills/rea-pro-max/scripts/rea-pro-max.mjs runtime doctor --browser "$RPM_BROWSER"
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./recovery-work/reference --candidate ./recovery-work/starter --scenario ./recovery-work/scenario.json --browser "$RPM_BROWSER" --out ./before.json
+```
+
+Đặt `RPM_BROWSER` thành đường dẫn tuyệt đối tới Chromium/Chrome for Testing đã cài và hỗ trợ extension giải nén. Công cụ không tự tải trình duyệt. Lần replay đầu cố ý trả exit `2`, ghi rõ thao tác sai khác và giữ bằng chứng từ cả hai lần chạy. Giao agent sửa `starter/worker.js` theo `starter/contract.json`, rồi chạy lại với tệp đầu ra mới. Thư mục `recovered/` là ví dụ triển khai nhận được viết độc lập và có thể chạy.
+
+**Kết quả là mã chạy được cùng bằng chứng có thể kiểm tra.** Provider hiện chỉ hỗ trợ giao thức thông điệp `rpm-kv-v1` đã mô tả và các ranh giới reset được chọn. Đây không phải cơ chế tự khôi phục mọi extension. Boot ID được giữ trong bằng chứng thô; chỉ trường quan sát đã khai báo này được loại khỏi đối chiếu. Receipt thông điệp không chứng minh các hiệu ứng UI, mạng hay tệp chưa quan sát.
+
+MCP có **15 công cụ**. Runtime mặc định tắt; thêm `--browser "/absolute/path/to/chromium"` khi đăng ký server để bật `capture_feature` và `replay_feature`. Chúng dùng profile tạm riêng; agent của host vẫn viết phần sửa. `read_source_evidence` đọc đoạn source có giới hạn và kiểm tra hash. Scope include/exclude cùng coverage nêu rõ tệp đã đọc, bị loại và chưa parse; TypeScript/JSX chưa được parse ngữ nghĩa.
+
+[Quy trình recovery và giới hạn — tiếng Anh](../RECOVERY.md) · [Kiểm chứng theo phiên bản](../VALIDATION.md). `shrink` chạy oracle trong process con mới cho mỗi lần thử, có deadline; `reset()` của oracle chịu trách nhiệm trạng thái bên ngoài. Profile mới và process con không phải sandbox hệ điều hành hoặc mạng.
+
 ## Giao diện thuyết phục mới chỉ là điểm khởi đầu
 
 Phần khó nằm sau cú nhấp: context nào nhận thông điệp, trạng thái tồn tại ở đâu, thao tác hủy thực sự dừng điều gì, lỗi nào trả về cho bên gọi và vì sao tính năng vừa dựng lại thất bại ở lần sử dụng thứ hai.
@@ -42,7 +60,7 @@ Các công việc phù hợp:
 
 ## Một bộ công cụ. Ba cách bắt đầu.
 
-**v0.2 bổ sung MCP cục bộ với 12 công cụ** để agent gọi trực tiếp cơ chế phân tích và kiểm chứng. Skill cung cấp quy trình giao việc; CLI cho phép chạy và xem kết quả độc lập. Runtime đóng gói sẵn parser và SDK MCP chính thức, không cần cài npm khi sử dụng.
+**v0.3 cung cấp MCP cục bộ với 15 công cụ**, thêm thu thập/replay Chromium theo lựa chọn và đoạn source đã kiểm tra hash. Skill hướng agent giao mã triển khai chạy được; CLI dùng cùng kernel và không cần cài npm khi sử dụng.
 
 ### Kết nối MCP với Claude Code hoặc Codex
 
@@ -83,6 +101,9 @@ Lệnh demo ngay bên dưới chạy độc lập với MCP. Bạn có thể dù
 | `get_capabilities` | Xem phiên bản, workspace, phạm vi, giới hạn và chính sách thực thi. |
 | `inspect_artifact` | Phân tích tĩnh mục tiêu trong phạm vi, lưu kết quả đầy đủ sau một handle. |
 | `read_artifact` | Đọc từng phần hoặc từng trang thay vì lặp lại toàn bộ đồ thị. |
+| `read_source_evidence` | Đọc đoạn source có giới hạn, kiểm tra hash theo bằng chứng. |
+| `capture_feature` | Thu kịch bản MV3 trên Chromium thật khi runtime đã bật. |
+| `replay_feature` | Chạy reference và project nhận riêng rồi giữ verdict và sai khác. |
 | `create_case` | Tạo case từ danh tính mục tiêu thực tế trong inspection. |
 | `revise_case` | Kiểm tra patch và revision trước khi cập nhật mô hình. |
 | `record_observation` | Lưu quan sát, nguồn, authority và bindings đã khai báo. |
@@ -95,7 +116,7 @@ Lệnh demo ngay bên dưới chạy độc lập với MCP. Bạn có thể dù
 
 Handle là định danh mờ trong bộ nhớ của tiến trình. Cache có giới hạn; khi khởi động lại hoặc bị loại khỏi cache, hãy import case đã lưu hoặc phân tích lại. `read_artifact` đọc phần cần thiết; schema công cụ mà client khám phá là hợp đồng đối số chính xác.
 
-MCP giới hạn đường dẫn đầu vào/đầu ra do client chọn bên trong workspace, từ chối symlink và không ghi đè tệp đã có. Đây là chính sách của công cụ, không phải sandbox hệ điều hành cho Node hoặc công cụ khác của host. Không có lệnh shell, launcher app, điều khiển trình duyệt hay thực thi oracle tùy ý trong MCP. `run_owned_lab` chỉ chạy mã lab cố định được đóng gói.
+MCP giới hạn đường dẫn client chọn trong workspace, từ chối symlink và không ghi đè đầu ra. Runtime chỉ được bật bằng `--browser` lúc khởi động server; khi đó các tool chuyên biệt chạy extension MV3 theo giao thức trong profile tạm. Không có shell hay oracle tùy ý. Đây là chính sách công cụ, không phải sandbox hệ điều hành/mạng.
 
 ## Chạy thử cơ chế trước khi tin vào lời hứa
 
@@ -136,13 +157,13 @@ Planner chọn câu hỏi tiếp theo, không tự chạy phép thử. Verifier 
 
 ## Phạm vi rõ ràng để kết quả có giá trị
 
-**Phân tích tích hợp ở v0.2:** tệp JavaScript và mã web, Manifest V3, Electron đã giải nén. Biểu thức động, cú pháp chưa hỗ trợ, import thiếu và giới hạn tài nguyên được nêu rõ.
+**Phân tích tích hợp ở v0.3:** tệp JavaScript và mã web, Manifest V3, Electron đã giải nén. Biểu thức động, cú pháp chưa hỗ trợ, import thiếu và giới hạn tài nguyên được nêu rõ.
 
 **Kernel độc lập provider:** quản lý case, xếp hạng phép thử, đối chiếu hữu hạn, thu gọn chuỗi và báo cáo cục bộ. `shrink` thực thi module oracle `.mjs` do bạn cung cấp; hãy dùng mã do bạn sở hữu và kiểm soát.
 
 **Quy trình nâng cao qua công cụ của host:** thư viện prompt có native, managed, Android, Apple, React Native, Flutter, Tauri và WebAssembly. Phân tích sâu cần công cụ phù hợp thực sự có sẵn. Phiên bản này không tích hợp decompiler đa năng, mobile runtime, bộ giải nén mọi định dạng hay engine khôi phục ngữ nghĩa. Nhận diện định dạng hoặc có prompt không phải bằng chứng tích hợp hoạt động.
 
-CLI không gửi dữ liệu qua mạng hay telemetry. AI host và công cụ ngoài tuân theo chính sách riêng. Report có thể chứa đường dẫn, mã và giá trị nhạy cảm; đọc [quyền riêng tư và ranh giới thực thi](../PRIVACY.md), tài liệu tiếng Anh, trước khi chia sẻ.
+CLI/MCP không tải telemetry hay gọi model API. Thao tác tĩnh xử lý cục bộ; runtime tùy chọn dùng endpoint debug loopback và extension/trình duyệt có thể truy cập mạng theo quyền của chúng. Host AI có chính sách riêng. Xem [quyền riêng tư và ranh giới thực thi — tiếng Anh](../PRIVACY.md).
 
 ## Bạn nhận được gì
 

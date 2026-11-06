@@ -1,6 +1,6 @@
 {
   "name": "rea-pro-max",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "description": "Independent reverse-engineering MCP, skill and CLI: artifact boundaries, distinguishing experiments and finite behavioral verification.",
   "type": "module",
