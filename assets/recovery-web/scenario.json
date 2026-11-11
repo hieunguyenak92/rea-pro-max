@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "web-recovery-smoke-v1",
+  "fixture": "rpm-owned-recovery-web",
+  "reset": {"clear_storage": true, "open": "index.html"},
+  "actions": [
+    {"id": "open", "kind": "open", "expected": {"state": "ready", "query": "", "filter": "all", "result_ids": ["alpha", "bravo", "charlie", "delta"]}},
+    {"id": "unicode-search", "kind": "input", "value": "ＣＡＦÉ", "wait_ms": 60, "expected": {"state": "success", "query": "ＣＡＦÉ", "result_ids": ["charlie"]}},
+    {"id": "done-filter", "kind": "select", "value": "done", "wait_ms": 60, "expected": {"state": "success", "query": "ＣＡＦÉ", "filter": "done", "result_ids": []}},
+    {"id": "empty", "kind": "input", "value": "does-not-exist", "wait_ms": 60, "expected": {"state": "empty", "result_ids": []}},
+    {"id": "error", "kind": "input", "value": "error", "wait_ms": 80, "expected": {"state": "error", "error": "synthetic_transport"}},
+    {"id": "cancel", "kind": "input-cancel", "value": "slow", "cancel": true, "expected": {"state": "cancelled", "query": "slow"}},
+    {"id": "reload", "kind": "reload", "expected": {"query": "slow", "filter": "done"}},
+    {"id": "latest-wins", "kind": "race", "values": ["slow", "release"], "expected": {"query": "release", "state": "success", "result_ids": ["bravo"]}}
+  ],
+  "expected_outcomes": {
+    "reference": "all actions satisfy the contract",
+    "recovered": "all actions satisfy the contract",
+    "starter": "latest-wins, reload persistence, label and empty-state checks expose seeded defects"
+  }
+}

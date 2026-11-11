@@ -10,6 +10,8 @@ import { minimizeSequence, minimizeSequenceIsolated } from '../lib/reduction.mjs
 import { inspectArtifact } from '../lib/analysis/inspect.mjs';
 import { readEvidenceSource } from '../lib/analysis/source.mjs';
 import { captureMv3, runtimeDoctor } from '../lib/runtime/mv3.mjs';
+import { captureWebScenario } from '../lib/runtime/web.mjs';
+import { replayWebFeature } from '../lib/runtime/web-replay.mjs';
 import { replayFeature } from '../lib/runtime/replay.mjs';
 import { initializeRecovery } from '../lib/recovery.mjs';
 import { writeReport } from '../lib/report.mjs';
@@ -63,7 +65,7 @@ async function main(tokens) {
   if (Object.hasOwn(expected, command) && p.length !== expected[command]) throw new RpmError('arguments', `Command ${command} expects ${expected[command]} positional arguments.`);
   for (const [key, value] of Object.entries(f)) if (value === true && key !== 'help') throw new RpmError('arguments', `Provide a value for --${key}.`);
   if (!command || command === 'help' || command === '--help') {
-    console.log(`REA Pro Max ${VERSION}\n\ninspect TARGET --out inspection.json\nreport DATA.json --out report.html\ncase init --inspection inspection.json --goal TEXT --out case.json\ncase revise CASE.json --patch patch.json --revision NUMBER\ncase observe CASE.json --receipt observation.json --revision NUMBER\nplan CASE.json [--bindings bindings.json] [--budget NUMBER] [--out plan.json]\nverify --reference reference.json --candidate candidate.json [--contract contract.json] [--out verdict.json]\nshrink --input actions.json --oracle ./owned-oracle.mjs [--max-tests NUMBER] [--timeout-ms NUMBER] [--out reduction.json]\nruntime doctor --browser ABSOLUTE_CHROMIUM\nruntime capture --extension DIRECTORY --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--timeout-ms NUMBER] [--out CAPTURE.json]\ndemo --out NEW_DIRECTORY\nprompts [--target TARGET]\nmcp --workspace ABSOLUTE_DIRECTORY\n\nInspect reads artifacts without executing them. Runtime capture executes only an explicitly selected MV3 extension in a disposable Chromium profile and records provider evidence; it is not an OS or network sandbox. Shrink runs the explicitly supplied oracle in a fresh child process per trial. Reports are local standalone HTML. Cases support one writer at a time.`); return;
+    console.log(`REA Pro Max ${VERSION}\n\ninspect TARGET --out inspection.json\nreport DATA.json --out report.html\ncase init --inspection inspection.json --goal TEXT --out case.json\ncase revise CASE.json --patch patch.json --revision NUMBER\ncase observe CASE.json --receipt observation.json --revision NUMBER\nplan CASE.json [--bindings bindings.json] [--budget NUMBER] [--out plan.json]\nverify --reference reference.json --candidate candidate.json [--contract contract.json] [--out verdict.json]\nshrink --input actions.json --oracle ./owned-oracle.mjs [--max-tests NUMBER] [--timeout-ms NUMBER] [--out reduction.json]\nruntime doctor --browser ABSOLUTE_CHROMIUM\nruntime capture --extension DIRECTORY --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--timeout-ms NUMBER] [--out CAPTURE.json]\nweb capture --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--timeout-ms NUMBER] [--out CAPTURE.json]\nweb replay --reference-url URL --candidate-url URL --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--contract CONTRACT.json] [--timeout-ms NUMBER] [--out REPLAY.json]\ndemo --out NEW_DIRECTORY\nprompts [--target TARGET]\nmcp --workspace ABSOLUTE_DIRECTORY\n\nInspect reads artifacts without executing them. Runtime capture executes only an explicitly selected MV3 extension in a disposable Chromium profile and records provider evidence; it is not an OS or network sandbox. Shrink runs the explicitly supplied oracle in a fresh child process per trial. Reports are local standalone HTML. Cases support one writer at a time.`); return;
   }
   if (command === 'mcp') { accepted(f, ['workspace', 'browser']); if (p.length) throw new RpmError('arguments', 'mcp takes --workspace DIRECTORY.'); const { startServer } = await import('./mcp-server.mjs'); await startServer(requireValue(f.workspace, '--workspace DIRECTORY'), f.browser); return; }
   if (command === 'runtime') {
@@ -76,6 +78,21 @@ async function main(tokens) {
       output(capture, f.out); process.exitCode = capture.complete ? 0 : 3; return;
     }
     throw new RpmError('arguments', 'Use runtime doctor or runtime capture.');
+  }
+  if (command === 'web') {
+    const action = p.shift();
+    if (p.length) throw new RpmError('arguments', 'web commands take named options only.');
+    if (action === 'capture') {
+      accepted(f, ['browser', 'scenario', 'timeout-ms', 'out']);
+      const result = await captureWebScenario({ executablePath: resolve(requireValue(f.browser, '--browser ABSOLUTE_CHROMIUM')), scenario: readJson(requireValue(f.scenario, '--scenario FILE')), timeoutMs: f['timeout-ms'] ? Number(f['timeout-ms']) : undefined });
+      output(result, f.out); process.exitCode = result.complete ? 0 : 3; return;
+    }
+    if (action === 'replay') {
+      accepted(f, ['reference-url', 'candidate-url', 'browser', 'scenario', 'contract', 'timeout-ms', 'out']);
+      const result = await replayWebFeature({ referenceUrl: requireValue(f['reference-url'], '--reference-url URL'), candidateUrl: requireValue(f['candidate-url'], '--candidate-url URL'), executablePath: resolve(requireValue(f.browser, '--browser ABSOLUTE_CHROMIUM')), scenario: readJson(requireValue(f.scenario, '--scenario FILE')), contract: f.contract ? readJson(f.contract) : undefined, timeoutMs: f['timeout-ms'] ? Number(f['timeout-ms']) : undefined });
+      output(result, f.out); process.exitCode = result.status === 'fail' ? 2 : result.status === 'unknown' ? 3 : 0; return;
+    }
+    throw new RpmError('arguments', 'Use web capture or web replay.');
   }
   if (command === 'recovery') {
     const action = p.shift(); if (p.length) throw new RpmError('arguments', 'recovery commands take named options only.');

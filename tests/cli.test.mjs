@@ -205,7 +205,7 @@ test('CLI invoked through a symlinked parent directory still executes its entryp
   catch (error) { if (['EPERM', 'EACCES'].includes(error.code)) { t.skip('Directory symlink privilege is unavailable.'); return; } throw error; }
   const result = spawnSync(process.execPath, [join(alias, 'scripts/rea-pro-max.mjs'), 'help'], { cwd: directory, encoding: 'utf8', timeout: 20000 });
   assert.equal(result.error, undefined); assert.equal(result.status, 0); assert.equal(result.stderr, '');
-  assert.match(result.stdout, /REA Pro Max 0\.3\.0/u);
+  assert.match(result.stdout, /REA Pro Max 0\.4\.0/u);
 });
 
 test('malformed JSON, ambiguous options and extra positional arguments are rejected', t => {
@@ -219,8 +219,8 @@ test('malformed JSON, ambiguous options and extra positional arguments are rejec
 });
 
 test('help, version and prompt inventory are available without external services', () => {
-  assert.match(run(['help']).stdout, /REA Pro Max 0\.3\.0/u);
-  assert.equal(run(['version']).stdout.trim(), '0.3.0');
+  assert.match(run(['help']).stdout, /REA Pro Max 0\.4\.0/u);
+  assert.equal(run(['version']).stdout.trim(), '0.4.0');
   const prompts = parse(run(['prompts'])); assert.ok(prompts.length >= 5);
   const target = prompts[0].target; const selected = parse(run(['prompts', '--target', target]));
   assert.ok(selected.length); assert.equal(selected.every(item => item.target === target), true);

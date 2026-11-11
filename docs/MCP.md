@@ -1,6 +1,6 @@
 # REA Pro Max MCP
 
-REA Pro Max v0.3 exposes its shared kernel as **15 local MCP tools**. An agent can inspect a scoped artifact, read hash-checked source snippets, maintain a case, rank experiments, compare receipts and export a portable result. Explicitly enabled runtime tools can capture and replay the documented MV3 protocol in actual Chromium.
+REA Pro Max v0.4 exposes its shared kernel as **21 local MCP tools**. An agent can inspect a scoped artifact, read hash-checked source snippets, maintain a case, rank experiments, compare receipts and export a portable result. Explicitly enabled runtime tools can capture and replay the documented MV3 protocol in actual Chromium.
 
 The server uses the bundled official MCP SDK runtime over **stdio**. It requires no service account and does not call a model API. Static operations open no network listener; optional runtime execution launches a disposable browser with a loopback debugging endpoint. Node.js22+ is required; runtime npm installation is unnecessary. Client availability and permissions remain subject to your installed host.
 
@@ -118,6 +118,10 @@ Arguments below describe the product's input names. The schemas discovered throu
 | `read_source_evidence` | Inspection handle, evidence ID, optional character bound; see discovered schema | Reads a hash-checked snippet for an evidence record; stale source is rejected. |
 | `capture_feature` | `extension_path`, `scenario_path`, optional `timeout_ms` | With runtime enabled, executes one declared MV3 scenario in a disposable Chromium profile. |
 | `replay_feature` | `reference_path`, `candidate_path`, `scenario_path`, optional `timeout_ms` | Runs both extensions in separate profiles; retains verdict, full captures and first mismatch. |
+| `capture_web` | `scenario_path`, optional `timeout_ms` | With runtime enabled, executes one bounded web scenario in a disposable Chromium profile. |
+| `replay_web` | `reference_url`, `candidate_url`, `scenario_path`, optional `contract_path`, `timeout_ms` | Runs two explicit web URLs and compares behavior separately from visual hashes. |
+| `craft_provider_doctor` | `executable_path`, optional `args`, `timeout_ms` | Performs the pinned Craft Anything MCP handshake and capability check. |
+| `craft_provider_inspect` / `craft_provider_capture` / `craft_provider_compare` | `executable_path`, optional `args`, `input`, `timeout_ms` | Calls only the typed Craft aliases and retains provider provenance. |
 | `create_case` | `inspection_handle`, `goal`, `capabilities` | Creates an in-memory case using the inspection's actual target identity. |
 | `revise_case` | `case_handle`, `expected_revision`, `patch` | Validates and commits a model revision. |
 | `record_observation` | `case_handle`, `expected_revision`, `observation` | Retains the receipt's source, authority and bindings. |
@@ -130,7 +134,14 @@ Arguments below describe the product's input names. The schemas discovered throu
 
 Tools that retain results return bounded `structuredContent` including `handle`, `kind`, `summary` and available `sections`. Handles are opaque; do not construct them or assume another server has the same handle.
 
-### Read only the section you need
+#
+## Web replay and optional Craft provider
+
+With `--browser` configured, `capture_web` accepts the same bounded scenario shape as the CLI. `replay_web` runs that action list against `reference_url` and `candidate_url` in fresh profiles. It stores a web recovery IR, a finite contract and two verdicts: behavior channels (DOM, network summary and storage) and visual artifact hashes. A visual mismatch does not prove a behavior mismatch; incomplete coverage remains unknown. See [WEB-RECOVERY.md](WEB-RECOVERY.md).
+
+The Craft Anything adapter is optional. `craft_provider_doctor` and the three typed operations require an absolute executable path and the reviewed `0.4.0`/`49af55e4e4f4b729152a1e61c845a5b10f7b6d9b` identity. The adapter does not install Craft, expose arbitrary tool names or accept paths outside the workspace. Provider drift, malformed output, timeout or missing commit identity fails closed. See [PROVIDERS.md](PROVIDERS.md).
+
+## Read only the section you need
 
 `read_artifact` defaults to `section: "summary"`, `offset: 0`, `limit: 20`. Its maximum page size is50. Nested sections may also use an RFC6901 pointer, such as `/inspection/contexts` for a lab payload. Array sections such as `contexts`, `edges`, `evidence`, `findings` and `unknowns` are paginated. `query` is a bounded filter, not code to execute.
 

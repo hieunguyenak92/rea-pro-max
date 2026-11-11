@@ -16,7 +16,7 @@ Um conjunto independente de ferramentas de engenharia reversa com MCP local, ski
 
 ## Um salvamento que resiste ao reinício real do worker
 
-Uma demo numa sessão ativa pode esconder perda de dados. A v0.3 cria um projeto receptor executável: o starter salva e passa pela reabertura da página, mas perde o valor confirmado quando o Chromium realmente encerra e desperta o worker.
+Uma demo numa sessão ativa pode esconder perda de dados. A v0.4 cria um projeto receptor executável: o starter salva e passa pela reabertura da página, mas perde o valor confirmado quando o Chromium realmente encerra e desperta o worker.
 
 ```sh
 node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
@@ -28,7 +28,7 @@ Defina `RPM_BROWSER` como o caminho absoluto do executável instalado do Chromiu
 
 **A entrega é código que você pode executar e evidência que pode inspecionar.** Este provedor verifica o protocolo de mensagens documentado `rpm-kv-v1` e os limites de reset selecionados; não reconstrói automaticamente qualquer extensão. Os boot IDs continuam na evidência bruta; só esse campo observacional declarado é excluído da comparação. Recibos de mensagens não comprovam efeitos de UI, rede ou arquivos não observados.
 
-O MCP oferece **15 ferramentas**. O runtime vem desativado; acrescente `--browser "/absolute/path/to/chromium"` ao registrar o servidor para habilitar `capture_feature` e `replay_feature`. Eles usam perfis temporários separados; o agente do ambiente escreve a correção. `read_source_evidence` lê trechos limitados com hash verificado. include/exclude e coverage mostram arquivos admitidos, omitidos e não analisados; análise semântica de TypeScript/JSX ainda não é fornecida.
+O MCP oferece **21 ferramentas**. O runtime vem desativado; acrescente `--browser "/absolute/path/to/chromium"` ao registrar o servidor para habilitar `capture_feature` e `replay_feature`. Eles usam perfis temporários separados; o agente do ambiente escreve a correção. `read_source_evidence` lê trechos limitados com hash verificado. include/exclude e coverage mostram arquivos admitidos, omitidos e não analisados; análise semântica de TypeScript/JSX ainda não é fornecida.
 
 [Fluxo de recuperação e limites, em inglês](../RECOVERY.md) · [Verificação por versão](../VALIDATION.md). `shrink` executa o oracle num processo filho novo por tentativa, com prazo. A função `reset()` cuida do estado externo. Perfil novo e processo filho não são sandbox do sistema ou de rede.
 
@@ -58,7 +58,7 @@ No Codex, selecione a skill ou acrescente `$rea-pro-max` no início da mesma tar
 
 ## Uma ferramenta. Três formas de começar.
 
-**A v0.3 oferece MCP local com 15 ferramentas**, captura/replay opcional no Chromium real e trechos de código com hash verificado. A skill conduz o agente até uma implementação executável; a CLI compartilha o núcleo e dispensa instalação npm no uso.
+**A v0.4 oferece MCP local com 21 ferramentas**, captura/replay opcional no Chromium real e trechos de código com hash verificado. A skill conduz o agente até uma implementação executável; a CLI compartilha o núcleo e dispensa instalação npm no uso.
 
 ### Conecte MCP ao Claude Code ou Codex
 
@@ -155,7 +155,7 @@ O planejador escolhe a próxima pergunta; não executa o teste. O verificador co
 
 ## Escopo definido, limites visíveis
 
-**Análise integrada na v0.3:** arquivos JavaScript e fontes extraídas de web, Manifest V3 e Electron. Expressões dinâmicas, sintaxe não suportada, imports ausentes e limites de recursos ficam explícitos.
+**Análise integrada na v0.4:** arquivos JavaScript e fontes extraídas de web, Manifest V3 e Electron. Expressões dinâmicas, sintaxe não suportada, imports ausentes e limites de recursos ficam explícitos.
 
 **Núcleo independente de provedores:** gestão de casos, priorização de experimentos, comparação finita, redução de sequências e relatórios locais. `shrink` executa explicitamente o módulo oráculo `.mjs` que você fornece e controla.
 
@@ -211,3 +211,19 @@ Referências técnicas em inglês: [Skill](../../skills/rea-pro-max/SKILL.md) ·
 Projeto desenvolvido de forma independente. Inspiração de pesquisa e avisos de dependências estão nos [créditos](../../THIRD_PARTY_NOTICES.md); REA original não é dependência obrigatória. [Licença MIT](../../LICENSE).
 
 **Traga uma funcionalidade que mereça ser entendida. Leve um resultado que você pode verificar.**
+
+## Recuperação web e ponte opcional do Craft
+
+v0.4 adiciona um kernel limitado de recuperação web. CLI/MCP executa a mesma sequência de navigate, click, input, reload e wait em perfis Chromium novos e separa os veredictos de comportamento (DOM, estado, storage e resumo de rede) dos hashes visuais. Cobertura incompleta ou limpeza não confirmada permanece como `unknown`. A verificação é finita e declarada; não afirma equivalência da aplicação inteira.
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
+  --reference-url http://127.0.0.1:4173/reference/ \
+  --candidate-url http://127.0.0.1:4174/recovered/ \
+  --browser "/absolute/path/to/chromium" \
+  --scenario ./web-scenario.json --out ./web-replay.json
+```
+
+`assets/recovery-web/` é um fixture próprio sem rede: reference, starter com defeitos intencionais e recovered independente cobrem respostas atrasadas, cancelamento latest-wins, Unicode NFKC, estados vazio/erro, localStorage, foco de teclado e markup responsivo. Veja [WEB-RECOVERY.md](../WEB-RECOVERY.md).
+
+Craft Anything é opcional e não é dependência. O adaptador chama somente aliases tipados para `js_app_map`, `web_site_capture` e `app_graphs_compare`, verificando handshake MCP, versão/commit fixados, ferramentas anunciadas, caminhos, limites de tempo/bytes e limpeza. Um binário sem commit verificável é rejeitado. O projeto não instala Craft nem inclui seu código ou marca; consulte [PROVIDERS.md](../PROVIDERS.md).

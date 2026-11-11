@@ -14,7 +14,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const entry = join(root, 'skills/rea-pro-max/scripts/mcp-server.mjs');
 const fixture = join(root, 'skills/rea-pro-max/assets/labs/mv3/reference');
 const hash = char => char.repeat(64);
-const names = ['get_capabilities', 'inspect_artifact', 'read_artifact', 'create_case', 'revise_case', 'record_observation', 'rank_probes', 'verify_behavior', 'export_artifact', 'run_owned_lab', 'list_task_prompts', 'import_case', 'read_source_evidence', 'capture_feature', 'replay_feature'];
+const names = ['get_capabilities', 'inspect_artifact', 'read_artifact', 'create_case', 'revise_case', 'record_observation', 'rank_probes', 'verify_behavior', 'export_artifact', 'run_owned_lab', 'list_task_prompts', 'import_case', 'read_source_evidence', 'capture_feature', 'replay_feature', 'capture_web', 'replay_web', 'craft_provider_doctor', 'craft_provider_inspect', 'craft_provider_capture', 'craft_provider_compare'];
 function workspace(t) {
   const directory = mkdtempSync(join(tmpdir(), 'rpm-mcp-test-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
@@ -42,12 +42,16 @@ function behavior(target = 'a') {
 for (const modern of [false, true]) test(`real stdio lists the exact catalog and validates schema (${modern ? 'modern' : 'legacy'})`, async t => {
   const directory = workspace(t); const client = await connect(t, directory, modern);
   assert.equal(Boolean(client.getDiscoverResult()), modern);
-  assert.equal(client.getServerVersion().version, '0.3.0');
+  assert.equal(client.getServerVersion().version, '0.4.0');
   assert.match(client.getInstructions().slice(0, 512), /host agent implements/u);
   const catalog = await client.listTools(); assert.deepEqual(catalog.tools.map(tool => tool.name).sort(), names.toSorted());
   for (const tool of catalog.tools) { assert.equal(tool.inputSchema.type, 'object'); assert.equal(tool.inputSchema.additionalProperties, false); }
   const caps = await call(client, 'get_capabilities');
   assert.equal(caps.transport, 'stdio'); assert.equal(caps.execution_policy.target_execution, false); assert.equal(caps.execution_policy.arbitrary_oracle, false);
+  for (const name of ['capture_feature', 'capture_web', 'replay_web']) {
+    const disabled = await client.callTool({ name, arguments: name === 'capture_feature' ? { extension_path: 'target', scenario_path: 'missing.json' } : name === 'capture_web' ? { scenario_path: 'missing.json' } : { reference_url: 'http://127.0.0.1:1/', candidate_url: 'http://127.0.0.1:2/', scenario_path: 'missing.json' } });
+    assert.equal(disabled.isError, true); assert.equal(disabled.structuredContent.error.code, 'runtime_disabled');
+  }
   assert.equal(caps.limits.maxInputBufferBytes, 4 * 1024 * 1024);
   const rejected = await client.callTool({ name: 'read_artifact', arguments: { handle: 'unknown', limit: 51 } });
   assert.equal(rejected.isError, true);

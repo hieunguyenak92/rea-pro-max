@@ -2,6 +2,14 @@
 
 Recorded 2026-11-06. This record separates executable engine checks, a controlled model and actual app observations. No comparison with another reverse-engineering product was run.
 
+## v0.4 — web recovery and optional provider boundary
+
+The working tree now reports version `0.4.0` and exposes **21 local MCP tools**. It adds a dependency-free bounded web action provider (`capture_web`/`replay_web`) and an optional typed Craft Anything MCP adapter. The web kernel has a versioned recovery IR, contract compiler, deterministic behavior/visual separation and dependency-aware action reducer. The Craft adapter is tested against a fake newline JSON-RPC MCP server for pinned identity, capability drift, malformed output, byte/time bounds, cancellation, cleanup and workspace path admission; no Craft build or target application was executed during this audit.
+
+On 2026-11-11, the local Node `v22.23.0` suite reports **166 tests, 164 pass and 2 explicit browser skips** when no Chromium executable is configured. `npm run lint`, `npm run check:mcp` and the documentation checks pass. The MCP smoke check exercises both legacy initialization and current discovery with the 21-tool catalog. Web fixture tests cover the owned reference/starter/recovered static apps and pass without network access. Real Chromium web capture/replay remains unverified on this host because no executable was configured; the runtime test records an explicit skip/unknown rather than inferring success.
+
+The reviewed Craft source identity is `storytold/craft-anything` version `0.4.0` at commit `49af55e4e4f4b729152a1e61c845a5b10f7b6d9b`, licensed `MIT OR Apache-2.0`. The adapter retains this identity and fails closed when a supplied binary does not report the pinned commit/version. This is protocol/provider evidence, not evidence that Craft itself was installed, built or run against a target.
+
 ## v0.3 — recovery and actual Chromium provider
 
 The v0.3 checkout uses version `0.3.0` and exposes **15 local MCP tools**. It adds explicit unsupported-source coverage, bounded include/exclude scopes, hash-checked source excerpts, a shared descriptor-based JSON reader, current-target CLI binding checks and isolated CLI oracle trials with a hard child-process deadline. The runtime lane is opt-in and provider-specific: it executes the documented `rpm-kv-v1` MV3 extension protocol in a fresh disposable Chromium profile.

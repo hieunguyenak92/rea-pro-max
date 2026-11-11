@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "rpm-owned-recovery-web",
+  "title": "Filter Desk",
+  "description": "A self-contained local catalog for testing asynchronous search recovery.",
+  "entry": "index.html",
+  "contract": "contract.json",
+  "scenario": "scenario.json",
+  "variants": ["reference", "starter", "recovered"],
+  "files": ["index.html", "app.js", "style.css"],
+  "network": "none",
+  "storage_key": "rpm-web-filter-v1",
+  "record_id_field": "id",
+  "runtime": {
+    "origin": "http://127.0.0.1",
+    "requires": ["DOM", "localStorage", "setTimeout"],
+    "external_dependencies": []
+  }
+}

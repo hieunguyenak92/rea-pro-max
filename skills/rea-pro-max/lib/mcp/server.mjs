@@ -11,6 +11,9 @@ import { inspectArtifact } from '../analysis/inspect.mjs';
 import { readEvidenceSource } from '../analysis/source.mjs';
 import { captureMv3 } from '../runtime/mv3.mjs';
 import { replayFeature } from '../runtime/replay.mjs';
+import { captureWebScenario } from '../runtime/web.mjs';
+import { replayWebFeature } from '../runtime/web-replay.mjs';
+import { CraftAnythingProvider } from '../providers/craft-anything.mjs';
 import { DEFAULT_LIMITS } from '../analysis/inventory.mjs';
 import { renderReport } from '../report.mjs';
 import { DEFAULT_SEQUENCE, FIXTURE_BINDINGS, demonstrationCase, simulateWorker, behaviorDocument, mismatchOracle } from '../lab.mjs';
@@ -19,7 +22,7 @@ import { SessionStore } from './store.mjs';
 
 const fixture = fileURLToPath(new URL('../../assets/labs/mv3/reference', import.meta.url));
 const prompts = JSON.parse(readFileSync(new URL('../../assets/prompts.json', import.meta.url), 'utf8'));
-export const SERVER_INSTRUCTIONS = 'Start with get_capabilities, inspect_artifact and read_artifact pages. The host agent implements the requested feature. Use case handles for hypotheses/probes, export important work, and preserve reported/static authority. Optional capture_feature/replay_feature require a browser explicitly configured at server startup; they execute workspace MV3 extensions in disposable profiles. No shell or arbitrary oracle tool is exposed. Read execution_policy before runtime work.';
+export const SERVER_INSTRUCTIONS = 'Start with get_capabilities, inspect_artifact and read_artifact pages. The host agent implements the requested feature. Use case handles for hypotheses/probes, export important work, and preserve reported/static authority. Optional capture_feature/replay_feature and capture_web/replay_web require a browser explicitly configured at server startup; they execute selected local or remote targets in disposable profiles and are not OS/network sandboxes. Craft Anything calls are optional, pinned and fail closed on provider drift; the core works without Craft. No shell or arbitrary oracle tool is exposed. Read execution_policy before runtime work.';
 const pathSchema = z.string().min(1).max(4096);
 const handleSchema = z.string().min(1).max(128);
 const textList = z.array(z.string().min(1).max(256)).max(2000);
@@ -45,6 +48,9 @@ function summary(entry) {
   if (entry.kind === 'lab') return { evidence_kind: 'controlled-javascript-model', verification: data.verification.status, reduction: { status: data.reduction.status, minimality: data.reduction.minimality, original_actions: DEFAULT_SEQUENCE.length, retained_actions: data.reduction.sequence.length }, limits: 'Only bundled owned worker scripts and simulated Chrome APIs; no real browser lifecycle claim.' };
   if (entry.kind === 'runtime') return { complete: data.complete, actions: data.receipt.cases.length, target_sha256: data.receipt.bindings.target_sha256, authority: data.provenance.authority, unknown_count: data.unknowns.length, lifecycle: data.lifecycle.map(item => ({ action_id: item.action_id, reset: item.reset, qualified: item.qualified })) };
   if (entry.kind === 'replay') return { status: data.status, summary: data.verification.summary, first_mismatch: data.mismatch?.first_action ?? null, fingerprint: data.mismatch?.fingerprint ?? null, scope: data.scope };
+  if (entry.kind === 'web-runtime') return { complete: data.complete, actions: data.receipt.cases.length, authority: data.provenance.authority, unknown_count: data.unknowns.length, provider: data.provenance.toolchain?.provider ?? null };
+  if (entry.kind === 'web-replay') return { status: data.status, behavior: data.verification.behavior.status, visual: data.verification.visual.status, first_mismatch: data.mismatch?.first_action ?? null, scope: data.scope };
+  if (entry.kind === 'provider') return { status: data.status, provider: data.provenance?.provider?.provider ?? null, command: data.provenance?.command ?? null, error: data.error?.code ?? null };
   throw new RpmError('unknown_artifact_kind', 'Unsupported session artifact kind.');
 }
 function sections(entry) {
@@ -56,6 +62,9 @@ function sections(entry) {
     lab: ['schema_version', 'title', 'kind', 'inspection', 'case', 'planner', 'verification', 'reduction', 'narrative', '/inspection/contexts', '/inspection/nodes', '/inspection/edges', '/inspection/evidence', '/inspection/unknowns', '/reduction/sequence', '/reduction/receipts'],
     runtime: ['schema_version', 'complete', 'receipt', 'events', 'lifecycle', 'unknowns', 'provenance'],
     replay: ['schema_version', 'status', 'scenario', 'reference', 'candidate', 'verification', 'mismatch', 'scope', '/reference/lifecycle', '/candidate/lifecycle', '/verification/cases'],
+    'web-runtime': ['schema_version', 'kind', 'complete', 'receipt', 'events', 'unknowns', 'provenance', 'failure'],
+    'web-replay': ['schema_version', 'kind', 'status', 'scenario', 'reference', 'candidate', 'reference_ir', 'candidate_ir', 'contract', 'verification', 'mismatch', 'scope'],
+    provider: ['status', 'data', 'error', 'provenance'],
   };
   return ['summary', 'full', ...known[entry.kind]];
 }
@@ -75,6 +84,9 @@ function reportPayload(entry, store) {
   if (entry.kind === 'verification') return { schema_version: 1, title: 'Finite behavior verification', kind: 'verification', verification: entry.data };
   if (entry.kind === 'runtime') return { schema_version: 1, title: 'Actual Chromium capture', kind: 'runtime', capture: entry.data, narrative: { label: 'Provider-captured runtime evidence', description: entry.data.provenance.observables } };
   if (entry.kind === 'replay') return { schema_version: 1, title: 'Feature recovery replay', kind: 'verification', verification: entry.data.verification, replay: entry.data, narrative: { label: 'Actual Chromium replay', description: entry.data.scope } };
+  if (entry.kind === 'web-runtime') return { schema_version: 1, title: 'Actual web capture', kind: 'runtime', capture: entry.data, narrative: { label: 'Provider-captured web evidence', description: entry.data.provenance.observables } };
+  if (entry.kind === 'web-replay') return { schema_version: 1, title: 'Web feature replay', kind: 'verification', verification: entry.data.verification.behavior, replay: entry.data, narrative: { label: 'Actual web replay', description: entry.data.scope } };
+  if (entry.kind === 'provider') return { schema_version: 1, title: 'Optional provider result', kind: 'inspection', inspection: entry.data };
   if (entry.kind === 'plan') {
     const inspected = store.peek(entry.context.inspection_handle);
     return { schema_version: 1, title: 'Distinguishing experiments', kind: 'case', case: entry.context.case, planner: entry.data, ...(inspected ? { inspection: inspected.data } : {}) };
@@ -118,9 +130,9 @@ export function createReaMcpServer({ workspace, limits: overrides = {}, browserE
     });
   }
   tool('get_capabilities', 'Read the exact server scope, configured workspace, limits and execution policy before choosing tools.', emptySchema, () => ({
-    version: VERSION, transport: 'stdio', workspace: policy.root, implemented_targets: ['JavaScript', 'extracted web', 'Manifest V3', 'extracted Electron'],
+    version: VERSION, transport: 'stdio', workspace: policy.root, implemented_targets: ['JavaScript', 'extracted web', 'web action replay', 'Manifest V3', 'extracted Electron'],
     limits: { ...limits, model: MODEL_LIMITS, inspection: DEFAULT_LIMITS }, cache: store.stats(),
-    execution_policy: { target_execution: Boolean(browserExecutable), shell: false, arbitrary_oracle: false, browser_control: Boolean(browserExecutable), runtime: browserExecutable ? 'Opt-in rpm-kv-v1 MV3 execution in disposable profiles; not an OS/network sandbox.' : 'Disabled. Restart server with --browser ABSOLUTE_CHROMIUM to opt in.', native_mobile_provider: false, owned_lab: 'bundled trusted worker scripts only; controlled Chrome API model' },
+    execution_policy: { target_execution: Boolean(browserExecutable), shell: false, arbitrary_oracle: false, browser_control: Boolean(browserExecutable), runtime: browserExecutable ? 'Opt-in MV3 and bounded web action execution in disposable profiles; not an OS/network sandbox.' : 'Disabled. Restart server with --browser ABSOLUTE_CHROMIUM to opt in.', craft_provider: 'Optional pinned Craft Anything MCP adapter; executable is caller supplied, no installation occurs, and unpinned/drifted provider identity remains unknown.', native_mobile_provider: false, owned_lab: 'bundled trusted worker scripts only; controlled Chrome API model' },
     state: 'Handles live only in this server process. Export/import cases to resume. Root restrictions are application policy, not an operating-system sandbox.',
   }));
   tool('inspect_artifact', 'Statically inspect a workspace artifact without executing it. Optional include/exclude are exact relative file/directory prefixes, not globs. Read coverage to see admitted, unparsed and omitted files.', z.object({ path: pathSchema, include: z.array(pathSchema).max(256).optional(), exclude: z.array(pathSchema).max(256).optional() }).strict(), async ({ path, include, exclude }, context) => {
@@ -142,6 +154,31 @@ export function createReaMcpServer({ workspace, limits: overrides = {}, browserE
     const result = await replayFeature({ referencePath: policy.resolveInput(reference_path), candidatePath: policy.resolveInput(candidate_path), executablePath: browserExecutable, scenario: policy.readJson(scenario_path), timeoutMs: timeout_ms, signal: context?.signal });
     return commit('replay', result);
   }, { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true }, true);
+  tool('capture_web', 'Opt-in execution: capture a bounded web action scenario in actual Chromium with a fresh disposable profile. Requires --browser at server startup; the URL is executed as supplied and this is not an OS/network sandbox.', z.object({ scenario_path: pathSchema, timeout_ms: z.number().int().min(5000).max(240000).optional() }).strict(), async ({ scenario_path, timeout_ms }, context) => {
+    if (!browserExecutable) throw new RpmError('runtime_disabled', 'Runtime is disabled. Configure --browser ABSOLUTE_CHROMIUM at server startup to opt in.');
+    const capture = await captureWebScenario({ executablePath: browserExecutable, scenario: policy.readJson(scenario_path), timeoutMs: timeout_ms, signal: context?.signal });
+    return commit('web-runtime', capture);
+  }, { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true }, true);
+  tool('replay_web', 'Opt-in execution: run the same bounded web action scenario against two explicit URLs in separate fresh Chromium profiles, then compare behavioral channels and visual hashes as separate verdicts.', z.object({ reference_url: z.string().url().max(4096), candidate_url: z.string().url().max(4096), scenario_path: pathSchema, contract_path: pathSchema.optional(), timeout_ms: z.number().int().min(5000).max(240000).optional() }).strict(), async ({ reference_url, candidate_url, scenario_path, contract_path, timeout_ms }, context) => {
+    if (!browserExecutable) throw new RpmError('runtime_disabled', 'Runtime is disabled. Configure --browser ABSOLUTE_CHROMIUM at server startup to opt in.');
+    const result = await replayWebFeature({ referenceUrl: reference_url, candidateUrl: candidate_url, executablePath: browserExecutable, scenario: policy.readJson(scenario_path), contract: contract_path ? policy.readJson(contract_path) : undefined, timeoutMs: timeout_ms, signal: context?.signal });
+    return commit('web-replay', result);
+  }, { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true }, true);
+  const providerArgs = z.array(z.string().max(4096)).max(64).default([]);
+  const providerInput = z.record(z.string(), z.unknown()).default({});
+  const makeCraftProvider = ({ executable_path, args, timeout_ms }) => new CraftAnythingProvider({ executablePath: executable_path, args, workspace: policy.root, timeoutMs: timeout_ms });
+  const craftTool = (name, description, method) => tool(name, description, z.object({ executable_path: z.string().min(1).max(4096), args: providerArgs, input: providerInput, timeout_ms: z.number().int().min(100).max(240000).optional() }).strict(), async ({ executable_path, args, input, timeout_ms }, context) => {
+    const provider = makeCraftProvider({ executable_path, args, timeout_ms });
+    const result = await provider[method](input, { signal: context?.signal });
+    return commit('provider', result);
+  }, { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true }, true);
+  tool('craft_provider_doctor', 'Run the pinned Craft Anything MCP handshake and tools/list check. The executable is caller supplied; no installation is performed and a missing pinned commit fails closed.', z.object({ executable_path: z.string().min(1).max(4096), args: providerArgs, timeout_ms: z.number().int().min(100).max(240000).optional() }).strict(), async ({ executable_path, args, timeout_ms }, context) => {
+    const provider = makeCraftProvider({ executable_path, args, timeout_ms });
+    return commit('provider', await provider.doctor({ signal: context?.signal }));
+  }, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true }, true);
+  craftTool('craft_provider_inspect', 'Call the pinned, typed Craft Anything JavaScript application map operation and retain provider provenance.', 'inspect');
+  craftTool('craft_provider_capture', 'Call the pinned, typed Craft Anything web capture operation and retain provider provenance.', 'capture');
+  craftTool('craft_provider_compare', 'Call the pinned, typed Craft Anything application graph comparison operation and retain provider provenance.', 'compare');
   tool('read_artifact', 'Read a bounded session section/page. Use summary, full, a top-level field or RFC6901 pointer such as /inspection/contexts. Export large individual records explicitly.', z.object({ handle: handleSchema, section: z.string().min(1).max(256).default('summary'), offset: z.number().int().nonnegative().max(1_000_000).default(0), limit: z.number().int().min(1).max(limits.maxPage).default(Math.min(20, limits.maxPage)), query: z.string().max(limits.maxQueryChars).optional() }).strict(), ({ handle, section, offset, limit, query }) => {
     const entry = store.get(handle);
     if (section === 'summary') return receipt(store, handle);

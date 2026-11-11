@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "rpm-web-filter-v1",
+  "summary": "A local catalog keeps the latest query and state filter authoritative while delayed responses resolve out of order.",
+  "seed_records": [
+    {"id": "alpha", "title": "Inbox triage", "summary": "Decide what needs attention before stand-up.", "status": "open", "tags": ["ops", "daily"]},
+    {"id": "bravo", "title": "Release checklist", "summary": "Confirm the build can ship.", "status": "done", "tags": ["release", "qa"]},
+    {"id": "charlie", "title": "Café handoff", "summary": "Keep the Tokyo support notes with the handoff.", "status": "open", "tags": ["東京", "support"]},
+    {"id": "delta", "title": "Offline export", "summary": "Prepare a local copy for review.", "status": "done", "tags": ["privacy", "export"]}
+  ],
+  "storage": {
+    "key": "rpm-web-filter-v1",
+    "value": {"query": "", "filter": "all"},
+    "boundary": "query and filter survive a page reload; result rows are derived from the seed records"
+  },
+  "normalization": ["NFKC", "locale-lowercase(en-US)", "trim"],
+  "filters": ["all", "open", "done"],
+  "states": ["ready", "loading", "success", "empty", "error", "cancelled"],
+  "transport": {
+    "kind": "deterministic-local-delay",
+    "delays_ms": {"default": 45, "slow": 180, "fast": 20, "error": 65},
+    "error_query": "error",
+    "cancellation": "a newer query or Escape cancels the active delay; an old callback cannot commit"
+  },
+  "ui": {
+    "search_label": "Search projects",
+    "filter_label": "Status",
+    "keyboard": ["Tab reaches search and filter", "Enter submits", "Escape cancels an in-flight search"],
+    "empty_message": "No projects match that search.",
+    "error_message": "Could not load projects. Try again."
+  },
+  "limits": [
+    "The catalog is synthetic and local; it does not call a server.",
+    "The delayed transport models a response boundary and is not a network benchmark.",
+    "The contract compares finite visible states, not pixel-perfect layout."
+  ]
+}

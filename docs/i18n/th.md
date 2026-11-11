@@ -16,7 +16,7 @@
 
 ## บันทึกข้อมูลให้รอดจากการเริ่ม worker ใหม่จริง
 
-เดโมที่ทำงานในเซสชันเดิมอาจซ่อนปัญหาข้อมูลหาย v0.3 สร้างโปรเจกต์รับที่รันได้: starter บันทึกสำเร็จและผ่านการเปิดหน้าใหม่ แต่สูญเสียค่าที่ตอบรับแล้วเมื่อ Chromium หยุดและปลุก worker จริง
+เดโมที่ทำงานในเซสชันเดิมอาจซ่อนปัญหาข้อมูลหาย v0.4 สร้างโปรเจกต์รับที่รันได้: starter บันทึกสำเร็จและผ่านการเปิดหน้าใหม่ แต่สูญเสียค่าที่ตอบรับแล้วเมื่อ Chromium หยุดและปลุก worker จริง
 
 ```sh
 node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
@@ -28,7 +28,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **ผลลัพธ์คือโค้ดที่รันได้และหลักฐานที่ตรวจสอบได้** provider นี้ตรวจเฉพาะโปรโตคอลข้อความ `rpm-kv-v1` ที่ระบุไว้และขอบเขต reset ที่เลือก ยังไม่สร้างส่วนขยายทุกชนิดกลับมาอัตโนมัติ boot ID ยังคงอยู่ในหลักฐานดิบ มีเพียงฟิลด์สังเกตที่ประกาศนี้เท่านั้นที่ถูกตัดออกจากการเปรียบเทียบ receipt ข้อความไม่ยืนยันผลข้างเคียง UI เครือข่าย หรือไฟล์ที่ไม่ได้สังเกต
 
-MCP มี **15 เครื่องมือ** runtime ปิดตามค่าเริ่มต้น เพิ่ม `--browser "/absolute/path/to/chromium"` ตอนลงทะเบียนเซิร์ฟเวอร์เพื่อเปิด `capture_feature` และ `replay_feature` ซึ่งใช้โปรไฟล์ชั่วคราวแยกกัน เอเจนต์ของ host ยังเป็นผู้แก้โค้ด `read_source_evidence` อ่านส่วนซอร์สขนาดจำกัดพร้อมตรวจ hash ส่วน include/exclude และ coverage ระบุไฟล์ที่รับเข้า ตัดออก และยังไม่ parse ชัดเจน ยังไม่รองรับการวิเคราะห์ความหมาย TypeScript/JSX
+MCP มี **21 เครื่องมือ** runtime ปิดตามค่าเริ่มต้น เพิ่ม `--browser "/absolute/path/to/chromium"` ตอนลงทะเบียนเซิร์ฟเวอร์เพื่อเปิด `capture_feature` และ `replay_feature` ซึ่งใช้โปรไฟล์ชั่วคราวแยกกัน เอเจนต์ของ host ยังเป็นผู้แก้โค้ด `read_source_evidence` อ่านส่วนซอร์สขนาดจำกัดพร้อมตรวจ hash ส่วน include/exclude และ coverage ระบุไฟล์ที่รับเข้า ตัดออก และยังไม่ parse ชัดเจน ยังไม่รองรับการวิเคราะห์ความหมาย TypeScript/JSX
 
 [ขั้นตอน recovery และข้อจำกัด — อังกฤษ](../RECOVERY.md) · [การตรวจสอบตามเวอร์ชัน](../VALIDATION.md) `shrink` รัน oracle ใน child process ใหม่ทุกครั้งพร้อม deadline ส่วน `reset()` ของ oracle รับผิดชอบสถานะภายนอก โปรไฟล์ใหม่และ child process ไม่ใช่ sandbox ของระบบปฏิบัติการหรือเครือข่าย
 
@@ -58,7 +58,7 @@ REA Pro Max นำคำถามเหล่านี้มาอยู่ใ�
 
 ## เครื่องมือชุดเดียว เริ่มต้นได้สามทาง
 
-**v0.3 ให้ MCP ในเครื่อง 15 เครื่องมือ** เพิ่ม capture/replay บน Chromium จริงแบบเลือกเปิด และส่วนซอร์สที่ตรวจ hash สกิลช่วยให้เอเจนต์ส่งมอบ implementation ที่รันได้ CLI ใช้เคอร์เนลเดียวกันและไม่ต้องติดตั้ง npm เพื่อใช้งาน
+**v0.4 ให้ MCP ในเครื่อง 21 เครื่องมือ** เพิ่ม capture/replay บน Chromium จริงแบบเลือกเปิด และส่วนซอร์สที่ตรวจ hash สกิลช่วยให้เอเจนต์ส่งมอบ implementation ที่รันได้ CLI ใช้เคอร์เนลเดียวกันและไม่ต้องติดตั้ง npm เพื่อใช้งาน
 
 ### เชื่อม MCP กับ Claude Code หรือ Codex
 
@@ -155,7 +155,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs prompts --target mv3
 
 ## ขอบเขตชัดเจน เพื่อให้ผลลัพธ์มีความหมาย
 
-**การวิเคราะห์ในตัว v0.3:** ไฟล์ JavaScript และซอร์สเว็บ Manifest V3 และ Electron ที่แยกออกมาแล้ว นิพจน์แบบไดนามิก ไวยากรณ์ที่ไม่รองรับ import ที่ขาด และขีดจำกัดทรัพยากรจะแสดงไว้อย่างชัดเจน
+**การวิเคราะห์ในตัว v0.4:** ไฟล์ JavaScript และซอร์สเว็บ Manifest V3 และ Electron ที่แยกออกมาแล้ว นิพจน์แบบไดนามิก ไวยากรณ์ที่ไม่รองรับ import ที่ขาด และขีดจำกัดทรัพยากรจะแสดงไว้อย่างชัดเจน
 
 **เคอร์เนลที่ไม่ผูกกับ provider:** จัดการ case จัดอันดับการทดลอง เปรียบเทียบพฤติกรรมในขอบเขตจำกัด ลดชุดการกระทำ และสร้างรายงานในเครื่อง `shrink` จะรันโมดูล oracle `.mjs` ที่คุณเป็นผู้จัดหาและควบคุมโดยตรง
 
@@ -211,3 +211,19 @@ CLI/MCP ไม่ส่ง telemetry และไม่เรียก model API
 REA Pro Max พัฒนาอย่างอิสระ ที่มาของแรงบันดาลใจและประกาศไลบรารีอยู่ใน[เครดิต](../../THIRD_PARTY_NOTICES.md) โดยไม่จำเป็นต้องติดตั้ง REA ต้นฉบับ [สัญญาอนุญาต MIT](../../LICENSE)
 
 **นำฟีเจอร์ที่ควรค่าแก่การเข้าใจมา แล้วกลับไปพร้อมผลลัพธ์ที่ตรวจสอบได้**
+
+## การกู้คืนเว็บและบริดจ์ Craft แบบเลือกใช้
+
+v0.4 เพิ่มเคอร์เนลกู้คืนเว็บที่มีขอบเขต CLI/MCP รันลำดับ navigate, click, input, reload และ wait เดียวกันในโปรไฟล์ Chromium ใหม่ แล้วแยกผลพฤติกรรม (DOM, state, storage และสรุป network) ออกจาก visual hash หาก coverage หรือ cleanup ไม่ครบ ผลจะคงเป็น `unknown` ตรวจเฉพาะ action แบบ finite ที่ประกาศไว้ ไม่ได้อ้างความเท่าเทียมของทั้งแอป
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
+  --reference-url http://127.0.0.1:4173/reference/ \
+  --candidate-url http://127.0.0.1:4174/recovered/ \
+  --browser "/absolute/path/to/chromium" \
+  --scenario ./web-scenario.json --out ./web-replay.json
+```
+
+`assets/recovery-web/` เป็น fixture ของเราเองที่ไม่ใช้เครือข่าย มี reference, starter ที่ตั้งใจใส่ข้อผิดพลาด และ recovered ที่เขียนแยกกัน ครอบคลุม delayed response, การยกเลิกแบบ latest-wins, Unicode NFKC, สถานะว่าง/ผิดพลาด, localStorage, keyboard focus และ responsive markup อ่าน [WEB-RECOVERY.md](../WEB-RECOVERY.md)
+
+Craft Anything เป็น provider เสริมและไม่ใช่ dependency ตัว adapter เรียกเฉพาะ alias แบบมีชนิด `js_app_map`, `web_site_capture`, `app_graphs_compare` พร้อมตรวจ MCP handshake, version/commit ที่ pin ไว้, รายการเครื่องมือ, path, ขีดจำกัดเวลา/ไบต์ และ cleanup binary ที่พิสูจน์ commit ไม่ได้จะถูกปฏิเสธ ไม่มีการติดตั้ง Craft อัตโนมัติและไม่รวมโค้ดหรือแบรนด์ของ Craft ดู [PROVIDERS.md](../PROVIDERS.md)

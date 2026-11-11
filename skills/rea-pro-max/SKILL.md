@@ -1,7 +1,7 @@
 ---
 name: rea-pro-max
-description: Reverse engineer a shipped JavaScript/web feature, MV3 extension or extracted Electron app, then implement and verify the selected behavior in the user's project. Use for feature reconstruction, ambiguous state/message mechanisms, target-build regressions and stable failure reduction. Use connected REA Pro Max MCP tools or the bundled CLI for executable analysis and finite verification; hand over runnable work when rebuilding.
-compatibility: Node.js 22+ for bundled MCP/CLI. Claude Code, Codex or a compatible local MCP client; host coding tools perform implementation; optional explicit Chromium provider captures the documented MV3 message protocol. Native/mobile tasks require appropriate external providers.
+description: Reverse engineer a shipped JavaScript/web feature, MV3 extension or extracted Electron app, then implement and verify the selected behavior in the user's project. Use for feature reconstruction, ambiguous state/message mechanisms, target-build regressions, web action replay and stable failure reduction. Use connected REA Pro Max MCP tools or the bundled CLI for executable analysis and finite verification; hand over runnable work when rebuilding.
+compatibility: Node.js 22+ for bundled MCP/CLI. Claude Code, Codex or a compatible local MCP client; host coding tools perform implementation; optional explicit Chromium provider captures bounded web scenarios and the documented MV3 message protocol. Craft Anything is an optional separately installed pinned provider. Native/mobile tasks require appropriate external providers.
 license: MIT
 ---
 
@@ -43,6 +43,24 @@ The first owned-task replay should fail after worker restart. Read its first mis
 The bundled `recovered/` implementation is a worked example authored separately from the reference. It is not automatic synthesis of arbitrary targets. Keep its source out of an evaluation that claims reconstruction without implementation access. This provider currently captures declared messages, explicit storage snapshots and selected resets; do not extend its verdict to unobserved UI, network/file effects or unsupported protocols.
 
 With MCP, `get_capabilities` reports whether runtime was enabled through startup `--browser`. Use `capture_feature` or `replay_feature` with workspace paths and inspect the returned sections. The client cannot select an executable through these tools. Runtime executes selected extension code in a disposable profile; it is not an OS/network sandbox. Ordinary static inspection never launches the target.
+
+## Recover a web workflow
+
+For a web application, write a bounded scenario using `schema_version: 1`, an absolute `http(s)` URL and at most 64 `navigate`, `click`, `input`, `reload` or `wait` actions. The CLI and MCP web provider run the action list in fresh Chromium profiles and adapt the capture to the versioned web recovery IR. Compare DOM/state/storage/network summaries with `replay_web`; compare screenshot hashes separately. A visual match is not a behavior proof, and missing channels or cleanup remain unknown.
+
+```sh
+node <skill>/scripts/rea-pro-max.mjs web replay \
+  --reference-url http://127.0.0.1:4173/reference/ \
+  --candidate-url http://127.0.0.1:4174/recovered/ \
+  --browser <absolute-chromium-executable> \
+  --scenario ./web-scenario.json --out web-replay.json
+```
+
+The owned `assets/recovery-web/` fixture is a self-contained acceptance example with delayed responses, cancellation/latest-wins ordering, Unicode normalization, empty/error states, localStorage persistence, keyboard focus and responsive markup. Its starter is intentionally faulty; its recovered app is independently authored. It does not establish support for arbitrary sites.
+
+## Optional Craft Anything provider
+
+When a separately installed Craft Anything MCP executable is available, use only the typed provider aliases exposed by MCP: doctor, JavaScript application map, web capture and application graph comparison. The adapter checks the reviewed version/commit, advertised tool, bounded JSON-RPC output, workspace paths, deadline and process cleanup. It fails closed on drift or missing identity. It does not install Craft, bundle Craft assets, expose arbitrary provider tool names or replace REA's own finite behavioral verification. See [provider boundaries](../../docs/PROVIDERS.md).
 
 ## Build competing explanations and choose a test
 

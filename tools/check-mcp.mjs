@@ -11,7 +11,7 @@ const { values } = parseArgs({ options: { server: { type: 'string' }, workspace:
 const entry = resolve(values.server || join(root, 'skills/rea-pro-max/scripts/mcp-server.mjs'));
 const temporary = mkdtempSync(join(values.workspace || tmpdir(), 'rpm-mcp-smoke-'));
 const expectedVersion = JSON.parse(readFileSync(join(root,'package.json'),'utf8')).version;
-const names = ['get_capabilities','inspect_artifact','read_artifact','create_case','revise_case','record_observation','rank_probes','verify_behavior','export_artifact','run_owned_lab','list_task_prompts','import_case','read_source_evidence','capture_feature','replay_feature'];
+const names = ['get_capabilities','inspect_artifact','read_artifact','create_case','revise_case','record_observation','rank_probes','verify_behavior','export_artifact','run_owned_lab','list_task_prompts','import_case','read_source_evidence','capture_feature','replay_feature','capture_web','replay_web','craft_provider_doctor','craft_provider_inspect','craft_provider_capture','craft_provider_compare'];
 const results = [];
 try {
   for (const modern of [false,true]) {

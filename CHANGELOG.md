@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 — 2026-11-11
+
+- Add a bounded web recovery IR and contract kernel with route/state/viewport inputs, typed actions, explicit authority/coverage, deterministic diffs, separate behavior versus visual verdicts and dependency-aware counterexample shrinking.
+- Add dependency-free Chromium web capture/replay for explicit scenarios and URLs. Receipts retain bounded DOM/layout/storage observations, visual hashes, provider identity and cleanup without claiming whole-application equivalence.
+- Add an owned `assets/recovery-web` reference/starter/recovered fixture covering delayed search responses, cancellation, latest-wins ordering, Unicode normalization, empty/error states, localStorage persistence, keyboard focus and responsive markup.
+- Add an optional Craft Anything MCP adapter pinned to the audited `0.4.0` commit, with typed aliases, handshake/capability drift checks, bounded JSON-RPC, path admission, cancellation, timeout cleanup and provenance. No Craft source or assets are bundled.
+- Extend the independent local MCP server and CLI to expose web capture/replay and the typed provider operations. Runtime/provider execution remains opt-in and local; no automatic installation or arbitrary shell/tool execution is added.
+- Record the v0.4 verification scope in [VALIDATION.md](docs/VALIDATION.md), including explicit browser-unavailable limits and the provider audit boundary.
+
 ## 0.3.0 — 2026-11-06
 
 - Add optional dependency-free actual Chromium capture/replay for the documented `rpm-kv-v1` MV3 protocol, with disposable profiles/snapshots, distinct reset receipts, retained raw evidence and explicit cleanup status.

@@ -16,7 +16,7 @@ Claude Code, Codex, 호환 MCP 클라이언트를 위한 독립적인 리버스 
 
 ## 실제 워커 재시작을 견디는 저장 기능
 
-따뜻한 세션에서 성공한 데모도 데이터 손실을 숨길 수 있습니다. v0.3은 실행 가능한 수신 프로젝트를 만듭니다. starter는 저장과 페이지 재열기를 통과하지만, Chromium이 워커를 실제로 중지하고 깨우면 확인된 값을 잃습니다.
+따뜻한 세션에서 성공한 데모도 데이터 손실을 숨길 수 있습니다. v0.4은 실행 가능한 수신 프로젝트를 만듭니다. starter는 저장과 페이지 재열기를 통과하지만, Chromium이 워커를 실제로 중지하고 깨우면 확인된 값을 잃습니다.
 
 ```sh
 node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
@@ -28,7 +28,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **결과는 실행 가능한 코드와 검토할 수 있는 증거입니다.** 이 제공자는 현재 문서화된 `rpm-kv-v1` 메시지 프로토콜과 선택한 초기화 경계만 검사합니다. 임의 확장 프로그램을 자동 복원하지 않습니다. 원시 증거에는 boot ID가 남으며 비교에서 선언된 관찰 필드만 제외됩니다. 메시지 receipt는 관찰하지 않은 UI·네트워크·파일 효과를 입증하지 않습니다.
 
-MCP는 **15개 도구**를 제공합니다. 런타임은 기본 비활성화이며 서버 등록 시 `--browser "/absolute/path/to/chromium"`을 추가하면 `capture_feature`와 `replay_feature`가 활성화됩니다. 각각 임시 프로필을 사용하며 호스트 에이전트가 수정을 작성합니다. `read_source_evidence`는 해시를 확인한 제한된 소스 조각을 읽습니다. include/exclude와 coverage는 읽은 파일, 제외한 파일, 파싱하지 않은 파일을 명시합니다. TypeScript/JSX 의미 분석은 아직 제공하지 않습니다.
+MCP는 **21개 도구**를 제공합니다. 런타임은 기본 비활성화이며 서버 등록 시 `--browser "/absolute/path/to/chromium"`을 추가하면 `capture_feature`와 `replay_feature`가 활성화됩니다. 각각 임시 프로필을 사용하며 호스트 에이전트가 수정을 작성합니다. `read_source_evidence`는 해시를 확인한 제한된 소스 조각을 읽습니다. include/exclude와 coverage는 읽은 파일, 제외한 파일, 파싱하지 않은 파일을 명시합니다. TypeScript/JSX 의미 분석은 아직 제공하지 않습니다.
 
 [복원 흐름과 제한 — 영어](../RECOVERY.md) · [버전별 검증](../VALIDATION.md). `shrink`는 시도마다 새 자식 프로세스에서 기한을 두고 oracle을 실행합니다. 외부 상태는 oracle의 `reset()`이 담당합니다. 새 프로필과 자식 프로세스는 OS나 네트워크 샌드박스가 아닙니다.
 
@@ -58,7 +58,7 @@ Codex에서는 스킬을 선택하거나 같은 작업 앞에 `$rea-pro-max`를 
 
 ## 하나의 도구 모음, 세 가지 시작 방법
 
-**v0.3은 15개 도구의 로컬 MCP**, 선택적 실제 Chromium 캡처/replay와 해시 확인 소스 조각을 제공합니다. 스킬은 에이전트의 실행 가능한 구현 전달을 지원하며 CLI는 같은 커널을 사용합니다. 런타임 npm 설치는 필요 없습니다.
+**v0.4은 21개 도구의 로컬 MCP**, 선택적 실제 Chromium 캡처/replay와 해시 확인 소스 조각을 제공합니다. 스킬은 에이전트의 실행 가능한 구현 전달을 지원하며 CLI는 같은 커널을 사용합니다. 런타임 npm 설치는 필요 없습니다.
 
 ### Claude Code 또는 Codex에 MCP 연결
 
@@ -155,7 +155,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs prompts --target mv3
 
 ## 명확한 범위가 결과의 신뢰도를 만듭니다
 
-**v0.3 내장 분석:** JavaScript 파일과 추출된 웹·Manifest V3·Electron 소스입니다. 동적 표현식, 미지원 구문, 누락된 import, 자원 제한은 결과에 명시됩니다.
+**v0.4 내장 분석:** JavaScript 파일과 추출된 웹·Manifest V3·Electron 소스입니다. 동적 표현식, 미지원 구문, 누락된 import, 자원 제한은 결과에 명시됩니다.
 
 **제공자 독립 커널:** 케이스 관리, 실험 순위, 유한한 동작 비교, 시퀀스 축소, 로컬 보고서입니다. `shrink`는 사용자가 제공한 `.mjs` 오라클 모듈을 명시적으로 실행합니다.
 
@@ -211,3 +211,19 @@ CLI/MCP에는 텔레메트리 업로드나 모델 API 호출이 없습니다. �
 독립적으로 개발된 프로젝트입니다. 연구 영감과 라이브러리 고지는 [크레딧](../../THIRD_PARTY_NOTICES.md)에 있으며, 원본 REA는 필수 의존성이 아닙니다. [MIT 라이선스](../../LICENSE).
 
 **이해할 가치가 있는 기능을 가져오세요. 직접 확인할 수 있는 결과를 얻으세요.**
+
+## 웹 복구와 선택적 Craft 연결
+
+v0.4에는 제한된 웹 복구 커널이 추가되었습니다. CLI/MCP는 새 Chromium 프로필에서 navigate, click, input, reload, wait로 구성된 동일한 시나리오를 실행하고 DOM, 상태, storage, network 요약과 시각 hash를 행동 판정과 시각 판정으로 분리합니다. 관찰이나 정리가 부족하면 결과는 `unknown`으로 남습니다. 선언한 유한 action만 검증하며 전체 애플리케이션 동등성을 주장하지 않습니다.
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
+  --reference-url http://127.0.0.1:4173/reference/ \
+  --candidate-url http://127.0.0.1:4174/recovered/ \
+  --browser "/absolute/path/to/chromium" \
+  --scenario ./web-scenario.json --out ./web-replay.json
+```
+
+`assets/recovery-web/`는 네트워크가 없는 자체 fixture입니다. reference, 의도적으로 결함을 가진 starter, 독립 작성 recovered가 지연 응답, latest-wins 취소, NFKC Unicode, 빈 결과/오류, localStorage, 키보드 focus와 responsive markup을 보여 줍니다. 자세한 내용은 [WEB-RECOVERY.md](../WEB-RECOVERY.md)를 참고하세요.
+
+Craft Anything은 선택적 provider이며 필수 dependency가 아닙니다. Adapter는 `js_app_map`, `web_site_capture`, `app_graphs_compare`라는 타입이 지정된 alias만 호출하고 MCP handshake, 고정 version/commit, tool 목록, 경로, 시간/바이트 제한과 정리를 확인합니다. commit을 증명하지 못하는 binary는 거부합니다. Craft를 자동 설치하거나 코드와 branding을 포함하지 않습니다. [PROVIDERS.md](../PROVIDERS.md)를 확인하세요.

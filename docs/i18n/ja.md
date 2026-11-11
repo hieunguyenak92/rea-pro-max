@@ -16,7 +16,7 @@ Claude Code、Codex、互換MCPクライアントのための独立したリバ�
 
 ## 実際のworker再起動を越えて保存を維持する
 
-同じセッションで動くデモでも、データ消失を隠している場合があります。v0.3は実行可能な受け入れプロジェクトを作ります。starterは保存とページの再表示を通過しますが、Chromiumがworkerを実際に停止して起動し直すと、確認済みの値を失います。
+同じセッションで動くデモでも、データ消失を隠している場合があります。v0.4は実行可能な受け入れプロジェクトを作ります。starterは保存とページの再表示を通過しますが、Chromiumがworkerを実際に停止して起動し直すと、確認済みの値を失います。
 
 ```sh
 node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
@@ -28,7 +28,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **成果物は、実行できるコードと確認できる証拠です。** このproviderは現在、文書化された`rpm-kv-v1`メッセージプロトコルと選択したリセット境界を検査します。任意の拡張を自動復元するものではありません。boot IDは生の証拠に残し、比較では宣言済みの観測フィールドだけを除外します。メッセージreceiptは未観測のUI・ネットワーク・ファイル効果を証明しません。
 
-MCPは**15ツール**です。runtimeは既定で無効です。サーバー登録時に`--browser "/absolute/path/to/chromium"`を加えると`capture_feature`と`replay_feature`が使えます。それぞれ一時プロファイルで実行し、修正コードはホストエージェントが書きます。`read_source_evidence`はハッシュ確認済みのソース断片を返します。include/excludeとcoverageは採用・除外・未解析ファイルを明示し、TypeScript/JSXの意味解析はまだ提供しません。
+MCPは**21ツール**です。runtimeは既定で無効です。サーバー登録時に`--browser "/absolute/path/to/chromium"`を加えると`capture_feature`と`replay_feature`が使えます。それぞれ一時プロファイルで実行し、修正コードはホストエージェントが書きます。`read_source_evidence`はハッシュ確認済みのソース断片を返します。include/excludeとcoverageは採用・除外・未解析ファイルを明示し、TypeScript/JSXの意味解析はまだ提供しません。
 
 [復元手順と制限・英語](../RECOVERY.md) · [バージョン別検証](../VALIDATION.md)。`shrink`は各試行を期限付きの新しい子プロセスで実行します。外部状態のリセットはoracleの`reset()`が担当します。新しいプロファイルや子プロセスはOS・ネットワークのサンドボックスではありません。
 
@@ -58,7 +58,7 @@ Codexではスキルを選択するか、同じ依頼の先頭に`$rea-pro-max`�
 
 ## 一つのツールキット。三つの始め方。
 
-**v0.3は15ツールのローカルMCP**、任意設定の実Chromium capture/replay、ハッシュ確認済みソース断片を提供します。スキルは実行可能な実装の納品を導き、CLIは同じカーネルを使います。利用時のnpmインストールは不要です。
+**v0.4は21ツールのローカルMCP**、任意設定の実Chromium capture/replay、ハッシュ確認済みソース断片を提供します。スキルは実行可能な実装の納品を導き、CLIは同じカーネルを使います。利用時のnpmインストールは不要です。
 
 ### Claude CodeまたはCodexへMCPを接続
 
@@ -155,7 +155,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs prompts --target mv3
 
 ## 範囲を明確にし、結果の意味を保つ
 
-**v0.3の内蔵解析：** JavaScriptファイル、および展開済みWeb・Manifest V3・Electronソース。動的な式、未対応構文、欠落import、リソース制限は結果に明示されます。
+**v0.4の内蔵解析：** JavaScriptファイル、および展開済みWeb・Manifest V3・Electronソース。動的な式、未対応構文、欠落import、リソース制限は結果に明示されます。
 
 **プロバイダー非依存カーネル：** ケース管理、実験順位付け、有限の動作比較、列の縮小、ローカルレポート。`shrink`は指定した自作の`.mjs`オラクルを明示的に実行します。
 
@@ -211,3 +211,19 @@ CLI/MCPはテレメトリーを送信せず、モデルAPIも呼びません。�
 独立して開発されたプロジェクトです。研究上の着想と依存ライブラリの表記は[クレジット](../../THIRD_PARTY_NOTICES.md)を参照してください。元のREAは必須依存ではありません。[MITライセンス](../../LICENSE)。
 
 **理解する価値のある機能を。自分で確かめられる結果へ。**
+
+## Web復元と任意のCraft接続
+
+v0.4には境界付きのWeb復元カーネルが追加されています。CLI/MCPは新しいChromiumプロファイルでnavigate、click、input、reload、waitの同じシナリオを実行し、DOM、状態、storage、network要約、画面ハッシュを行動判定と視覚判定に分離します。観測やcleanupが不足すると結果は`unknown`のままです。宣言した有限actionだけを検証し、アプリ全体の同値性は主張しません。
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
+  --reference-url http://127.0.0.1:4173/reference/ \
+  --candidate-url http://127.0.0.1:4174/recovered/ \
+  --browser "/absolute/path/to/chromium" \
+  --scenario ./web-scenario.json --out ./web-replay.json
+```
+
+`assets/recovery-web/`はネットワークを使わない所有fixtureです。遅延応答、latest-winsキャンセル、NFKC Unicode、空/エラー状態、localStorage、キーボードfocus、responsive markupをreference、意図的に壊したstarter、独立実装recoveredで確認できます。詳細は[WEB-RECOVERY.md](../WEB-RECOVERY.md)を参照してください。
+
+Craft Anythingは任意のproviderであり必須依存ではありません。Adapterは`js_app_map`、`web_site_capture`、`app_graphs_compare`の型付きaliasだけを呼び、MCP handshake、固定version/commit、tool一覧、パス、時間/バイト制限、cleanupを確認します。commitを提示できないbinaryは拒否されます。Craftを自動インストールせず、コードやbrandingも同梱しません。[PROVIDERS.md](../PROVIDERS.md)をご覧ください。

@@ -16,7 +16,7 @@
 
 ## 让保存经得住真正的 worker 重启
 
-活跃会话中的演示可能掩盖数据丢失。v0.3 创建可运行的接收项目：starter 能保存，也能通过重新打开页面的检查，但 Chromium 真正停止并唤醒 worker 后，已确认的值就会丢失。
+活跃会话中的演示可能掩盖数据丢失。v0.4 创建可运行的接收项目：starter 能保存，也能通过重新打开页面的检查，但 Chromium 真正停止并唤醒 worker 后，已确认的值就会丢失。
 
 ```sh
 node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
@@ -28,7 +28,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **交付物是可以运行的代码，以及可以核验的证据。** 该 provider 目前只检查文档化的 `rpm-kv-v1` 消息协议和选定的重置边界，不会自动重建任意扩展。原始证据保留 boot ID；比较时仅排除这一已声明的观察字段。消息 receipt 不证明未观察的 UI、网络或文件副作用。
 
-MCP 提供 **15 个工具**。运行时默认关闭；注册服务器时追加 `--browser "/absolute/path/to/chromium"`，即可启用 `capture_feature` 与 `replay_feature`。它们使用独立临时 profile；宿主智能体仍负责修复代码。`read_source_evidence` 返回有大小限制且经过 hash 检查的源码片段。include/exclude 和 coverage 会列明纳入、排除、未解析的文件；尚未提供 TypeScript/JSX 语义解析。
+MCP 提供 **21 个工具**。运行时默认关闭；注册服务器时追加 `--browser "/absolute/path/to/chromium"`，即可启用 `capture_feature` 与 `replay_feature`。它们使用独立临时 profile；宿主智能体仍负责修复代码。`read_source_evidence` 返回有大小限制且经过 hash 检查的源码片段。include/exclude 和 coverage 会列明纳入、排除、未解析的文件；尚未提供 TypeScript/JSX 语义解析。
 
 [恢复流程与限制（英文）](../RECOVERY.md) · [按版本验证](../VALIDATION.md)。`shrink` 每次尝试都在有期限的新子进程中执行 oracle；外部状态由 oracle 的 `reset()` 负责。新 profile 和子进程不是操作系统或网络沙箱。
 
@@ -58,7 +58,7 @@ REA Pro Max 把这些问题带入实现过程。分析已分发的 JavaScript，
 
 ## 一套工具，三种起步方式
 
-**v0.3 提供 15 个本地 MCP 工具**，增加可选的真实 Chromium capture/replay，以及经过 hash 检查的源码片段。技能引导智能体交付可运行实现；CLI 共用同一内核，使用时无需安装 npm 依赖。
+**v0.4 提供 21 个本地 MCP 工具**，增加可选的真实 Chromium capture/replay，以及经过 hash 检查的源码片段。技能引导智能体交付可运行实现；CLI 共用同一内核，使用时无需安装 npm 依赖。
 
 ### 将 MCP 连接到 Claude Code 或 Codex
 
@@ -155,7 +155,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs prompts --target mv3
 
 ## 边界清楚，结果才有明确含义
 
-**v0.3 内置分析：** JavaScript 文件，以及已提取的 Web、Manifest V3、Electron 源码。动态表达式、不支持的语法、缺失 import 和资源限制会明确出现在结果中。
+**v0.4 内置分析：** JavaScript 文件，以及已提取的 Web、Manifest V3、Electron 源码。动态表达式、不支持的语法、缺失 import 和资源限制会明确出现在结果中。
 
 **与 provider 无关的内核：** case 管理、实验排序、有限行为比较、序列缩减和本地报告。`shrink` 会明确执行你提供并控制的 `.mjs` oracle 模块。
 
@@ -211,3 +211,19 @@ CLI/MCP 不上传遥测，也不调用模型 API。静态操作在本地处理�
 REA Pro Max 为独立开发项目。研究灵感和依赖声明见[致谢](../../THIRD_PARTY_NOTICES.md)；原版 REA 不是必需依赖。[MIT 许可证](../../LICENSE)。
 
 **带来一个值得理解的功能，带走一个可以核验的结果。**
+
+## Web 恢复与可选 Craft 桥接
+
+v0.4 增加了有边界的 Web 恢复内核。CLI/MCP 在新的 Chromium 配置中执行相同的 navigate、click、input、reload、wait 序列，并把行为判定（DOM、状态、storage、network 摘要）与视觉 hash 分开。覆盖不完整或清理未确认时，结果保持为 `unknown`。它只验证声明的有限 action，不声称整个应用等价。
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
+  --reference-url http://127.0.0.1:4173/reference/ \
+  --candidate-url http://127.0.0.1:4174/recovered/ \
+  --browser "/absolute/path/to/chromium" \
+  --scenario ./web-scenario.json --out ./web-replay.json
+```
+
+`assets/recovery-web/` 是无网络的自有 fixture：reference、故意有缺陷的 starter 和独立编写的 recovered 覆盖延迟响应、latest-wins 取消、NFKC Unicode、空/错误状态、localStorage、键盘焦点与响应式标记。详见 [WEB-RECOVERY.md](../WEB-RECOVERY.md)。
+
+Craft Anything 是可选 provider，并非依赖。适配器只调用 `js_app_map`、`web_site_capture`、`app_graphs_compare` 三个类型化 alias，并检查 MCP handshake、固定版本/commit、工具列表、路径、时间/字节限制和清理。无法证明 commit 的 binary 会被拒绝。不会自动安装 Craft，也不包含其代码或品牌；请阅读 [PROVIDERS.md](../PROVIDERS.md)。

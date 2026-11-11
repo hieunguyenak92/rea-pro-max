@@ -1,6 +1,6 @@
 # MV3 recovery workflow
 
-Version 0.3 includes one executable recovery lane for the documented local `rpm-kv-v1` protocol. It runs a target, compares a deliberately faulty receiving project, and leaves evidence for a repair and replay.
+Version 0.4 retains the executable MV3 recovery lane for the documented local `rpm-kv-v1` protocol. It runs a target, compares a deliberately faulty receiving project, and leaves evidence for a repair and replay. The separate bounded web lane is documented in [WEB-RECOVERY.md](WEB-RECOVERY.md).
 
 The lane is bounded. It executes an unpacked Manifest V3 extension in an explicitly selected local Chromium or Chrome for Testing executable. It does not reconstruct arbitrary extensions automatically, launch arbitrary target code through MCP, or prove unobserved UI, network or file effects. A fresh profile is not an OS or network sandbox.
 

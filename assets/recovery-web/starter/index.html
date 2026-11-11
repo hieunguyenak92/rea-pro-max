@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Filter Desk — owned web recovery fixture</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell" data-rpm-owned-fixture="starter">
+    <header class="masthead">
+      <p class="eyebrow">REA PRO MAX · OWNED WEB RECOVERY FIXTURE</p>
+      <h1>Filter Desk</h1>
+      <p class="lede">A local catalog with intentionally incomplete search recovery behaviour.</p>
+    </header>
+
+    <section class="panel" aria-labelledby="controls-title">
+      <h2 id="controls-title">Find a project</h2>
+      <form id="search-form" role="search" novalidate>
+        <div class="control-grid">
+          <div class="field">
+            <span class="pseudo-label">Search the catalog</span>
+            <input id="search" name="q" type="search" autocomplete="off" maxlength="80" aria-controls="results" placeholder="Try café, Tokyo or release">
+            <p id="search-hint" class="hint">Results arrive after a short local delay.</p>
+          </div>
+          <div class="field">
+            <label for="filter">Status</label>
+            <select id="filter" name="status" aria-controls="results">
+              <option value="all">All projects</option>
+              <option value="open">Open</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button id="submit" type="submit">Search</button>
+          <button id="cancel" type="button" class="secondary">Cancel search</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="results-panel" aria-labelledby="results-title">
+      <div class="results-heading">
+        <div>
+          <p class="eyebrow">VISIBLE STATE</p>
+          <h2 id="results-title">Projects</h2>
+        </div>
+        <p id="status" class="status">Ready.</p>
+      </div>
+      <ul id="results" class="results" aria-label="Matching projects"></ul>
+    </section>
+
+    <footer class="footer-note">Synthetic records are held in memory for this starter.</footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

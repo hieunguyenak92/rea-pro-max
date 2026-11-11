@@ -16,7 +16,7 @@ Bộ công cụ reverse engineering độc lập với MCP cục bộ, skill cho
 
 ## Lưu dữ liệu qua một lần khởi động lại worker thật
 
-Demo chạy ổn trong một phiên có thể che giấu lỗi mất dữ liệu. Luồng v0.3 tạo project nhận chạy được: starter lưu thành công và qua bước mở lại trang, nhưng mất giá trị đã xác nhận khi Chromium thực sự dừng rồi khởi tạo lại worker.
+Demo chạy ổn trong một phiên có thể che giấu lỗi mất dữ liệu. Luồng v0.4 tạo project nhận chạy được: starter lưu thành công và qua bước mở lại trang, nhưng mất giá trị đã xác nhận khi Chromium thực sự dừng rồi khởi tạo lại worker.
 
 ```sh
 node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
@@ -28,7 +28,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **Kết quả là mã chạy được cùng bằng chứng có thể kiểm tra.** Provider hiện chỉ hỗ trợ giao thức thông điệp `rpm-kv-v1` đã mô tả và các ranh giới reset được chọn. Đây không phải cơ chế tự khôi phục mọi extension. Boot ID được giữ trong bằng chứng thô; chỉ trường quan sát đã khai báo này được loại khỏi đối chiếu. Receipt thông điệp không chứng minh các hiệu ứng UI, mạng hay tệp chưa quan sát.
 
-MCP có **15 công cụ**. Runtime mặc định tắt; thêm `--browser "/absolute/path/to/chromium"` khi đăng ký server để bật `capture_feature` và `replay_feature`. Chúng dùng profile tạm riêng; agent của host vẫn viết phần sửa. `read_source_evidence` đọc đoạn source có giới hạn và kiểm tra hash. Scope include/exclude cùng coverage nêu rõ tệp đã đọc, bị loại và chưa parse; TypeScript/JSX chưa được parse ngữ nghĩa.
+MCP có **21 công cụ**. Runtime mặc định tắt; thêm `--browser "/absolute/path/to/chromium"` khi đăng ký server để bật `capture_feature` và `replay_feature`. Chúng dùng profile tạm riêng; agent của host vẫn viết phần sửa. `read_source_evidence` đọc đoạn source có giới hạn và kiểm tra hash. Scope include/exclude cùng coverage nêu rõ tệp đã đọc, bị loại và chưa parse; TypeScript/JSX chưa được parse ngữ nghĩa.
 
 [Quy trình recovery và giới hạn — tiếng Anh](../RECOVERY.md) · [Kiểm chứng theo phiên bản](../VALIDATION.md). `shrink` chạy oracle trong process con mới cho mỗi lần thử, có deadline; `reset()` của oracle chịu trách nhiệm trạng thái bên ngoài. Profile mới và process con không phải sandbox hệ điều hành hoặc mạng.
 
@@ -60,7 +60,7 @@ Các công việc phù hợp:
 
 ## Một bộ công cụ. Ba cách bắt đầu.
 
-**v0.3 cung cấp MCP cục bộ với 15 công cụ**, thêm thu thập/replay Chromium theo lựa chọn và đoạn source đã kiểm tra hash. Skill hướng agent giao mã triển khai chạy được; CLI dùng cùng kernel và không cần cài npm khi sử dụng.
+**v0.4 cung cấp MCP cục bộ với 21 công cụ**, thêm thu thập/replay Chromium theo lựa chọn và đoạn source đã kiểm tra hash. Skill hướng agent giao mã triển khai chạy được; CLI dùng cùng kernel và không cần cài npm khi sử dụng.
 
 ### Kết nối MCP với Claude Code hoặc Codex
 
@@ -157,7 +157,7 @@ Planner chọn câu hỏi tiếp theo, không tự chạy phép thử. Verifier 
 
 ## Phạm vi rõ ràng để kết quả có giá trị
 
-**Phân tích tích hợp ở v0.3:** tệp JavaScript và mã web, Manifest V3, Electron đã giải nén. Biểu thức động, cú pháp chưa hỗ trợ, import thiếu và giới hạn tài nguyên được nêu rõ.
+**Phân tích tích hợp ở v0.4:** tệp JavaScript và mã web, Manifest V3, Electron đã giải nén. Biểu thức động, cú pháp chưa hỗ trợ, import thiếu và giới hạn tài nguyên được nêu rõ.
 
 **Kernel độc lập provider:** quản lý case, xếp hạng phép thử, đối chiếu hữu hạn, thu gọn chuỗi và báo cáo cục bộ. `shrink` thực thi module oracle `.mjs` do bạn cung cấp; hãy dùng mã do bạn sở hữu và kiểm soát.
 
@@ -213,3 +213,19 @@ Tài liệu kỹ thuật tiếng Anh: [Skill](../../skills/rea-pro-max/SKILL.md)
 REA Pro Max được phát triển độc lập. Nguồn cảm hứng và thông báo thư viện ở [credits](../../THIRD_PARTY_NOTICES.md); REA gốc không phải dependency bắt buộc. [Giấy phép MIT](../../LICENSE).
 
 **Mang đến một tính năng đáng để thấu hiểu. Nhận lại kết quả bạn có thể kiểm tra.**
+
+## Web recovery và cầu nối Craft tùy chọn
+
+Bản v0.4 thêm một kernel phục hồi web có giới hạn. CLI/MCP chạy cùng một kịch bản gồm navigate, click, input, reload và wait trong profile Chromium mới, rồi ghi nhận DOM, trạng thái, storage, tóm tắt network và hash hình ảnh thành hai kết quả riêng: hành vi và thị giác. Thiếu quan sát, cleanup hoặc điều kiện browser sẽ giữ verdict ở `unknown`. Đây là kiểm chứng hữu hạn cho các action đã khai báo, không phải tương đương toàn bộ ứng dụng.
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
+  --reference-url http://127.0.0.1:4173/reference/ \
+  --candidate-url http://127.0.0.1:4174/recovered/ \
+  --browser "/absolute/path/to/chromium" \
+  --scenario ./web-scenario.json --out ./web-replay.json
+```
+
+Fixture `assets/recovery-web/` là ví dụ tự sở hữu, không gọi mạng: reference, starter cố ý lỗi và recovered độc lập. Nó bao phủ phản hồi trễ, latest-wins, hủy, Unicode NFKC, trạng thái rỗng/lỗi, localStorage, keyboard focus và markup responsive. Xem [WEB-RECOVERY.md](../WEB-RECOVERY.md).
+
+Craft Anything là provider tùy chọn, không phải dependency. Adapter chỉ gọi các alias kiểu hóa cho `js_app_map`, `web_site_capture` và `app_graphs_compare`, kiểm tra MCP handshake, version/commit đã ghim, tool list, path, timeout, byte limit và cleanup. Bản binary không chứng minh được commit sẽ bị từ chối. Không tự cài Craft, không đóng gói mã/branding của Craft; xem [PROVIDERS.md](../PROVIDERS.md).

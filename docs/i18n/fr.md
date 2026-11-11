@@ -16,7 +16,7 @@ Une boîte à outils indépendante de rétro-ingénierie avec MCP local, skill d
 
 ## Une sauvegarde qui résiste au vrai redémarrage du worker
 
-Une démo dans une session active peut masquer une perte de données. La v0.3 crée un projet récepteur exécutable : le starter sauvegarde et passe la réouverture de page, puis perd la valeur confirmée lorsque Chromium arrête et réveille réellement le worker.
+Une démo dans une session active peut masquer une perte de données. La v0.4 crée un projet récepteur exécutable : le starter sauvegarde et passe la réouverture de page, puis perd la valeur confirmée lorsque Chromium arrête et réveille réellement le worker.
 
 ```sh
 node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery init --out ./recovery-work
@@ -28,7 +28,7 @@ Définissez `RPM_BROWSER` comme le chemin absolu de l’exécutable installé Ch
 
 **Le livrable est du code exécutable et une preuve que vous pouvez examiner.** Ce fournisseur vérifie le protocole de messages documenté `rpm-kv-v1` et les frontières de reset choisies ; il ne reconstruit pas automatiquement toute extension. Les boot ID restent dans les données brutes ; seul ce champ d’observation déclaré est exclu de la comparaison. Les reçus de messages ne prouvent pas les effets UI, réseau ou fichiers non observés.
 
-MCP propose **15 outils**. Le runtime est désactivé par défaut ; ajoutez `--browser "/absolute/path/to/chromium"` à l’enregistrement du serveur pour activer `capture_feature` et `replay_feature`. Ils utilisent des profils temporaires séparés ; l’agent de l’environnement écrit la correction. `read_source_evidence` lit des extraits bornés après contrôle du hash. include/exclude et coverage précisent les fichiers admis, omis et non analysés ; l’analyse sémantique TypeScript/JSX n’est pas encore fournie.
+MCP propose **21 outils**. Le runtime est désactivé par défaut ; ajoutez `--browser "/absolute/path/to/chromium"` à l’enregistrement du serveur pour activer `capture_feature` et `replay_feature`. Ils utilisent des profils temporaires séparés ; l’agent de l’environnement écrit la correction. `read_source_evidence` lit des extraits bornés après contrôle du hash. include/exclude et coverage précisent les fichiers admis, omis et non analysés ; l’analyse sémantique TypeScript/JSX n’est pas encore fournie.
 
 [Procédure et limites, en anglais](../RECOVERY.md) · [Vérification par version](../VALIDATION.md). `shrink` lance l’oracle dans un nouveau processus enfant à chaque essai, avec un délai. Sa fonction `reset()` gère l’état externe. Un profil neuf ou un processus enfant n’est pas un bac à sable système ou réseau.
 
@@ -58,7 +58,7 @@ Dans Codex, sélectionnez la skill ou ajoutez `$rea-pro-max` au début de la mê
 
 ## Une boîte à outils. Trois façons de commencer.
 
-**La v0.3 fournit un MCP local de 15 outils**, la capture/replay optionnelle dans Chromium réel et des extraits de code dont le hash est vérifié. La skill conduit l’agent vers une implémentation exécutable ; la CLI partage le noyau sans installation npm à l’usage.
+**La v0.4 fournit un MCP local de 21 outils**, la capture/replay optionnelle dans Chromium réel et des extraits de code dont le hash est vérifié. La skill conduit l’agent vers une implémentation exécutable ; la CLI partage le noyau sans installation npm à l’usage.
 
 ### Connecter MCP à Claude Code ou Codex
 
@@ -155,7 +155,7 @@ Le planificateur choisit la prochaine question ; il ne lance pas le test. Le vé
 
 ## Un périmètre clair pour des résultats interprétables
 
-**Analyse intégrée à la v0.3 :** fichiers JavaScript et sources extraites web, Manifest V3 et Electron. Expressions dynamiques, syntaxe non prise en charge, imports absents et limites de ressources restent explicites.
+**Analyse intégrée à la v0.4 :** fichiers JavaScript et sources extraites web, Manifest V3 et Electron. Expressions dynamiques, syntaxe non prise en charge, imports absents et limites de ressources restent explicites.
 
 **Noyau indépendant des fournisseurs :** gestion de dossiers, classement d’expériences, comparaison finie, réduction de séquences et rapports locaux. `shrink` exécute explicitement le module oracle `.mjs` que vous fournissez et maîtrisez.
 
@@ -211,3 +211,19 @@ Références techniques en anglais : [Skill](../../skills/rea-pro-max/SKILL.md) 
 Projet développé indépendamment. L’inspiration de recherche et les mentions des dépendances figurent dans les [crédits](../../THIRD_PARTY_NOTICES.md) ; REA d’origine n’est pas une dépendance obligatoire. [Licence MIT](../../LICENSE).
 
 **Apportez une fonction qui mérite d’être comprise. Repartez avec un résultat vérifiable.**
+
+## Récupération web et pont Craft optionnel
+
+v0.4 ajoute un noyau de récupération web borné. La CLI/MCP exécute la même suite navigate, click, input, reload et wait dans des profils Chromium neufs, puis sépare les verdicts comportementaux (DOM, état, storage et résumé réseau) des hashes visuels. Une couverture ou un nettoyage incomplet reste `unknown`. La vérification porte sur les actions finies déclarées, sans prétendre à l’équivalence de toute l’application.
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
+  --reference-url http://127.0.0.1:4173/reference/ \
+  --candidate-url http://127.0.0.1:4174/recovered/ \
+  --browser "/absolute/path/to/chromium" \
+  --scenario ./web-scenario.json --out ./web-replay.json
+```
+
+`assets/recovery-web/` est un fixture local sans réseau : reference, starter volontairement défectueux et recovered indépendant couvrent réponses retardées, annulation latest-wins, Unicode NFKC, états vide/erreur, localStorage, focus clavier et markup responsive. Voir [WEB-RECOVERY.md](../WEB-RECOVERY.md).
+
+Craft Anything est un provider optionnel, pas une dépendance. L’adaptateur appelle seulement les alias typés `js_app_map`, `web_site_capture` et `app_graphs_compare`, et vérifie handshake MCP, version/commit épinglés, outils annoncés, chemins, limites temps/octets et nettoyage. Un binaire sans commit vérifiable est refusé. Craft n’est ni installé automatiquement ni livré avec son code ou sa marque ; voir [PROVIDERS.md](../PROVIDERS.md).

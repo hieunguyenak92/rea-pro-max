@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A local catalog used to observe search recovery behaviour.">
+  <title>Filter Desk — owned web recovery fixture</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#results">Skip to results</a>
+  <main class="shell" data-rpm-owned-fixture="reference">
+    <header class="masthead">
+      <p class="eyebrow">REA PRO MAX · OWNED WEB RECOVERY FIXTURE</p>
+      <h1>Filter Desk</h1>
+      <p class="lede">A small local catalog for observing delayed search, cancellation and saved filters. It never calls a network.</p>
+    </header>
+
+    <section class="panel" aria-labelledby="controls-title">
+      <h2 id="controls-title">Find a project</h2>
+      <form id="search-form" role="search" novalidate>
+        <div class="control-grid">
+          <div class="field">
+            <label for="search">Search projects</label>
+            <input id="search" name="q" type="search" autocomplete="off" maxlength="80" aria-controls="results" aria-describedby="search-hint" placeholder="Try café, Tokyo or release">
+            <p id="search-hint" class="hint">Press Enter to submit. Escape cancels a delayed result.</p>
+          </div>
+          <div class="field">
+            <label for="filter">Status</label>
+            <select id="filter" name="status" aria-controls="results">
+              <option value="all">All projects</option>
+              <option value="open">Open</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button id="submit" type="submit">Search</button>
+          <button id="cancel" type="button" class="secondary" hidden>Cancel search</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="results-panel" aria-labelledby="results-title">
+      <div class="results-heading">
+        <div>
+          <p class="eyebrow">VISIBLE STATE</p>
+          <h2 id="results-title">Projects</h2>
+        </div>
+        <p id="status" class="status" role="status" aria-live="polite">Ready.</p>
+      </div>
+      <ul id="results" class="results" aria-label="Matching projects"></ul>
+    </section>
+
+    <footer class="footer-note">Synthetic records stay in this browser profile under <code>rpm-web-filter-v1</code>.</footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
