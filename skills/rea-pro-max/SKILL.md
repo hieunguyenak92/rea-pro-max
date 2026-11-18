@@ -93,6 +93,10 @@ node <skill>/scripts/rea-pro-max.mjs api-diff ./openapi.json ./traffic.har --out
 
 Use the [owned API fixture](assets/labs/api/openapi.json) and its [saved traffic](assets/labs/api/traffic.har) to reproduce a known result.
 
+To explain which Java build users are affected, call `compare_jar_profiles` with the JAR paths and explicit Java feature versions. Report which member each version selects, its digest and cases the resolver leaves unknown. For a core Wasm i32 export, use `compare_wasm_behavior` with a finite input contract to compare returns and traps. Keep the result separate from `compare_wasm_interfaces`. [Owned i32 contract](assets/labs/release/wasm-behavior.json)
+
+For a native task with saved evidence, call `import_ghidra_evidence` with the selected binary and Ghidra 12.2 export. Treat pseudocode as derived and use `verify_native_behavior` only for the specified u8-to-u16 receipt format and independent oracle. The [owned native lab](assets/labs/native-recovery/run.mjs) supplies a runnable C example.
+
 ## Check a release before shipping
 
 When the task compares an earlier build with a release candidate, use `check_release` with an explicit policy file and disjoint build directories. Declare exact file changes, repack-only ZIPs, Wasm paths whose public interface must match, and any required HAR response or Playwright action evidence. Keep saved observations at reported authority. Review the failure or unknown from each check and repair the receiving build. Re-run the same policy before handing over the candidate and its receipt.

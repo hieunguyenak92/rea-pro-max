@@ -119,13 +119,31 @@ def smoke_test(data):
                                       targets / "arm64-macos12.o"], expected=2))
         if inspected["targets"][0]["javaRelease"] != 11 or narrowed["status"] != "narrowed":
             raise ValueError("Extracted CLI missed the compiler-produced deployment targets.")
+        jar = skill / "assets/labs/jar-profiles"
+        jar_diff = json.loads(invoke(["jar-profile-diff", jar / "before.jar", jar / "after.jar",
+                                      "--profiles", "11,17"], expected=2))
+        if [profile["status"] for profile in jar_diff["profiles"]] != ["same-selection", "different"]:
+            raise ValueError("Extracted CLI missed the change in effective Java class selection.")
+        wasm = skill / "assets/labs/release"
+        wasm_diff = json.loads(invoke(["wasm-behavior", wasm / "reference/engine.wasm", wasm / "candidate/engine.wasm",
+                                       "--contract", wasm / "wasm-behavior.json"], expected=2))
+        if wasm_diff["cases"][0]["candidate"]["value"] != 2 or wasm_diff["cases"][0]["reference"]["value"] != 1:
+            raise ValueError("Extracted CLI did not evaluate the owned Wasm modules.")
+        native = skill / "assets/labs/native-recovery/evidence"
+        imported = json.loads(invoke(["native-import-ghidra", native / "reference.bin",
+                                      native / "ghidra-12.2-arm64.json"]))
+        native_diff = json.loads(invoke(["native-verify", native / "reference.json", native / "negative.json",
+                                         native / "oracle.json"], expected=2))
+        if imported["status"] != "complete" or native_diff["differences"][0]["input"] != 173:
+            raise ValueError("Extracted CLI missed native byte binding or the owned native discrepancy.")
         mcp = subprocess.run([node, str(ROOT / "tools/check-mcp.mjs"), "--server",
                               str(skill / "scripts/mcp-server.mjs"), "--workspace", str(extracted)],
                              cwd=extracted, text=True, encoding="utf-8", capture_output=True,
                              timeout=60, check=False)
         if mcp.returncode != 0:
             raise ValueError(f"Extracted MCP check failed; run npm ci --ignore-scripts for the development client: {mcp.stderr}")
-        return {"commands": ["help", "demo", "verify", "api-diff", "release-check", "target-inspect", "target-diff"], "verification": "fail",
+        return {"commands": ["help", "demo", "verify", "api-diff", "release-check", "target-inspect", "target-diff",
+                             "jar-profile-diff", "wasm-behavior", "native-import-ghidra", "native-verify"], "verification": "fail",
                 "reduced_actions": len(reduced["sequence"]), "mcp": json.loads(mcp.stdout)}
 
 

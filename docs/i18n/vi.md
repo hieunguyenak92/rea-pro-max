@@ -8,13 +8,17 @@ Bộ công cụ reverse engineering độc lập với MCP cục bộ, skill cho
 
 [Khám phá bản lab đã ghi lại](https://hieunguyenak92.github.io/rea-pro-max/#explorer) · [Cài skill](../INSTALL.md) · [Hồ sơ kiểm chứng](../VALIDATION.md) · [Bản phát hành](https://github.com/hieunguyenak92/rea-pro-max/releases)
 
-**v0.8 phát hiện khi bản build mới bỏ hỗ trợ một nhóm người dùng.** So sánh hai tệp bằng `target-diff` để thấy kiến trúc Apple bị bỏ, mức macOS tối thiểu tăng hoặc yêu cầu Java thay đổi. Trong ví dụ đi kèm, CI cho phép sửa tệp nhưng vẫn chặn bản tăng từ Java 11 lên 17. `unknown` nghĩa là dữ liệu khai báo chưa đủ để kết luận. Phép kiểm tra đọc tệp tại chỗ, không chạy ứng dụng. [Ví dụ và cách tái lập bằng tiếng Anh](../NATIVE-TARGETS.md)
+**v1.0 phát hiện khi bản build mới bỏ hỗ trợ một nhóm người dùng.** So sánh hai tệp bằng `target-diff` để thấy kiến trúc Apple bị bỏ, mức macOS tối thiểu tăng hoặc yêu cầu Java thay đổi. Trong ví dụ đi kèm, CI cho phép sửa tệp nhưng vẫn chặn bản tăng từ Java 11 lên 17. `unknown` nghĩa là dữ liệu khai báo chưa đủ để kết luận. Phép kiểm tra đọc tệp tại chỗ, không chạy ứng dụng. [Ví dụ và cách tái lập bằng tiếng Anh](../NATIVE-TARGETS.md)
 
 ![REA Pro Max — Understand the mechanism](../media/hero.png)
 
 ![Workbench REA Pro Max thực tế từ lab tổng hợp do dự án sở hữu](../media/workbench.png)
 
 *Ảnh report thật từ mô hình JavaScript có Chrome API mô phỏng; đây không phải bằng chứng vòng đời Chromium thật.*
+
+## Điểm mới trong 1.0
+
+So sánh các lớp có hiệu lực của multi-release JAR theo phiên bản Java. Chạy một hàm Wasm i32 có giới hạn để so đầu ra với bộ đầu vào đã khai báo. Replay Chromium ghi quan sát mạng theo thao tác và báo thiếu chứng cứ khi cần. Có thể nối phép thử Save với biên nhận từ máy chủ mẫu, rồi khởi động lại máy chủ và đọc giá trị đã lưu. Phân tích native nhập bản xuất Ghidra 12.2 và so biên nhận chạy trên miền hữu hạn. [Ví dụ và phạm vi kỹ thuật — tiếng Anh](../VERIFIED-RECOVERY.md)
 
 ## Lưu dữ liệu qua một lần khởi động lại worker thật
 
@@ -30,7 +34,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **Kết quả là mã chạy được cùng bằng chứng có thể kiểm tra.** Provider hiện chỉ hỗ trợ giao thức thông điệp `rpm-kv-v1` đã mô tả và các ranh giới reset được chọn. Đây không phải cơ chế tự khôi phục mọi extension. Boot ID được giữ trong bằng chứng thô; chỉ trường quan sát đã khai báo này được loại khỏi đối chiếu. Receipt thông điệp không chứng minh các hiệu ứng UI, mạng hay tệp chưa quan sát.
 
-MCP có **31 công cụ**. Runtime mặc định tắt. Thêm `--browser "/absolute/path/to/chromium"` khi đăng ký server để bật `capture_feature`, `replay_feature` và `run_recovery`. Chromium chạy trong profile tạm riêng và agent trong ứng dụng chủ viết phần sửa. `reconcile_runtime` đối chiếu kênh thông điệp của service worker MV3 với bản ghi trong cùng phiên MCP khi SHA-256 xác nhận đúng gói extension đã phân tích. Kết quả giữ lại các kênh mơ hồ và sự kiện chưa ghép được. `read_source_evidence` đọc đoạn mã nguồn có giới hạn và kiểm tra lại hash. Kết quả phân tích nêu rõ tệp đã đọc, bị loại và chưa phân tích được. Phân tích ngữ nghĩa TypeScript/JSX chưa được hỗ trợ.
+MCP có **35 công cụ**. Chromium mặc định tắt. Thêm `--browser "/absolute/path/to/chromium"` khi đăng ký server để bật `capture_feature`, `replay_feature` và `run_recovery`. Chromium chạy trong profile tạm riêng và agent trong ứng dụng chủ viết phần sửa. `reconcile_runtime` đối chiếu kênh thông điệp của service worker MV3 với bản ghi trong cùng phiên MCP khi SHA-256 xác nhận đúng gói extension đã phân tích. Kết quả giữ lại các kênh mơ hồ và sự kiện chưa ghép được. `read_source_evidence` đọc đoạn mã nguồn có giới hạn và kiểm tra lại hash. Kết quả phân tích nêu rõ tệp đã đọc, bị loại và chưa phân tích được. Phân tích ngữ nghĩa TypeScript/JSX chưa được hỗ trợ.
 
 [Quy trình recovery và giới hạn — tiếng Anh](../RECOVERY.md) · [Kiểm chứng theo phiên bản](../VALIDATION.md). `shrink` chạy oracle trong process con mới cho mỗi lần thử, có deadline; `reset()` của oracle chịu trách nhiệm trạng thái bên ngoài. Profile mới và process con không phải sandbox hệ điều hành hoặc mạng.
 

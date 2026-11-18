@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "kind": "rpm-ghidra-export",
+  "provider": {
+    "name": "Ghidra",
+    "version": "12.2",
+    "exporter": "rpm-ghidra-1"
+  },
+  "binary_sha256": "c6533dd4d67e64e87c2ee23611b856976c92f26f5ea82be70b8be28e52ec1a57",
+  "language": "AARCH64:LE:64:AppleSilicon",
+  "functions_complete": true,
+  "functions": [
+    {
+      "entry": "ram:1000004bc",
+      "instructions": [
+        {
+          "address": "ram:1000004bc",
+          "file_offset": 1212,
+          "bytes": "081c0411",
+          "listing": "add w8,w0,#0x107",
+          "raw_pcode": [
+            "(unique, 0x22e00, 4) COPY (const, 0x107, 4)",
+            "(register, 0x105, 1) INT_CARRY (register, 0x4000, 4) , (unique, 0x22e00, 4)",
+            "(register, 0x106, 1) INT_SCARRY (register, 0x4000, 4) , (unique, 0x22e00, 4)",
+            "(unique, 0x23000, 4) INT_ADD (register, 0x4000, 4) , (unique, 0x22e00, 4)",
+            "(register, 0x107, 1) INT_SLESS (unique, 0x23000, 4) , (const, 0x0, 4)",
+            "(register, 0x108, 1) INT_EQUAL (unique, 0x23000, 4) , (const, 0x0, 4)",
+            "(register, 0x4040, 8) INT_ZEXT (unique, 0x23000, 4)"
+          ]
+        },
+        {
+          "address": "ram:1000004c0",
+          "file_offset": 1216,
+          "bytes": "09781f53",
+          "listing": "lsl w9,w0,#0x1",
+          "raw_pcode": [
+            "(unique, 0x4fe00, 4) INT_LEFT (register, 0x4000, 4) , (const, 0x1, 4)",
+            "(register, 0x4048, 8) INT_ZEXT (unique, 0x4fe00, 4)"
+          ]
+        },
+        {
+          "address": "ram:1000004c4",
+          "file_offset": 1220,
+          "bytes": "295d0111",
+          "listing": "add w9,w9,#0x57",
+          "raw_pcode": [
+            "(unique, 0x22e00, 4) COPY (const, 0x57, 4)",
+            "(register, 0x105, 1) INT_CARRY (register, 0x4048, 4) , (unique, 0x22e00, 4)",
+            "(register, 0x106, 1) INT_SCARRY (register, 0x4048, 4) , (unique, 0x22e00, 4)",
+            "(unique, 0x23000, 4) INT_ADD (register, 0x4048, 4) , (unique, 0x22e00, 4)",
+            "(register, 0x107, 1) INT_SLESS (unique, 0x23000, 4) , (const, 0x0, 4)",
+            "(register, 0x108, 1) INT_EQUAL (unique, 0x23000, 4) , (const, 0x0, 4)",
+            "(register, 0x4048, 8) INT_ZEXT (unique, 0x23000, 4)"
+          ]
+        },
+        {
+          "address": "ram:1000004c8",
+          "file_offset": 1224,
+          "bytes": "1fbc0271",
+          "listing": "cmp w0,#0xaf",
+          "raw_pcode": [
+            "(unique, 0x38b00, 4) COPY (const, 0xaf, 4)",
+            "(register, 0x105, 1) INT_LESSEQUAL (const, 0xaf, 4) , (register, 0x4000, 4)",
+            "(register, 0x106, 1) INT_SBORROW (register, 0x4000, 4) , (const, 0xaf, 4)",
+            "(unique, 0x38d00, 4) INT_SUB (register, 0x4000, 4) , (unique, 0x38b00, 4)",
+            "(register, 0x107, 1) INT_SLESS (unique, 0x38d00, 4) , (const, 0x0, 4)",
+            "(register, 0x108, 1) INT_EQUAL (unique, 0x38d00, 4) , (const, 0x0, 4)",
+            "(register, 0x100, 1) COPY (register, 0x107, 1)",
+            "(register, 0x101, 1) COPY (register, 0x108, 1)",
+            "(register, 0x102, 1) COPY (register, 0x105, 1)",
+            "(register, 0x103, 1) COPY (register, 0x106, 1)"
+          ]
+        },
+        {
+          "address": "ram:1000004cc",
+          "file_offset": 1228,
+          "bytes": "0881891a",
+          "listing": "csel w8,w8,w9,hi",
+          "raw_pcode": [
+            "(unique, 0x3400, 1) BOOL_NEGATE (register, 0x101, 1)",
+            "(unique, 0x3600, 1) BOOL_AND (register, 0x102, 1) , (unique, 0x3400, 1)",
+            "(unique, 0x3b300, 4) COPY (register, 0x4040, 4)",
+            " ---  CBRANCH (const, 0x2, 4) , (unique, 0x3600, 1)",
+            "(unique, 0x3b300, 4) COPY (register, 0x4048, 4)",
+            "(register, 0x4040, 8) INT_ZEXT (unique, 0x3b300, 4)"
+          ]
+        },
+        {
+          "address": "ram:1000004d0",
+          "file_offset": 1232,
+          "bytes": "0904000b",
+          "listing": "add w9,w0,w0, LSL #0x1",
+          "raw_pcode": [
+            "(unique, 0x7d00, 4) INT_LEFT (register, 0x4000, 4) , (const, 0x1, 4)",
+            "(unique, 0x23c00, 4) COPY (unique, 0x7d00, 4)",
+            "(register, 0x105, 1) INT_CARRY (register, 0x4000, 4) , (unique, 0x23c00, 4)",
+            "(register, 0x106, 1) INT_SCARRY (register, 0x4000, 4) , (unique, 0x23c00, 4)",
+            "(unique, 0x23e00, 4) INT_ADD (register, 0x4000, 4) , (unique, 0x23c00, 4)",
+            "(register, 0x107, 1) INT_SLESS (unique, 0x23e00, 4) , (const, 0x0, 4)",
+            "(register, 0x108, 1) INT_EQUAL (unique, 0x23e00, 4) , (const, 0x0, 4)",
+            "(register, 0x4048, 8) INT_ZEXT (unique, 0x23e00, 4)"
+          ]
+        },
+        {
+          "address": "ram:1000004d4",
+          "file_offset": 1236,
+          "bytes": "291d0011",
+          "listing": "add w9,w9,#0x7",
+          "raw_pcode": [
+            "(unique, 0x22e00, 4) COPY (const, 0x7, 4)",
+            "(register, 0x105, 1) INT_CARRY (register, 0x4048, 4) , (unique, 0x22e00, 4)",
+            "(register, 0x106, 1) INT_SCARRY (register, 0x4048, 4) , (unique, 0x22e00, 4)",
+            "(unique, 0x23000, 4) INT_ADD (register, 0x4048, 4) , (unique, 0x22e00, 4)",
+            "(register, 0x107, 1) INT_SLESS (unique, 0x23000, 4) , (const, 0x0, 4)",
+            "(register, 0x108, 1) INT_EQUAL (unique, 0x23000, 4) , (const, 0x0, 4)",
+            "(register, 0x4048, 8) INT_ZEXT (unique, 0x23000, 4)"
+          ]
+        },
+        {
+          "address": "ram:1000004d8",
+          "file_offset": 1240,
+          "bytes": "1f3c0171",
+          "listing": "cmp w0,#0x4f",
+          "raw_pcode": [
+            "(unique, 0x38b00, 4) COPY (const, 0x4f, 4)",
+            "(register, 0x105, 1) INT_LESSEQUAL (const, 0x4f, 4) , (register, 0x4000, 4)",
+            "(register, 0x106, 1) INT_SBORROW (register, 0x4000, 4) , (const, 0x4f, 4)",
+            "(unique, 0x38d00, 4) INT_SUB (register, 0x4000, 4) , (unique, 0x38b00, 4)",
+            "(register, 0x107, 1) INT_SLESS (unique, 0x38d00, 4) , (const, 0x0, 4)",
+            "(register, 0x108, 1) INT_EQUAL (unique, 0x38d00, 4) , (const, 0x0, 4)",
+            "(register, 0x100, 1) COPY (register, 0x107, 1)",
+            "(register, 0x101, 1) COPY (register, 0x108, 1)",
+            "(register, 0x102, 1) COPY (register, 0x105, 1)",
+            "(register, 0x103, 1) COPY (register, 0x106, 1)"
+          ]
+        },
+        {
+          "address": "ram:1000004dc",
+          "file_offset": 1244,
+          "bytes": "0081891a",
+          "listing": "csel w0,w8,w9,hi",
+          "raw_pcode": [
+            "(unique, 0x3400, 1) BOOL_NEGATE (register, 0x101, 1)",
+            "(unique, 0x3600, 1) BOOL_AND (register, 0x102, 1) , (unique, 0x3400, 1)",
+            "(unique, 0x3b300, 4) COPY (register, 0x4040, 4)",
+            " ---  CBRANCH (const, 0x2, 4) , (unique, 0x3600, 1)",
+            "(unique, 0x3b300, 4) COPY (register, 0x4048, 4)",
+            "(register, 0x4000, 8) INT_ZEXT (unique, 0x3b300, 4)"
+          ]
+        },
+        {
+          "address": "ram:1000004e0",
+          "file_offset": 1248,
+          "bytes": "c0035fd6",
+          "listing": "ret",
+          "raw_pcode": [
+            "(register, 0x0, 8) COPY (register, 0x40f0, 8)",
+            " ---  RETURN (register, 0x0, 8)"
+          ]
+        }
+      ],
+      "pseudocode": {
+        "status": "present",
+        "text": "\nint _quote(uint param_1)\n\n{\n  int iVar1;\n  \n  iVar1 = param_1 + 0x107;\n  if (param_1 < 0xb0) {\n    iVar1 = param_1 * 2 + 0x57;\n  }\n  if (param_1 < 0x50) {\n    iVar1 = param_1 * 3 + 7;\n  }\n  return iVar1;\n}\n\n"
+      },
+      "instructions_complete": true,
+      "name": "_quote"
+    }
+  ]
+}

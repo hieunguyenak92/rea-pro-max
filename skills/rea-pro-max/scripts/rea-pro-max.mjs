@@ -10,7 +10,9 @@ import { minimizeSequence, minimizeSequenceIsolated } from '../lib/reduction.mjs
 import { inspectArtifact } from '../lib/analysis/inspect.mjs';
 import { compareArtifacts } from '../lib/analysis/artifact-diff.mjs';
 import { compareApiContract } from '../lib/analysis/api-contract.mjs';
-import { compareWasmInterfaces, inspectWasmInterface, WASM_INTERFACE_LIMITS } from '../lib/analysis/wasm-interface.mjs';
+import { compareWasmBehavior, compareWasmInterfaces, inspectWasmInterface, WASM_BEHAVIOR_LIMITS, WASM_INTERFACE_LIMITS } from '../lib/analysis/wasm-interface.mjs';
+import { compareJarProfiles, JAR_PROFILE_LIMITS } from '../lib/analysis/jar-profiles.mjs';
+import { compareNativeRuns, importGhidraExport, NATIVE_LIMITS } from '../lib/native-recovery/native.mjs';
 import { compareDeploymentTargets, inspectDeploymentTargets, TARGET_LIMITS } from '../lib/analysis/deployment-targets.mjs';
 import { inspectPlaywrightEvidence } from '../lib/analysis/playwright-evidence.mjs';
 import { checkRelease, RELEASE_LIMITS } from '../lib/release-check.mjs';
@@ -97,11 +99,11 @@ export async function generateDemo(directory) {
 }
 async function main(tokens) {
   const { positionals: p, flags: f } = argumentsOf(tokens); const command = p.shift();
-  const expected = { inspect: 1, compare: 2, 'api-diff': 2, 'target-inspect': 1, 'target-diff': 2, 'wasm-inspect': 1, 'wasm-diff': 2, 'playwright-trace': 1, 'release-check': 1, report: 1, plan: 1, verify: 0, reconcile: 2, shrink: 0, recover: 1, demo: 0, prompts: 0, version: 0 };
+  const expected = { inspect: 1, compare: 2, 'api-diff': 2, 'target-inspect': 1, 'target-diff': 2, 'jar-profile-diff': 2, 'wasm-inspect': 1, 'wasm-diff': 2, 'wasm-behavior': 2, 'native-import-ghidra': 2, 'native-verify': 3, 'playwright-trace': 1, 'release-check': 1, report: 1, plan: 1, verify: 0, reconcile: 2, shrink: 0, recover: 1, demo: 0, prompts: 0, version: 0 };
   if (Object.hasOwn(expected, command) && p.length !== expected[command]) throw new RpmError('arguments', `Command ${command} expects ${expected[command]} positional arguments.`);
   for (const [key, value] of Object.entries(f)) if (value === true && key !== 'help') throw new RpmError('arguments', `Provide a value for --${key}.`);
   if (!command || command === 'help' || command === '--help') {
-    console.log(`REA Pro Max ${VERSION}\n\ninspect TARGET --out inspection.json\ncompare REFERENCE CANDIDATE [--scope scope.json] [--out diff.json]\napi-diff OPENAPI.json SAVED.har [--out coverage.json]\ntarget-inspect FILE [--out targets.json]\ntarget-diff REFERENCE CANDIDATE [--out changes.json]\nwasm-inspect MODULE.wasm [--out interface.json]\nwasm-diff REFERENCE.wasm CANDIDATE.wasm [--out abi.json]\nplaywright-trace ACTIONS.trace [--network ACTIONS.network] [--out trace.json]\nrelease-check POLICY.json [--out verdict.json]\nreport DATA.json --out report.html\ncase init --inspection inspection.json --goal TEXT --out case.json\ncase revise CASE.json --patch patch.json --revision NUMBER\ncase observe CASE.json --receipt observation.json --revision NUMBER\nplan CASE.json [--bindings bindings.json] [--budget NUMBER] [--out plan.json]\nverify --reference reference.json --candidate candidate.json [--contract contract.json] [--out verdict.json]\nreconcile inspection.json runtime.json --out reconciliation.json\nrecover PLAN.json --out recovery.json\nshrink --input actions.json --oracle ./owned-oracle.mjs [--max-tests NUMBER] [--timeout-ms NUMBER] [--out reduction.json]\nruntime doctor --browser ABSOLUTE_CHROMIUM\nruntime capture --extension DIRECTORY --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--timeout-ms NUMBER] [--out CAPTURE.json]\nweb capture --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--timeout-ms NUMBER] [--out CAPTURE.json]\nweb replay --reference-url URL --candidate-url URL --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--contract CONTRACT.json] [--timeout-ms NUMBER] [--out REPLAY.json]\ndemo --out NEW_DIRECTORY\nprompts [--target TARGET]\nmcp --workspace ABSOLUTE_DIRECTORY [--browser ABSOLUTE_CHROMIUM] [--craft-config FILE]\n\nInspect reads artifacts without executing them. Runtime capture executes only an explicitly selected MV3 extension in a disposable Chromium profile and records provider evidence; it is not an OS or network sandbox. Reconcile correlates literal MV3 service-worker channels with events from the same target digest. Saved receipts carry reported authority. Recover applies only hash-bound text patches from a declarative plan and replays the typed provider after every patch. Shrink runs the explicitly supplied oracle in a fresh child process per trial. Reports are local standalone HTML. Cases support one writer at a time.`); return;
+    console.log(`REA Pro Max ${VERSION}\n\ninspect TARGET --out inspection.json\ncompare REFERENCE CANDIDATE [--scope scope.json] [--out diff.json]\napi-diff OPENAPI.json SAVED.har [--out coverage.json]\ntarget-inspect FILE [--out targets.json]\ntarget-diff REFERENCE CANDIDATE [--out changes.json]\nwasm-inspect MODULE.wasm [--out interface.json]\nwasm-diff REFERENCE.wasm CANDIDATE.wasm [--out abi.json]\njar-profile-diff REFERENCE.jar CANDIDATE.jar --profiles 11,17 [--out members.json]\nwasm-behavior REFERENCE.wasm CANDIDATE.wasm --contract CONTRACT.json [--out behavior.json]\nnative-import-ghidra BINARY EXPORT.json [--out evidence.json]\nnative-verify REFERENCE.json CANDIDATE.json ORACLE.json [--out behavior.json]\nplaywright-trace ACTIONS.trace [--network ACTIONS.network] [--out trace.json]\nrelease-check POLICY.json [--out verdict.json]\nreport DATA.json --out report.html\ncase init --inspection inspection.json --goal TEXT --out case.json\ncase revise CASE.json --patch patch.json --revision NUMBER\ncase observe CASE.json --receipt observation.json --revision NUMBER\nplan CASE.json [--bindings bindings.json] [--budget NUMBER] [--out plan.json]\nverify --reference reference.json --candidate candidate.json [--contract contract.json] [--out verdict.json]\nreconcile inspection.json runtime.json --out reconciliation.json\nrecover PLAN.json --out recovery.json\nshrink --input actions.json --oracle ./owned-oracle.mjs [--max-tests NUMBER] [--timeout-ms NUMBER] [--out reduction.json]\nruntime doctor --browser ABSOLUTE_CHROMIUM\nruntime capture --extension DIRECTORY --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--timeout-ms NUMBER] [--out CAPTURE.json]\nweb capture --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--timeout-ms NUMBER] [--out CAPTURE.json]\nweb replay --reference-url URL --candidate-url URL --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--contract CONTRACT.json] [--timeout-ms NUMBER] [--out REPLAY.json]\ndemo --out NEW_DIRECTORY\nprompts [--target TARGET]\nmcp --workspace ABSOLUTE_DIRECTORY [--browser ABSOLUTE_CHROMIUM] [--craft-config FILE]\n\nInspect reads artifacts without executing them. Runtime capture executes only an explicitly selected MV3 extension in a disposable Chromium profile and records provider evidence; it is not an OS or network sandbox. Reconcile correlates literal MV3 service-worker channels with events from the same target digest. Saved receipts carry reported authority. Recover applies only hash-bound text patches from a declarative plan and replays the typed provider after every patch. Shrink runs the explicitly supplied oracle in a fresh child process per trial. Reports are local standalone HTML. Cases support one writer at a time.`); return;
   }
   if (command === 'mcp') { accepted(f, ['workspace', 'browser', 'craft-config']); if (p.length) throw new RpmError('arguments', 'mcp takes --workspace DIRECTORY.'); const { startServer } = await import('./mcp-server.mjs'); await startServer(requireValue(f.workspace, '--workspace DIRECTORY'), f.browser, f['craft-config']); return; }
   if (command === 'runtime') {
@@ -170,6 +172,36 @@ async function main(tokens) {
     const result = command === 'wasm-inspect' ? inspectWasmInterface(bytes[0]) : compareWasmInterfaces(...bytes);
     output(result, f.out);
     process.exitCode = result.status === 'unknown' ? 3 : result.status === 'changed-interface' ? 2 : 0;
+    return;
+  }
+  if (command === 'jar-profile-diff') {
+    accepted(f, ['out', 'profiles']);
+    const profiles = requireValue(f.profiles, '--profiles JAVA_MAJOR[,JAVA_MAJOR...]');
+    if (!/^\d{1,2}(,\d{1,2}){0,7}$/u.test(profiles)) {
+      throw new RpmError('arguments', 'Provide up to eight comma-separated Java feature versions.');
+    }
+    const [reference, candidate] = p.map(path => readBoundedBytes(path, JAR_PROFILE_LIMITS.max_file_bytes));
+    const result = compareJarProfiles(reference, candidate, profiles.split(',').map(Number));
+    output(result, f.out);
+    process.exitCode = result.status === 'unknown' ? 3 : result.status === 'different' ? 2 : 0;
+    return;
+  }
+  if (command === 'wasm-behavior') {
+    accepted(f, ['out', 'contract']);
+    const contract = readJson(requireValue(f.contract, '--contract FILE'), 64 * 1024);
+    const [reference, candidate] = p.map(path => readBoundedBytes(path, WASM_BEHAVIOR_LIMITS.max_file_bytes));
+    const result = compareWasmBehavior(reference, candidate, contract);
+    output(result, f.out);
+    process.exitCode = result.status === 'fail' ? 2 : result.status === 'unknown' ? 3 : 0;
+    return;
+  }
+  if (command === 'native-import-ghidra' || command === 'native-verify') {
+    accepted(f, ['out']);
+    const result = command === 'native-import-ghidra'
+      ? importGhidraExport(readBoundedBytes(p[0], NATIVE_LIMITS.binary_bytes), readJson(p[1], NATIVE_LIMITS.export_bytes))
+      : compareNativeRuns(...p.map(path => readJson(path, NATIVE_LIMITS.export_bytes)));
+    output(result, f.out);
+    process.exitCode = result.status === 'unknown' ? 3 : result.status === 'fail' ? 2 : 0;
     return;
   }
   if (command === 'playwright-trace') {

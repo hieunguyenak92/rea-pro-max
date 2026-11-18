@@ -274,7 +274,17 @@ export function normalizeWebRecoveryIR(value = {}) {
   if (result.kind !== WEB_RECOVERY_KIND) fail('web_ir_type', `kind must be ${WEB_RECOVERY_KIND}.`);
   const observations = source.observations ?? source.capture?.observations ?? [];
   if (!Array.isArray(observations) || observations.length > LIMITS.maxObservations) fail('web_observation_type', `observations must be an array of at most ${LIMITS.maxObservations} items.`);
-  result.observations = observations.map(normalizeObservation);
+  const legacyRuntime = source.metadata?.environment_normalization === 'Origin and port are excluded from bounded URL observations; path/query/hash remain compared.' &&
+    source.metadata?.network_observation !== 'cdp-action-window-v1';
+  result.observations = observations.map((observation, index) => {
+    const normalized = normalizeObservation(observation, index);
+    if (legacyRuntime) {
+      delete normalized.network;
+      if (normalized.coverage.channels) normalized.coverage.channels = normalized.coverage.channels.filter(channel => channel !== 'network');
+      normalized.metadata = { ...normalized.metadata, network_issues: ['legacy_runtime_without_network_observer'] };
+    }
+    return normalized;
+  });
   const observationIds = new Set();
   for (const observation of result.observations) {
     if (observationIds.has(observation.id)) fail('duplicate_observation', `Observation ID ${observation.id} is repeated.`);
@@ -290,6 +300,7 @@ export function normalizeWebRecoveryIR(value = {}) {
   if (source.coverage === undefined && result.actions.length) {
     result.coverage = { complete: result.observations.length >= result.actions.length, action_ids: result.observations.flatMap(item => item.action_id ? [item.action_id] : []), channels: [...OBSERVATION_CHANNELS] };
   }
+  if (legacyRuntime && result.coverage.channels) result.coverage.channels = result.coverage.channels.filter(channel => channel !== 'network');
   return result;
 }
 
@@ -325,16 +336,22 @@ export function captureToWebIR(capture, options = {}) {
       ? Object.fromEntries(Object.entries(output).filter(([key]) => key !== 'screenshot_sha256'))
       : output;
     const state = own(item, 'state') ? item.state : null;
-    const effects = own(item, 'effects') ? item.effects : [];
+    const networkObserved = item.network?.complete === true && Array.isArray(item.network.requests) &&
+      Array.isArray(item.network.issues) && item.network.issues.length === 0 && Number.isFinite(item.network.duration_ms);
+    const network = networkObserved
+      ? { summary: item.network.requests.map(({ method, path }) => ({ method, path })) }
+      : undefined;
     const screenshot = item.screenshot_sha256 ?? item.output?.screenshot_sha256 ?? capture.screenshot_sha256 ?? options.screenshot_sha256;
     return {
       id: item.id ?? `observation-${index + 1}`,
       action_id: item.id ?? actions[index]?.id,
       dom: { summary: domSummary },
-      network: { summary: effects },
+      ...(network === undefined ? {} : { network }),
       storage: { summary: state },
       ...(screenshot === undefined ? {} : { visual: { artifact_hash: screenshot } }),
       complete: item.complete !== false,
+      coverage: { channels: ['dom', 'storage', ...(screenshot === undefined ? [] : ['visual']), ...(network ? ['network'] : [])] },
+      metadata: { network_issues: networkObserved ? [] : item.network?.issues?.length ? item.network.issues : ['legacy_runtime_without_network_observer'] },
       authority: options.authority ?? 'controlled',
       unknowns: item.complete === false ? [{ code: 'runtime_case_incomplete', detail: 'The runtime receipt did not complete this action.', action_id: item.id ?? actions[index]?.id }] : [],
     };
@@ -348,8 +365,13 @@ export function captureToWebIR(capture, options = {}) {
     route: options.route ?? '/', state: options.state ?? {}, viewport: options.viewport ?? { width: 1280, height: 720, dpr: 1 },
     actions, observations, identities: { target, candidate: options.candidate_identity ?? null },
     authority: options.authority ?? 'controlled',
-    coverage: { complete: capture.complete !== false && receipt.complete !== false && observations.every(item => item.complete), action_ids: actions.map(item => item.id), channels: [...OBSERVATION_CHANNELS] },
+    coverage: {
+      complete: capture.complete !== false && receipt.complete !== false && observations.every(item => item.complete),
+      action_ids: actions.map(item => item.id),
+      channels: OBSERVATION_CHANNELS.filter(channel => observations.length && observations.every(item => item.coverage.channels.includes(channel))),
+    },
     unknowns,
+    metadata: { network_observation: 'cdp-action-window-v1', ...(capture.kind === 'web-runtime-capture' ? { target_identity_kind: 'url-locator' } : {}) },
   };
   return normalizeWebRecoveryIR(result);
 }

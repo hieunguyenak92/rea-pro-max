@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "engine_version": "1.0.0",
+  "date": "2026-11-19",
+  "browser_toolchain": {
+    "provider": "rpm-chromium-web-v1",
+    "browser": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/156.0.8078.4",
+      "revision": "@f842f52ef39fd97b449eb27cff414bf05a98ddce",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "jsVersion": "15.6.75"
+    },
+    "node": "v22.23.0",
+    "platform": "darwin",
+    "architecture": "arm64"
+  },
+  "independent_post_counter": [
+    {
+      "mode": "default",
+      "cliExit": 2,
+      "behavior": "fail",
+      "visual": "pass",
+      "referenceCount": 1,
+      "candidateCount": 0,
+      "required": [
+        "dom",
+        "network",
+        "storage"
+      ]
+    },
+    {
+      "mode": "network",
+      "cliExit": 2,
+      "behavior": "fail",
+      "visual": "pass",
+      "referenceCount": 1,
+      "candidateCount": 0,
+      "required": [
+        "network"
+      ]
+    }
+  ],
+  "persistence": {
+    "full_local_record_sha256": "8163f140fa3f20406e45f2ebe2df2829c932d6ee1d7fd34175d55a7115a53e0d",
+    "status": "pass",
+    "cases": [
+      {
+        "mode": "reference",
+        "verdict": "pass",
+        "restarted": true,
+        "revision_in_response_order": [
+          1,
+          3,
+          2
+        ],
+        "write_build_sha256": "0dfb832b2efa4d5627e0065e6eba5ba11d8c11f803d5a3f97cbbed7c7b7a2667",
+        "read_build_sha256": "0dfb832b2efa4d5627e0065e6eba5ba11d8c11f803d5a3f97cbbed7c7b7a2667",
+        "readback": {
+          "id": "read",
+          "text": "Preference recovery lab\nPreference  Save Save overlapping revisions Read saved preference\n\nviolet",
+          "source": {
+            "path": "preferences.mjs",
+            "line": 22
+          },
+          "status": 200,
+          "persisted_revision": 3,
+          "persisted_value": "violet"
+        }
+      },
+      {
+        "mode": "recovered",
+        "verdict": "pass",
+        "restarted": true,
+        "revision_in_response_order": [
+          1,
+          3,
+          2
+        ],
+        "write_build_sha256": "be4fb35336724eb646cb48339349d0861f17b2a8dd9368b1485e35e51ab15218",
+        "read_build_sha256": "be4fb35336724eb646cb48339349d0861f17b2a8dd9368b1485e35e51ab15218",
+        "readback": {
+          "id": "read",
+          "text": "Preference recovery lab\nPreference  Save Save overlapping revisions Read saved preference\n\nviolet",
+          "source": {
+            "path": "preferences.mjs",
+            "line": 22
+          },
+          "status": 200,
+          "persisted_revision": 3,
+          "persisted_value": "violet"
+        }
+      },
+      {
+        "mode": "stale",
+        "verdict": "fail",
+        "restarted": true,
+        "revision_in_response_order": [
+          1,
+          3,
+          2
+        ],
+        "write_build_sha256": "c65f511707731670fb2eb20cca004ea95834d7b9c8d1f75c9e6e681fd604bf39",
+        "read_build_sha256": "c65f511707731670fb2eb20cca004ea95834d7b9c8d1f75c9e6e681fd604bf39",
+        "readback": {
+          "id": "read",
+          "text": "Preference recovery lab\nPreference  Save Save overlapping revisions Read saved preference\n\nNo saved preference",
+          "source": {
+            "path": "preferences.mjs",
+            "line": 22
+          },
+          "status": 404,
+          "persisted_revision": null,
+          "persisted_value": null
+        }
+      }
+    ]
+  }
+}

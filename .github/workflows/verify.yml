@@ -55,3 +55,32 @@ jobs:
             dist/rea-pro-max-*.zip
             dist/SHA256SUMS
           if-no-files-found: error
+
+  owned-runtime:
+    name: Owned browser, Java and native workloads / Ubuntu x64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Compare selected JAR members against the JVM
+        run: RPM_JAVA_HOME="$JAVA_HOME" node --test tests/jar-profiles.test.mjs
+      - name: Run real browser observations and verify persistent readback
+        run: |
+          export RPM_BROWSER_EXECUTABLE="$(command -v google-chrome)"
+          test -x "$RPM_BROWSER_EXECUTABLE"
+          node --test tests/runtime-web.test.mjs
+          node skills/rea-pro-max/assets/labs/web-persistence/verify.mjs
+      - name: Compile and verify the owned native reconstruction
+        run: node skills/rea-pro-max/assets/labs/native-recovery/run.mjs --out "$RUNNER_TEMP/rpm-native"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-verification-ubuntu-x64
+          path: ${{ runner.temp }}/rpm-native
+          if-no-files-found: error

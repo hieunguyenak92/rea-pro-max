@@ -1,0 +1,1055 @@
+{
+  "schema_version": 1,
+  "kind": "rpm-native-run",
+  "contract": "rpm-native-u8-u16-v1",
+  "complete": true,
+  "rows": [
+    {
+      "input": 0,
+      "output": 7
+    },
+    {
+      "input": 1,
+      "output": 10
+    },
+    {
+      "input": 2,
+      "output": 13
+    },
+    {
+      "input": 3,
+      "output": 16
+    },
+    {
+      "input": 4,
+      "output": 19
+    },
+    {
+      "input": 5,
+      "output": 22
+    },
+    {
+      "input": 6,
+      "output": 25
+    },
+    {
+      "input": 7,
+      "output": 28
+    },
+    {
+      "input": 8,
+      "output": 31
+    },
+    {
+      "input": 9,
+      "output": 34
+    },
+    {
+      "input": 10,
+      "output": 37
+    },
+    {
+      "input": 11,
+      "output": 40
+    },
+    {
+      "input": 12,
+      "output": 43
+    },
+    {
+      "input": 13,
+      "output": 46
+    },
+    {
+      "input": 14,
+      "output": 49
+    },
+    {
+      "input": 15,
+      "output": 52
+    },
+    {
+      "input": 16,
+      "output": 55
+    },
+    {
+      "input": 17,
+      "output": 58
+    },
+    {
+      "input": 18,
+      "output": 61
+    },
+    {
+      "input": 19,
+      "output": 64
+    },
+    {
+      "input": 20,
+      "output": 67
+    },
+    {
+      "input": 21,
+      "output": 70
+    },
+    {
+      "input": 22,
+      "output": 73
+    },
+    {
+      "input": 23,
+      "output": 76
+    },
+    {
+      "input": 24,
+      "output": 79
+    },
+    {
+      "input": 25,
+      "output": 82
+    },
+    {
+      "input": 26,
+      "output": 85
+    },
+    {
+      "input": 27,
+      "output": 88
+    },
+    {
+      "input": 28,
+      "output": 91
+    },
+    {
+      "input": 29,
+      "output": 94
+    },
+    {
+      "input": 30,
+      "output": 97
+    },
+    {
+      "input": 31,
+      "output": 100
+    },
+    {
+      "input": 32,
+      "output": 103
+    },
+    {
+      "input": 33,
+      "output": 106
+    },
+    {
+      "input": 34,
+      "output": 109
+    },
+    {
+      "input": 35,
+      "output": 112
+    },
+    {
+      "input": 36,
+      "output": 115
+    },
+    {
+      "input": 37,
+      "output": 118
+    },
+    {
+      "input": 38,
+      "output": 121
+    },
+    {
+      "input": 39,
+      "output": 124
+    },
+    {
+      "input": 40,
+      "output": 127
+    },
+    {
+      "input": 41,
+      "output": 130
+    },
+    {
+      "input": 42,
+      "output": 133
+    },
+    {
+      "input": 43,
+      "output": 136
+    },
+    {
+      "input": 44,
+      "output": 139
+    },
+    {
+      "input": 45,
+      "output": 142
+    },
+    {
+      "input": 46,
+      "output": 145
+    },
+    {
+      "input": 47,
+      "output": 148
+    },
+    {
+      "input": 48,
+      "output": 151
+    },
+    {
+      "input": 49,
+      "output": 154
+    },
+    {
+      "input": 50,
+      "output": 157
+    },
+    {
+      "input": 51,
+      "output": 160
+    },
+    {
+      "input": 52,
+      "output": 163
+    },
+    {
+      "input": 53,
+      "output": 166
+    },
+    {
+      "input": 54,
+      "output": 169
+    },
+    {
+      "input": 55,
+      "output": 172
+    },
+    {
+      "input": 56,
+      "output": 175
+    },
+    {
+      "input": 57,
+      "output": 178
+    },
+    {
+      "input": 58,
+      "output": 181
+    },
+    {
+      "input": 59,
+      "output": 184
+    },
+    {
+      "input": 60,
+      "output": 187
+    },
+    {
+      "input": 61,
+      "output": 190
+    },
+    {
+      "input": 62,
+      "output": 193
+    },
+    {
+      "input": 63,
+      "output": 196
+    },
+    {
+      "input": 64,
+      "output": 199
+    },
+    {
+      "input": 65,
+      "output": 202
+    },
+    {
+      "input": 66,
+      "output": 205
+    },
+    {
+      "input": 67,
+      "output": 208
+    },
+    {
+      "input": 68,
+      "output": 211
+    },
+    {
+      "input": 69,
+      "output": 214
+    },
+    {
+      "input": 70,
+      "output": 217
+    },
+    {
+      "input": 71,
+      "output": 220
+    },
+    {
+      "input": 72,
+      "output": 223
+    },
+    {
+      "input": 73,
+      "output": 226
+    },
+    {
+      "input": 74,
+      "output": 229
+    },
+    {
+      "input": 75,
+      "output": 232
+    },
+    {
+      "input": 76,
+      "output": 235
+    },
+    {
+      "input": 77,
+      "output": 238
+    },
+    {
+      "input": 78,
+      "output": 241
+    },
+    {
+      "input": 79,
+      "output": 244
+    },
+    {
+      "input": 80,
+      "output": 247
+    },
+    {
+      "input": 81,
+      "output": 249
+    },
+    {
+      "input": 82,
+      "output": 251
+    },
+    {
+      "input": 83,
+      "output": 253
+    },
+    {
+      "input": 84,
+      "output": 255
+    },
+    {
+      "input": 85,
+      "output": 257
+    },
+    {
+      "input": 86,
+      "output": 259
+    },
+    {
+      "input": 87,
+      "output": 261
+    },
+    {
+      "input": 88,
+      "output": 263
+    },
+    {
+      "input": 89,
+      "output": 265
+    },
+    {
+      "input": 90,
+      "output": 267
+    },
+    {
+      "input": 91,
+      "output": 269
+    },
+    {
+      "input": 92,
+      "output": 271
+    },
+    {
+      "input": 93,
+      "output": 273
+    },
+    {
+      "input": 94,
+      "output": 275
+    },
+    {
+      "input": 95,
+      "output": 277
+    },
+    {
+      "input": 96,
+      "output": 279
+    },
+    {
+      "input": 97,
+      "output": 281
+    },
+    {
+      "input": 98,
+      "output": 283
+    },
+    {
+      "input": 99,
+      "output": 285
+    },
+    {
+      "input": 100,
+      "output": 287
+    },
+    {
+      "input": 101,
+      "output": 289
+    },
+    {
+      "input": 102,
+      "output": 291
+    },
+    {
+      "input": 103,
+      "output": 293
+    },
+    {
+      "input": 104,
+      "output": 295
+    },
+    {
+      "input": 105,
+      "output": 297
+    },
+    {
+      "input": 106,
+      "output": 299
+    },
+    {
+      "input": 107,
+      "output": 301
+    },
+    {
+      "input": 108,
+      "output": 303
+    },
+    {
+      "input": 109,
+      "output": 305
+    },
+    {
+      "input": 110,
+      "output": 307
+    },
+    {
+      "input": 111,
+      "output": 309
+    },
+    {
+      "input": 112,
+      "output": 311
+    },
+    {
+      "input": 113,
+      "output": 313
+    },
+    {
+      "input": 114,
+      "output": 315
+    },
+    {
+      "input": 115,
+      "output": 317
+    },
+    {
+      "input": 116,
+      "output": 319
+    },
+    {
+      "input": 117,
+      "output": 321
+    },
+    {
+      "input": 118,
+      "output": 323
+    },
+    {
+      "input": 119,
+      "output": 325
+    },
+    {
+      "input": 120,
+      "output": 327
+    },
+    {
+      "input": 121,
+      "output": 329
+    },
+    {
+      "input": 122,
+      "output": 331
+    },
+    {
+      "input": 123,
+      "output": 333
+    },
+    {
+      "input": 124,
+      "output": 335
+    },
+    {
+      "input": 125,
+      "output": 337
+    },
+    {
+      "input": 126,
+      "output": 339
+    },
+    {
+      "input": 127,
+      "output": 341
+    },
+    {
+      "input": 128,
+      "output": 343
+    },
+    {
+      "input": 129,
+      "output": 345
+    },
+    {
+      "input": 130,
+      "output": 347
+    },
+    {
+      "input": 131,
+      "output": 349
+    },
+    {
+      "input": 132,
+      "output": 351
+    },
+    {
+      "input": 133,
+      "output": 353
+    },
+    {
+      "input": 134,
+      "output": 355
+    },
+    {
+      "input": 135,
+      "output": 357
+    },
+    {
+      "input": 136,
+      "output": 359
+    },
+    {
+      "input": 137,
+      "output": 361
+    },
+    {
+      "input": 138,
+      "output": 363
+    },
+    {
+      "input": 139,
+      "output": 365
+    },
+    {
+      "input": 140,
+      "output": 367
+    },
+    {
+      "input": 141,
+      "output": 369
+    },
+    {
+      "input": 142,
+      "output": 371
+    },
+    {
+      "input": 143,
+      "output": 373
+    },
+    {
+      "input": 144,
+      "output": 375
+    },
+    {
+      "input": 145,
+      "output": 377
+    },
+    {
+      "input": 146,
+      "output": 379
+    },
+    {
+      "input": 147,
+      "output": 381
+    },
+    {
+      "input": 148,
+      "output": 383
+    },
+    {
+      "input": 149,
+      "output": 385
+    },
+    {
+      "input": 150,
+      "output": 387
+    },
+    {
+      "input": 151,
+      "output": 389
+    },
+    {
+      "input": 152,
+      "output": 391
+    },
+    {
+      "input": 153,
+      "output": 393
+    },
+    {
+      "input": 154,
+      "output": 395
+    },
+    {
+      "input": 155,
+      "output": 397
+    },
+    {
+      "input": 156,
+      "output": 399
+    },
+    {
+      "input": 157,
+      "output": 401
+    },
+    {
+      "input": 158,
+      "output": 403
+    },
+    {
+      "input": 159,
+      "output": 405
+    },
+    {
+      "input": 160,
+      "output": 407
+    },
+    {
+      "input": 161,
+      "output": 409
+    },
+    {
+      "input": 162,
+      "output": 411
+    },
+    {
+      "input": 163,
+      "output": 413
+    },
+    {
+      "input": 164,
+      "output": 415
+    },
+    {
+      "input": 165,
+      "output": 417
+    },
+    {
+      "input": 166,
+      "output": 419
+    },
+    {
+      "input": 167,
+      "output": 421
+    },
+    {
+      "input": 168,
+      "output": 423
+    },
+    {
+      "input": 169,
+      "output": 425
+    },
+    {
+      "input": 170,
+      "output": 427
+    },
+    {
+      "input": 171,
+      "output": 429
+    },
+    {
+      "input": 172,
+      "output": 431
+    },
+    {
+      "input": 173,
+      "output": 433
+    },
+    {
+      "input": 174,
+      "output": 435
+    },
+    {
+      "input": 175,
+      "output": 437
+    },
+    {
+      "input": 176,
+      "output": 439
+    },
+    {
+      "input": 177,
+      "output": 440
+    },
+    {
+      "input": 178,
+      "output": 441
+    },
+    {
+      "input": 179,
+      "output": 442
+    },
+    {
+      "input": 180,
+      "output": 443
+    },
+    {
+      "input": 181,
+      "output": 444
+    },
+    {
+      "input": 182,
+      "output": 445
+    },
+    {
+      "input": 183,
+      "output": 446
+    },
+    {
+      "input": 184,
+      "output": 447
+    },
+    {
+      "input": 185,
+      "output": 448
+    },
+    {
+      "input": 186,
+      "output": 449
+    },
+    {
+      "input": 187,
+      "output": 450
+    },
+    {
+      "input": 188,
+      "output": 451
+    },
+    {
+      "input": 189,
+      "output": 452
+    },
+    {
+      "input": 190,
+      "output": 453
+    },
+    {
+      "input": 191,
+      "output": 454
+    },
+    {
+      "input": 192,
+      "output": 455
+    },
+    {
+      "input": 193,
+      "output": 456
+    },
+    {
+      "input": 194,
+      "output": 457
+    },
+    {
+      "input": 195,
+      "output": 458
+    },
+    {
+      "input": 196,
+      "output": 459
+    },
+    {
+      "input": 197,
+      "output": 460
+    },
+    {
+      "input": 198,
+      "output": 461
+    },
+    {
+      "input": 199,
+      "output": 462
+    },
+    {
+      "input": 200,
+      "output": 463
+    },
+    {
+      "input": 201,
+      "output": 464
+    },
+    {
+      "input": 202,
+      "output": 465
+    },
+    {
+      "input": 203,
+      "output": 466
+    },
+    {
+      "input": 204,
+      "output": 467
+    },
+    {
+      "input": 205,
+      "output": 468
+    },
+    {
+      "input": 206,
+      "output": 469
+    },
+    {
+      "input": 207,
+      "output": 470
+    },
+    {
+      "input": 208,
+      "output": 471
+    },
+    {
+      "input": 209,
+      "output": 472
+    },
+    {
+      "input": 210,
+      "output": 473
+    },
+    {
+      "input": 211,
+      "output": 474
+    },
+    {
+      "input": 212,
+      "output": 475
+    },
+    {
+      "input": 213,
+      "output": 476
+    },
+    {
+      "input": 214,
+      "output": 477
+    },
+    {
+      "input": 215,
+      "output": 478
+    },
+    {
+      "input": 216,
+      "output": 479
+    },
+    {
+      "input": 217,
+      "output": 480
+    },
+    {
+      "input": 218,
+      "output": 481
+    },
+    {
+      "input": 219,
+      "output": 482
+    },
+    {
+      "input": 220,
+      "output": 483
+    },
+    {
+      "input": 221,
+      "output": 484
+    },
+    {
+      "input": 222,
+      "output": 485
+    },
+    {
+      "input": 223,
+      "output": 486
+    },
+    {
+      "input": 224,
+      "output": 487
+    },
+    {
+      "input": 225,
+      "output": 488
+    },
+    {
+      "input": 226,
+      "output": 489
+    },
+    {
+      "input": 227,
+      "output": 490
+    },
+    {
+      "input": 228,
+      "output": 491
+    },
+    {
+      "input": 229,
+      "output": 492
+    },
+    {
+      "input": 230,
+      "output": 493
+    },
+    {
+      "input": 231,
+      "output": 494
+    },
+    {
+      "input": 232,
+      "output": 495
+    },
+    {
+      "input": 233,
+      "output": 496
+    },
+    {
+      "input": 234,
+      "output": 497
+    },
+    {
+      "input": 235,
+      "output": 498
+    },
+    {
+      "input": 236,
+      "output": 499
+    },
+    {
+      "input": 237,
+      "output": 500
+    },
+    {
+      "input": 238,
+      "output": 501
+    },
+    {
+      "input": 239,
+      "output": 502
+    },
+    {
+      "input": 240,
+      "output": 503
+    },
+    {
+      "input": 241,
+      "output": 504
+    },
+    {
+      "input": 242,
+      "output": 505
+    },
+    {
+      "input": 243,
+      "output": 506
+    },
+    {
+      "input": 244,
+      "output": 507
+    },
+    {
+      "input": 245,
+      "output": 508
+    },
+    {
+      "input": 246,
+      "output": 509
+    },
+    {
+      "input": 247,
+      "output": 510
+    },
+    {
+      "input": 248,
+      "output": 511
+    },
+    {
+      "input": 249,
+      "output": 512
+    },
+    {
+      "input": 250,
+      "output": 513
+    },
+    {
+      "input": 251,
+      "output": 514
+    },
+    {
+      "input": 252,
+      "output": 515
+    },
+    {
+      "input": 253,
+      "output": 516
+    },
+    {
+      "input": 254,
+      "output": 517
+    },
+    {
+      "input": 255,
+      "output": 518
+    }
+  ],
+  "build": {
+    "binary_sha256": "687c17b6bd7f3e4f3cc3f9daad3f38455059e50940f70a17d30743b431acd939",
+    "implementation_sha256": "684b36cf2fb545c8d29c3a82b0bc7c7515d592c0734acbfbbe55d5b783f20867",
+    "harness_sha256": "92bd38aa3d0489dc788eb8a78490b65bb1d2949083a874ddd445c96076a29c7c",
+    "compiler": "Apple clang version 17.0.0 (clang-1700.4.4.1)",
+    "flags": [
+      "-std=c11",
+      "-O2",
+      "-g0",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-arch",
+      "arm64"
+    ]
+  },
+  "runtime": {
+    "architecture": "arm64",
+    "os": "darwin",
+    "os_release": "25.1.0",
+    "mode": "native",
+    "host_architecture": "arm64"
+  }
+}

@@ -10,7 +10,7 @@ The MCP server requires an existing explicit workspace. Its client-selected inpu
 
 Inspection/case/plan/verdict/lab handles live in a bounded in-memory cache, limited to16 artifacts and32MiB of serialized data. Restarted or evicted handles are unavailable; export a case and import it to resume. There is no automatic persistent session database or background upload.
 
-`run_owned_lab` executes only fixed bundled owned scripts under simulated Chrome APIs. Runtime is disabled unless the server is started with an explicit `--browser` executable. The dedicated `capture_feature` and `replay_feature` tools then execute workspace-selected MV3 extensions implementing the documented protocol. No arbitrary shell, generic oracle module or native/mobile provider tool is exposed. The executable is startup configuration, not a client-selected tool argument.
+`run_owned_lab` executes fixed bundled scripts under simulated Chrome APIs. Chromium execution requires an explicit `--browser` executable at server startup. The Wasm behavior check is available offline without browser setup. It evaluates only the validated, bounded i32 subset. The native tools compare saved files and leave execution to the separately invoked owned example.
 
 ## What is read and written
 
@@ -19,6 +19,9 @@ Inspection/case/plan/verdict/lab handles live in a bounded in-memory cache, limi
 | `inspect` | Reads selected regular files, validates supported ZIP members in memory and parses source without launching it. Symlinks are rejected. |
 | `compare` / `compare_artifacts` | Reads two local snapshots and emits hashes, relative file paths and scoped differences. |
 | `api-diff` / `compare_api_contract` | Reads OpenAPI JSON and a saved HAR. Output retains contract paths and HAR entry indices and omits the concrete traffic values. |
+| `jar-profile-diff` / `compare_jar_profiles` | Reads two JARs and returns effective class paths, declarations and content hashes for explicit Java versions. No JVM is launched. |
+| `wasm-behavior` / `compare_wasm_behavior` | Evaluates declared signed i32 inputs in a bounded stateless core subset without imports or start functions. Retains inputs and returns or trap occurrences. |
+| Native import and verification | Reads a saved Ghidra export, binary bytes, or native run receipts. Retains bound instruction bytes, provider output or finite mismatches. |
 | Case commands | Read/write the named case and patch/observation files. The workflow assumes one writer at a time and uses explicit revisions. |
 | `plan` | Reads supplied hypotheses, capabilities, constraints, observations and current bindings; produces a ranking. It does not execute probes. |
 | `verify` | Compares supplied behavior records and contract data. It does not attach to the target, run the candidate or authenticate the origin of receipts. |

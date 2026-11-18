@@ -8,13 +8,17 @@
 
 [探索已记录的实验](https://hieunguyenak92.github.io/rea-pro-max/#explorer) · [安装技能](../INSTALL.md) · [验证记录](../VALIDATION.md) · [发行版本](https://github.com/hieunguyenak92/rea-pro-max/releases)
 
-**v0.8 可以找出新构建放弃了哪些运行环境。** 使用 `target-diff` 比较两个 Mach-O 文件或两个 Java 类文件，即可查看删除的架构、提高的最低系统版本或 Java 预览功能要求的变化。随附示例允许修改文件，但当最低 Java 版本从 11 升至 17 时，CI 仍会报错。检查只读取文件声明，无需运行程序；证据不足时返回 `unknown`。 [英文复现示例](../NATIVE-TARGETS.md)
+**v1.0 可以找出新构建放弃了哪些运行环境。** 使用 `target-diff` 比较两个 Mach-O 文件或两个 Java 类文件，即可查看删除的架构、提高的最低系统版本或 Java 预览功能要求的变化。随附示例允许修改文件，但当最低 Java 版本从 11 升至 17 时，CI 仍会报错。检查只读取文件声明，无需运行程序；证据不足时返回 `unknown`。 [英文复现示例](../NATIVE-TARGETS.md)
 
 ![REA Pro Max — Understand the mechanism](../media/hero.png)
 
 ![自有合成实验中的真实 REA Pro Max 工作台](../media/workbench.png)
 
 *这是使用模拟 Chrome API 的 JavaScript 模型所生成的真实报告，不是真实 Chromium 生命周期的证据。*
+
+## 1.0 的新功能
+
+针对指定 Java 版本比较多版本 JAR 实际选择的类，并使用声明的输入比较受限 Wasm i32 函数的输出。Chromium 重放按操作记录网络覆盖，并报告缺失的证据。保存示例将操作与服务器记录关联，并验证服务器重启后的读取结果。原生分析支持导入 Ghidra 12.2 导出文件，并对有限输入域的运行记录进行比较。 [示例与技术范围（英文）](../VERIFIED-RECOVERY.md)
 
 ## 让保存经得住真正的 worker 重启
 
@@ -30,7 +34,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **交付物是可以运行的代码，以及可以核验的证据。** 该 provider 目前只检查文档化的 `rpm-kv-v1` 消息协议和选定的重置边界，不会自动重建任意扩展。原始证据保留 boot ID；比较时仅排除这一已声明的观察字段。消息 receipt 不证明未观察的 UI、网络或文件副作用。
 
-MCP 提供 **31 个工具**。运行时默认关闭。注册服务器时添加 `--browser "/absolute/path/to/chromium"`，即可启用 `capture_feature`、`replay_feature` 和 `run_recovery`。Chromium 使用独立的临时配置，宿主智能体负责编写修复代码。当 SHA-256 确认已静态检查的 MV3 扩展与同一 MCP 会话捕获的扩展一致时，`reconcile_runtime` 会对照服务工作线程的消息通道，并保留有歧义的通道和未匹配的事件。`read_source_evidence` 重新校验哈希后返回长度受限的源码片段。结果列明已读取、排除及未解析的文件。TypeScript 和 JSX 的语义分析暂未支持。
+MCP 提供 **35 个工具**。Chromium 执行默认关闭。注册服务器时添加 `--browser "/absolute/path/to/chromium"`，即可启用 `capture_feature`、`replay_feature` 和 `run_recovery`。Chromium 使用独立的临时配置，宿主智能体负责编写修复代码。当 SHA-256 确认已静态检查的 MV3 扩展与同一 MCP 会话捕获的扩展一致时，`reconcile_runtime` 会对照服务工作线程的消息通道，并保留有歧义的通道和未匹配的事件。`read_source_evidence` 重新校验哈希后返回长度受限的源码片段。结果列明已读取、排除及未解析的文件。TypeScript 和 JSX 的语义分析暂未支持。
 
 [恢复流程与限制（英文）](../RECOVERY.md) · [按版本验证](../VALIDATION.md)。`shrink` 每次尝试都在有期限的新子进程中执行 oracle；外部状态由 oracle 的 `reset()` 负责。新 profile 和子进程不是操作系统或网络沙箱。
 

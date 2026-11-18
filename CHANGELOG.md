@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0 — 2026-11-19
+
+- Chromium web replay now records network evidence per action. A required channel with missing coverage produces an unknown verdict and legacy captures preserve that gap.
+- The browser persistence lab ties a request to the owned server's receipt and checks the saved value after restarting the server and browser.
+- Added multi-release JAR profile comparison and execution of a bounded, stateless Wasm i32 subset against declared input contracts.
+- Added local Ghidra 12.2 export import and finite native run verification against an independent oracle, with a runnable C reconstruction.
+- The local MCP catalog now includes 35 tools. All nine READMEs link the new examples.
+
 ## 0.8.0 — 2026-11-18
 
 - Detect lost deployment targets across compiler-produced Apple Mach-O and JVM class files from the CLI and local MCP. Use exact CPU subtypes, per-slice platform minimums and Java preview-release constraints.

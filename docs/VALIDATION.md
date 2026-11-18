@@ -1,5 +1,17 @@
 # REA Pro Max — verification record
 
+## v1.0.0 — release verification
+
+On November 19, 2026, the full suite passed **292/292** with no skips on macOS arm64 using Node 22.23.0, Chrome for Testing 156.0.8078.4 and OpenJDK 21. The run included the real Chromium natural-idle case. Lint, documentation links, and vendored SDK verification passed. The extracted archive ran 11 CLI checks and discovered **35 tools** through both legacy initialization and current MCP discovery. Both modes separately completed the owned Chromium replay from the checkout.
+
+- Chromium 156.0.8078.4 on macOS arm64 reproduced the Save mismatch with an independent loopback server counter. The default replay and an explicit network-only contract both observed one reference POST and zero candidate POSTs. Both returned behavior `fail` and visual `pass`. The browser checks distinguish an observed empty window, disabled collection and a real mismatch.
+- The separate browser persistence project uses a child server process. Both the reference and recovered components read `violet` at revision 3 after restarting the server and browser. Their responses arrived in revision order 1, 3, 2. An acknowledgement-only variant failed the same readback check. Request, response and server identifiers join the observed effects. Build and source-map bindings apply to the owned project.
+- OpenJDK 21.0.12.1 and 26.0.2 selected identical effective class bytes for Java feature profile 11 and divergent class bytes under profile 17. The fixture's actual Java result changes from `v17` to `changed` under profile 17, with defaults on both hosts showing that same change. These runs selected feature versions through a JDK property. The tested hosts were JVM 21 and 26.
+- The bounded core Wasm evaluator independently executes the two packaged `get()` exports. Their public ABI matches, while their results differ by 1 versus 2. Unit cases also cover an enumerated 256-input domain and refuse stateful or looping modules.
+- Headless Ghidra 12.2 produced instruction, p-code and pseudocode output on the owned arm64 and x86-64 Mach-O files. REA bound all 29 reported instruction ranges to the original binary bytes. Four native configurations compared all 256 inputs under Apple clang 17.0.0, using arm64 natively and x86-64 under Rosetta, each with a debug and an optimized stripped-debug build. Every configuration detected the same wrong value at input 173. A separate review also reproduced this result from the extracted skill ZIP.
+
+[Runnable examples and scope](VERIFIED-RECOVERY.md) · [Browser records](evidence/web-v1.0.json) · [Native execution and Ghidra records](evidence/native-v1.0.json)
+
 ## v0.8.0 — release verification
 
 On November 18, 2026, the full suite passed **270/270** on macOS arm64 with Node 22.23.0, Chrome for Testing 156.0.8078.4 and the natural-idle test enabled. The default run passed 266 tests and skipped four opt-in browser tests. Lint, documentation, vendored SDK verification, and the extracted archive's CLI and official MCP client checks passed. Both MCP initialization modes discovered 31 tools.

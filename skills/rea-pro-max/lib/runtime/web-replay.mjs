@@ -17,9 +17,21 @@ function requireUrl(value, label) {
   }
 }
 
-function scenarioFor(scenario, url) {
+function scenarioFor(scenario, url, replayOrigins) {
   if (!object(scenario)) throw new RpmError('web_replay_input', 'Web replay requires a bounded scenario object.');
-  return { ...scenario, url };
+  const origins = new Set(replayOrigins);
+  if (scenario.url !== undefined) origins.add(new URL(requireUrl(scenario.url, 'scenario.url')).origin);
+  const actions = Array.isArray(scenario.actions) ? scenario.actions.map(action => {
+    if (action?.kind !== 'navigate') return action;
+    const authored = new URL(requireUrl(action.url, 'action.url'));
+    if (!origins.has(authored.origin)) throw new RpmError('web_replay_input', 'Paired navigate actions must use the scenario or one of the replay origins.');
+    const rebound = new URL(url);
+    rebound.pathname = authored.pathname;
+    rebound.search = authored.search;
+    rebound.hash = authored.hash;
+    return { ...action, url: rebound.href };
+  }) : scenario.actions;
+  return { ...scenario, url, actions };
 }
 
 function samePageIdentity(value) {
@@ -27,8 +39,18 @@ function samePageIdentity(value) {
   try { const url = new URL(value); return `${url.pathname}${url.search}${url.hash}`; } catch { return value; }
 }
 
-function normalizeEnvironment(ir) {
+function normalizeActionLocators(actions) {
+  for (const action of actions) if (action.kind === 'navigate' && action.url !== undefined) action.url = samePageIdentity(action.url);
+}
+
+function normalizeEnvironment(ir, origin) {
+  normalizeActionLocators(ir.actions);
   for (const observation of ir.observations) {
+    const observed = observation.dom?.summary?.url;
+    if (typeof observed === 'string' && new URL(observed).origin !== origin) {
+      observation.coverage.complete = false;
+      observation.unknowns.push({ code: 'unexpected_page_origin', detail: 'The observed document is outside this replay side origin.', action_id: observation.action_id });
+    }
     if (observation.dom?.summary && typeof observation.dom.summary === 'object' && !Array.isArray(observation.dom.summary) && typeof observation.dom.summary.url === 'string') observation.dom.summary.url = samePageIdentity(observation.dom.summary.url);
     if (observation.storage?.summary && typeof observation.storage.summary === 'object' && !Array.isArray(observation.storage.summary) && typeof observation.storage.summary.url === 'string') observation.storage.summary.url = samePageIdentity(observation.storage.summary.url);
   }
@@ -43,14 +65,22 @@ function normalizeEnvironment(ir) {
  * sandbox and does not claim whole-application equivalence.
  */
 export async function replayWebFeature({ referenceUrl, candidateUrl, executablePath, scenario, contract, timeoutMs, signal, onProgress } = {}) {
-  const referenceInput = scenarioFor(scenario, requireUrl(referenceUrl, 'referenceUrl'));
-  const candidateInput = scenarioFor(scenario, requireUrl(candidateUrl, 'candidateUrl'));
+  const referenceLocator = new URL(requireUrl(referenceUrl, 'referenceUrl'));
+  const candidateLocator = new URL(requireUrl(candidateUrl, 'candidateUrl'));
+  if (referenceLocator.origin === candidateLocator.origin && referenceLocator.href !== candidateLocator.href &&
+      Array.isArray(scenario?.actions) && scenario.actions.some(action => action?.kind === 'navigate')) {
+    throw new RpmError('web_replay_input', 'Distinct replay URLs on the same origin cannot share an explicit navigate action.');
+  }
+  const origins = [referenceLocator.origin, candidateLocator.origin];
+  const referenceInput = scenarioFor(scenario, referenceLocator.href, origins);
+  const candidateInput = scenarioFor(scenario, candidateLocator.href, origins);
   const reference = await captureWebScenario({ executablePath, scenario: referenceInput, timeoutMs, signal, onProgress: value => onProgress?.({ target: 'reference', ...value }) });
   if (signal?.aborted) throw new RpmError('request_cancelled', 'Web replay was cancelled after the reference capture.');
   const candidate = await captureWebScenario({ executablePath, scenario: candidateInput, timeoutMs, signal, onProgress: value => onProgress?.({ target: 'candidate', ...value }) });
-  const referenceIr = normalizeEnvironment(captureToWebIR(reference, { id: 'web-reference', route: new URL(referenceUrl).pathname }));
-  const candidateIr = normalizeEnvironment(captureToWebIR(candidate, { id: 'web-candidate', route: new URL(candidateUrl).pathname }));
+  const referenceIr = normalizeEnvironment(captureToWebIR(reference, { id: 'web-reference', route: referenceLocator.pathname }), referenceLocator.origin);
+  const candidateIr = normalizeEnvironment(captureToWebIR(candidate, { id: 'web-candidate', route: candidateLocator.pathname }), candidateLocator.origin);
   const compiled = contract === undefined ? compileContract(referenceIr, candidateIr) : validateContract(contract);
+  normalizeActionLocators(compiled.actions);
   const verification = compareWebRecovery(referenceIr, candidateIr, compiled);
   const failures = verification.behavior.cases.filter(item => item.status === 'fail');
   const mismatch = failures.length ? {
@@ -72,7 +102,7 @@ export async function replayWebFeature({ referenceUrl, candidateUrl, executableP
     contract: compiled,
     verification,
     mismatch,
-    scope: 'Finite actions executed against two explicit URLs in fresh disposable Chromium profiles. DOM/state/storage/network summaries and visual hashes are compared in separate verdicts; raw pixels, hidden effects and whole-program equivalence are not established.',
+    scope: 'Finite actions in disposable Chromium profiles. Behavior covers DOM, storage keys and same-origin HTTP effects in attached page-session windows. Visual hashes have a separate verdict.',
   };
 }
 

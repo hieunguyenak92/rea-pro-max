@@ -1,6 +1,6 @@
 # REA Pro Max MCP
 
-REA Pro Max v0.8 exposes its shared kernel through **31 local MCP tools**. Compare two builds, correlate a saved HAR with OpenAPI, inspect a scoped artifact or verify a finite behavior contract. An explicitly configured Chromium also enables typed MV3/web capture, replay and reviewed hash-bound patch plans.
+REA Pro Max v1.0 exposes its shared kernel through **35 local MCP tools**. Compare two builds, correlate a saved HAR with OpenAPI, inspect a scoped artifact or verify a finite behavior contract. An explicitly configured Chromium also enables typed MV3/web capture, replay and reviewed hash-bound patch plans.
 
 The server uses the bundled official MCP SDK runtime over **stdio**. It requires no service account and does not call a model API. Static operations open no network listener; optional runtime execution launches a disposable browser with a loopback debugging endpoint. Node.js22+ is required; runtime npm installation is unnecessary. Client availability and permissions remain subject to your installed host.
 
@@ -74,7 +74,7 @@ For your own artifact, ask the agent to call `inspect_artifact` with a workspace
 
 ## Opt in to actual Chromium capture and replay
 
-Runtime is **disabled by default**. To enable it, append an explicit executable path when the client launches the server:
+Chromium execution is **disabled by default**. To enable it, append an explicit executable path when the client launches the server:
 
 ```sh
 node /absolute/path/to/rea-pro-max/skills/rea-pro-max/scripts/mcp-server.mjs --workspace /absolute/path/to/your-workspace --browser "/absolute/path/to/chromium"
@@ -108,6 +108,8 @@ A fresh profile is **not an OS or network sandbox**. The selected browser and ex
 
 ## Exact tool catalog
 
+[Supported inputs and runnable examples](VERIFIED-RECOVERY.md)
+
 Arguments below describe the product's input names. The schemas discovered through the running client's tool list are authoritative, including field bounds.
 
 | Tool | Arguments | Effect |
@@ -120,6 +122,10 @@ Arguments below describe the product's input names. The schemas discovered throu
 | `compare_deployment_targets` | `reference_path`, `candidate_path` | Identify removed targets, raised minimums or changed Java preview requirements. [Compiled examples](NATIVE-TARGETS.md) |
 | `inspect_wasm_interface` | `path` | Inspect supported core Wasm public interface declarations. |
 | `compare_wasm_interfaces` | `reference_path`, `candidate_path` | Compare public ABI declarations in two Wasm modules. |
+| `compare_jar_profiles` | `reference_path`, `candidate_path`, `profiles` | Resolve effective class bytes for the declared Java feature versions. |
+| `compare_wasm_behavior` | `reference_path`, `candidate_path`, `contract_path` | Evaluate inputs in the bounded stateless i32 subset. |
+| `import_ghidra_evidence` | `binary_path`, `export_path` | Bind a saved Ghidra 12.2 export to the selected binary. |
+| `verify_native_behavior` | `reference_path`, `candidate_path`, `oracle_path` | Compare finite saved runs against a declared output oracle. |
 | `inspect_playwright_trace` | `trace_path`, optional `network_path` | Import saved Playwright v10 action and page evidence with bounded optional network counts. |
 | `check_release` | `path` | Apply a local release policy to two builds and supplied evidence. [Release check](RELEASE-CHECK.md) |
 | `read_artifact` | `handle`, `section`, `offset`, `limit`, optional `query` | Reads a bounded section/page of a retained artifact. |
@@ -204,6 +210,7 @@ Updates and imports must fit these limits; a rejected change does not replace th
 - Prompt browsing is paginated, with at most10 templates per response.
 - Session state is in memory. No hidden background database or automatic case upload is used.
 - MV3 and web execution use an explicitly configured browser. Craft uses an operator-supplied launcher from its startup configuration.
+- In capabilities, `target_execution` tracks the configured browser runtime. `wasm_evaluation` describes the bounded stateless i32 evaluation that is independently available offline. Ghidra and native tools read saved evidence files.
 
 The workspace policy restricts paths admitted by these tools; it is not an operating-system sandbox for Node or for other tools in your AI host. Bundled trusted lab assets are an explicit internal exception to client workspace intake. They do not grant arbitrary access to the skill directory.
 

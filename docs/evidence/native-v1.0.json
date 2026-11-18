@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "kind": "rpm-native-owned-lab",
+  "contract": "rpm-native-u8-u16-v1",
+  "results": [
+    {
+      "profile": "arm64-O0-g",
+      "runtime": {
+        "architecture": "arm64",
+        "os": "darwin",
+        "os_release": "25.1.0",
+        "mode": "native",
+        "host_architecture": "arm64"
+      },
+      "compiler": "Apple clang version 17.0.0 (clang-1700.4.4.1)",
+      "flags": [
+        "-std=c11",
+        "-O0",
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-arch",
+        "arm64"
+      ],
+      "compared": 256,
+      "recovered": "pass",
+      "negative": "fail",
+      "counterexample": {
+        "input": 173,
+        "reference": 433,
+        "candidate": 434,
+        "expected": 433
+      },
+      "verification_sha256": "c319ddb4645a11355a8d9be9d29535614a8cb47acfa60391ac0c49ed61de9522",
+      "counterexample_sha256": "fed239d096a06c2785ff5e9a7bd9ffd5924b9059ab15d6d6f077d7f6ee771e87"
+    },
+    {
+      "profile": "arm64-O2-g0",
+      "runtime": {
+        "architecture": "arm64",
+        "os": "darwin",
+        "os_release": "25.1.0",
+        "mode": "native",
+        "host_architecture": "arm64"
+      },
+      "compiler": "Apple clang version 17.0.0 (clang-1700.4.4.1)",
+      "flags": [
+        "-std=c11",
+        "-O2",
+        "-g0",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-arch",
+        "arm64"
+      ],
+      "compared": 256,
+      "recovered": "pass",
+      "negative": "fail",
+      "counterexample": {
+        "input": 173,
+        "reference": 433,
+        "candidate": 434,
+        "expected": 433
+      },
+      "verification_sha256": "dce5ea6817a9d4bc100cf2996aac0103d903f57146b6dd926302bc6456fccf51",
+      "counterexample_sha256": "568deafd0c389476463c784c4baaa756844f0245a587ce2fe6e1d2cc276f042c"
+    },
+    {
+      "profile": "x86_64-O0-g",
+      "runtime": {
+        "architecture": "x86_64",
+        "os": "darwin",
+        "os_release": "25.1.0",
+        "mode": "translated",
+        "host_architecture": "arm64"
+      },
+      "compiler": "Apple clang version 17.0.0 (clang-1700.4.4.1)",
+      "flags": [
+        "-std=c11",
+        "-O0",
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-arch",
+        "x86_64"
+      ],
+      "compared": 256,
+      "recovered": "pass",
+      "negative": "fail",
+      "counterexample": {
+        "input": 173,
+        "reference": 433,
+        "candidate": 434,
+        "expected": 433
+      },
+      "verification_sha256": "683f7ef7b39f344dde3b95b80d6dd8385deab888b2db4ab372db8103ce171241",
+      "counterexample_sha256": "a4d5e61d8b30df89e23e676513e824624b9af99f21038e69cc13f0c98c159041"
+    },
+    {
+      "profile": "x86_64-O2-g0",
+      "runtime": {
+        "architecture": "x86_64",
+        "os": "darwin",
+        "os_release": "25.1.0",
+        "mode": "translated",
+        "host_architecture": "arm64"
+      },
+      "compiler": "Apple clang version 17.0.0 (clang-1700.4.4.1)",
+      "flags": [
+        "-std=c11",
+        "-O2",
+        "-g0",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-arch",
+        "x86_64"
+      ],
+      "compared": 256,
+      "recovered": "pass",
+      "negative": "fail",
+      "counterexample": {
+        "input": 173,
+        "reference": 433,
+        "candidate": 434,
+        "expected": 433
+      },
+      "verification_sha256": "c3dd861ec517ddbd91e709924dcd659f8ff693872df20b675e39c92937ab7ed0",
+      "counterexample_sha256": "eb1d92b17a580d9351fb3113f360a5f528fe8370085322f44a353a3086b633d5"
+    }
+  ],
+  "measured_on": "2026-11-19",
+  "node": "v22.23.0",
+  "ghidra": {
+    "version": "12.2",
+    "release": "Ghidra_12.2_build",
+    "release_zip_sha256": "2c2cd776db3c1f6a097ba418922378ac3649cadd5e844a6f5f088ae628a7be67",
+    "jdk": "OpenJDK 26.0.2",
+    "helper": "mac_arm_64 decompiler compiled from the sources included in the verified Ghidra release ZIP",
+    "helper_sha256": "69d36265d094c1f9bebcb89818355404d2c806063557951cf698b57958e9276d",
+    "imports": [
+      {
+        "architecture": "arm64",
+        "binary_file": "reference.bin",
+        "binary_sha256": "c6533dd4d67e64e87c2ee23611b856976c92f26f5ea82be70b8be28e52ec1a57",
+        "export_file": "ghidra-12.2-arm64.json",
+        "export_sha256": "628e653167476e918b60da4472ba4373631ef3dd4113eeb04af5aea182d82b28",
+        "instructions_bound": 10,
+        "pseudocode": "present",
+        "import_status": "complete"
+      },
+      {
+        "architecture": "x86_64",
+        "binary_file": "reference-x86_64.bin",
+        "binary_sha256": "1ca221e4b82d6a3ee9912fcef8f35f9decd7b13e03d4ffff1239d4dd40d02718",
+        "export_file": "ghidra-12.2-x86_64.json",
+        "export_sha256": "ed7650322083f94e59d83303ae8c52887bd2283b1cf666654922aeba43e0dd4a",
+        "instructions_bound": 19,
+        "pseudocode": "present",
+        "import_status": "complete"
+      }
+    ]
+  },
+  "engine_version": "1.0.0"
+}

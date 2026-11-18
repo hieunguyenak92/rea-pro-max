@@ -8,13 +8,17 @@ Une boîte à outils indépendante de rétro-ingénierie avec MCP local, skill d
 
 [Explorer le laboratoire enregistré](https://hieunguyenak92.github.io/rea-pro-max/#explorer) · [Installer la skill](../INSTALL.md) · [Dossier de vérification](../VALIDATION.md) · [Versions](https://github.com/hieunguyenak92/rea-pro-max/releases)
 
-**La v0.8 détecte les cibles abandonnées entre deux builds.** Sur deux fichiers Mach-O ou deux classes Java, `target-diff` signale une architecture perdue, une version minimale relevée ou une exigence de préversion Java. Dans l’exemple fourni, la CI accepte la modification du fichier et refuse le passage de Java 11 à 17. Le contrôle lit les déclarations sans exécuter le programme. Un résultat `unknown` indique que les données sont insuffisantes. [Exemple reproductible en anglais](../NATIVE-TARGETS.md)
+**La v1.0 détecte les cibles abandonnées entre deux builds.** Sur deux fichiers Mach-O ou deux classes Java, `target-diff` signale une architecture perdue, une version minimale relevée ou une exigence de préversion Java. Dans l’exemple fourni, la CI accepte la modification du fichier et refuse le passage de Java 11 à 17. Le contrôle lit les déclarations sans exécuter le programme. Un résultat `unknown` indique que les données sont insuffisantes. [Exemple reproductible en anglais](../NATIVE-TARGETS.md)
 
 ![REA Pro Max — Understand the mechanism](../media/hero.png)
 
 ![Workbench réel de REA Pro Max issu du laboratoire synthétique propre](../media/workbench.png)
 
 *Rapport réel du modèle JavaScript avec API Chrome simulées ; il ne prouve pas le cycle de vie de Chromium réel.*
+
+## Nouveautés de la version 1.0
+
+Comparez les classes effectivement choisies dans un JAR multiversion pour des versions données de Java et les sorties d’une fonction Wasm i32 bornée pour les entrées déclarées. La relecture Chromium consigne la couverture réseau par action et signale les preuves manquantes. L’exemple de sauvegarde relie l’action au relevé du serveur et vérifie la lecture après redémarrage. L’analyse native importe les données de Ghidra 12.2 et compare des relevés d’exécution sur un domaine fini. [Exemples et limites techniques en anglais](../VERIFIED-RECOVERY.md)
 
 ## Une sauvegarde qui résiste au vrai redémarrage du worker
 
@@ -30,7 +34,7 @@ Définissez `RPM_BROWSER` comme le chemin absolu de l’exécutable installé Ch
 
 **Le livrable est du code exécutable et une preuve que vous pouvez examiner.** Ce fournisseur vérifie le protocole de messages documenté `rpm-kv-v1` et les frontières de reset choisies ; il ne reconstruit pas automatiquement toute extension. Les boot ID restent dans les données brutes ; seul ce champ d’observation déclaré est exclu de la comparaison. Les reçus de messages ne prouvent pas les effets UI, réseau ou fichiers non observés.
 
-MCP propose **31 outils**. La capture et la relecture sous Chromium s’activent au démarrage du serveur avec `--browser "/absolute/path/to/chromium"` et utilisent des profils temporaires distincts. `reconcile_runtime` relie les canaux de messages d’un worker MV3 aux événements du même artefact, identifié par son empreinte, et conserve les ambiguïtés. `read_source_evidence` fournit des extraits de taille limitée dont l’empreinte est vérifiée. `include`, `exclude` et `coverage` indiquent quels fichiers ont été admis, écartés ou laissés sans analyse.
+MCP propose **35 outils**. La capture et la relecture sous Chromium s’activent au démarrage du serveur avec `--browser "/absolute/path/to/chromium"` et utilisent des profils temporaires distincts. `reconcile_runtime` relie les canaux de messages d’un worker MV3 aux événements du même artefact, identifié par son empreinte, et conserve les ambiguïtés. `read_source_evidence` fournit des extraits de taille limitée dont l’empreinte est vérifiée. `include`, `exclude` et `coverage` indiquent quels fichiers ont été admis, écartés ou laissés sans analyse.
 
 [Procédure et limites, en anglais](../RECOVERY.md) · [Vérification par version](../VALIDATION.md). `shrink` lance l’oracle dans un nouveau processus enfant à chaque essai, avec un délai. Sa fonction `reset()` gère l’état externe. Un profil neuf ou un processus enfant n’est pas un bac à sable système ou réseau.
 
@@ -60,7 +64,7 @@ Dans Codex, sélectionnez la skill ou ajoutez `$rea-pro-max` au début de la mê
 
 ## Une boîte à outils. Trois façons de commencer.
 
-**La v0.8.0 fournit 31 outils MCP locaux** pour comparer des builds, mesurer la couverture d’une API, inspecter des firmwares et contrôler une version hors ligne. La skill guide l’agent vers une implémentation exécutable. La CLI partage le même noyau et fonctionne sans installation de paquets npm.
+**La v1.0.0 fournit 35 outils MCP locaux** pour comparer des builds, mesurer la couverture d’une API, inspecter des firmwares et contrôler une version hors ligne. La skill guide l’agent vers une implémentation exécutable. La CLI partage le même noyau et fonctionne sans installation de paquets npm.
 
 - `compare` en CLI et `compare_artifacts` en MCP comparent deux fichiers ou deux arborescences par empreinte SHA-256. Pour les archives ZIP compatibles, ils détaillent les changements dans le contenu des entrées vérifiées et distinguent un nouvel empaquetage d’un changement de contenu.
 - `api-diff` et `compare_api_contract` rapprochent les méthodes et routes d’un OpenAPI JSON des requêtes d’un HAR enregistré. La couverture se limite à cette capture. Le résultat omet les corps, en-têtes et paramètres de requête.

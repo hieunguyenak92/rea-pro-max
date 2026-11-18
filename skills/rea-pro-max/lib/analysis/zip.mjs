@@ -213,7 +213,7 @@ function content(bytes, member, budget, archiveBudget) {
   }
   if (raw.length !== member.size) return { status: 'zip_member_size_mismatch' };
   if (crc32(raw) !== member.crc) return { status: 'zip_member_crc_mismatch' };
-  return member.kind === 'directory' ? { status: 'directory' } : { status: 'verified', sha256: hashBytes(raw) };
+  return member.kind === 'directory' ? { status: 'directory' } : { status: 'verified', sha256: hashBytes(raw), raw };
 }
 
 function classify(members) {
@@ -266,7 +266,8 @@ function directoryFailure(code, directory, entries) {
   return result({ directory, entries, unknowns: [{ code, detail: directoryErrors[code] }] });
 }
 
-export function inspectZip(bytes, maxMembers, budget = zipVerificationBudget()) {
+// The optional internal visitor sees a read-only view of a regular file after CRC and size validation.
+export function inspectZip(bytes, maxMembers, budget = zipVerificationBudget(), onVerifiedFile) {
   if (bytes.length < 4) return null;
   const signature = bytes.readUInt32LE(0);
   if (signature === DESCRIPTOR) return directoryFailure('zip_multidisk_unsupported', 'unsupported');
@@ -291,6 +292,7 @@ export function inspectZip(bytes, maxMembers, budget = zipVerificationBudget()) 
   const listingLimit = Math.min(maxMembers, budget.listings);
   const listed = members.slice(0, listingLimit).map(member => {
     const verified = content(bytes, member, budget, archiveBudget);
+    if (verified.status === 'verified') onVerifiedFile?.(member.name, verified.raw);
     return {
       name: member.name, ...(member.name === null ? { name_bytes_sha256: hashBytes(member.rawName) } : {}),
       compressed_bytes: member.compressed, uncompressed_bytes: member.size, compression_method: member.method,

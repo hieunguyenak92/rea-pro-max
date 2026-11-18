@@ -4,7 +4,7 @@
 
 **Turn an unfamiliar feature into a working implementation you can explain, exercise and verify.**
 
-REA Pro Max is an independent reverse-engineering toolkit with a local MCP server, an agent skill and a direct CLI. Built for Claude Code, Codex and compatible MCP clients, it connects artifact analysis to experiments, implementation and finite behavioral verification. Version 0.8 checks whether a new build drops an Apple architecture or raises a Java runtime requirement. Its offline release policy runs over both builds. It checks exact file changes, ZIP member content, WebAssembly public interfaces, required HTTP outcomes and saved Playwright v10 actions in one command. Its Chromium recovery loop can replay an owned regression, apply an explicit hash-bound repair and verify the result against the same finite scenario. The core runs independently of upstream REA. [Coverage against the REA 6.9.0 reference](docs/REA-6.9.md)
+REA Pro Max is an independent reverse-engineering toolkit with a local MCP server, an agent skill and a direct CLI. Built for Claude Code, Codex and compatible MCP clients, it connects artifact analysis to experiments, implementation and finite behavioral verification. Version 1.0 traces declared web actions with per-channel coverage, compares the classes different Java releases select from a JAR, and checks signed i32 return values for bounded core Wasm functions. Its offline release policy runs over both builds. It checks exact file changes, ZIP member content, WebAssembly public interfaces, required HTTP outcomes and saved Playwright v10 actions in one command. Its Chromium recovery loop can replay an owned regression, apply an explicit hash-bound repair and verify the result against the same finite scenario. The core runs independently of upstream REA. [Coverage against the REA 6.9.0 reference](docs/REA-6.9.md)
 
 [English](README.md) · [Tiếng Việt](docs/i18n/vi.md) · [한국어](docs/i18n/ko.md) · [日本語](docs/i18n/ja.md) · [Español](docs/i18n/es.md) · [Português](docs/i18n/pt-BR.md) · [简体中文](docs/i18n/zh-CN.md) · [ไทย](docs/i18n/th.md) · [Français](docs/i18n/fr.md)
 
@@ -24,6 +24,10 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs release-check \
 The bundled release case accepts a changed Wasm implementation with the same public signature and a ZIP repack with the same verified contents. It also checks recorded HTTP responses and ordered browser actions. An interface change fails even when the file modification is allowed. [Release policy and reproducible example](docs/RELEASE-CHECK.md)
 
 The second bundled case allows the compiler to change a class file but requires Java 11 support. Rebuilding for Java 17 fails that check. Another case identifies the lost Intel slice and the higher macOS minimum for Apple Silicon. Both read compiler-produced files. [Run both cases](docs/NATIVE-TARGETS.md)
+
+## Trace a save all the way to readback
+
+Run the owned persistence project to compare a working repair with a page that only displays “Saved”. Browser evidence identifies the request. A server receipt and fresh session check the stored value. The guide also runs a Java profile comparison, a Wasm value comparison and a finite native reconstruction. [Run the 1.0 examples](docs/VERIFIED-RECOVERY.md)
 
 ## The valuable part lives beneath the interface
 
@@ -91,7 +95,7 @@ The same kernel serves both tool paths. The host agent connects the investigatio
 
 ### 1. Connect your agent through MCP
 
-REA Pro Max exposes 31 tools over local stdio. The server receives an explicit existing workspace; client-selected files, provider inputs and exports stay inside that boundary.
+REA Pro Max exposes 35 tools over local stdio. The server receives an explicit existing workspace; client-selected files, provider inputs and exports stay inside that boundary.
 
 Claude Code registration, using your actual absolute paths:
 
@@ -277,14 +281,17 @@ The workbench is a standalone HTML viewer with working search, context filters, 
 
 MCP returns bounded summaries and session handles, then pages the selected sections. Export saves JSON or HTML to a new workspace path. Session handles live only for the server process; exported case files can be imported when resuming an investigation.
 
-## What v0.8 supports
+## What v1.0 supports
 
 | Area | Built-in capability | Boundary |
 | --- | --- | --- |
 | JavaScript/web artifacts | Bounded source inventory, AST analysis, contexts and candidate relationships | Local files/extracted sources; dynamic behavior requires host observations. |
 | Manifest V3 | Static contexts plus optional actual Chromium capture/replay for the documented `rpm-kv-v1` message protocol | Requires an explicit Chromium executable and an extension implementing that protocol. Other extensions need an appropriate adapter. |
-| Web recovery | Bounded action capture/replay with DOM, layout, storage keys and a separate visual hash verdict | Requires an explicit Chromium executable and URLs/scenarios supplied by the host; finite evidence is not whole-app equivalence. |
+| Web recovery | Bounded action capture/replay with DOM, storage keys, network coverage and a separate visual hash verdict | Requires an explicit Chromium executable and URLs/scenarios supplied by the host; finite evidence is not whole-app equivalence. |
 | Deployment targets | Compare architecture, CPU subtype, artifact kind and OS floor for Mach-O slices, or class format and preview requirements for JVM classes | One file per side. Runtime, linking and dependencies need separate evidence. |
+| Java package profiles | Compare effective classes in multi-release JARs under declared Java feature versions | Standard classpath subset with bounded ZIP coverage. |
+| Wasm behavior | Compare i32 outcomes for explicit inputs or an enumerated single-parameter domain | Bounded stateless core module subset. |
+| Saved native evidence | Import Ghidra 12.2 exports and compare finite-run receipts with an independent oracle | Saved evidence and an owned runnable C example. |
 | Static format inventory | Header and container metadata, validated Intel HEX/UF2 subsets, and verified ZIP member content hashes | ZIP members use bounded in-memory decoding. See deployment targets for Mach-O and JVM coverage. |
 | Release policy | Evaluate two builds and the evidence for the changes you intended to ship | Local directories, deployment targets, declaration-level Wasm comparison and saved HTTP/Playwright evidence. |
 | Build and API comparison | Two local builds by SHA-256 and OpenAPI 3.0–3.2 JSON against saved HAR entries | Comparison reports retain scope omissions and ambiguity. |
@@ -292,7 +299,7 @@ MCP returns bounded summaries and session handles, then pages the selected secti
 | Craft Anything provider | Optional pinned MCP adapter for typed application maps, web capture and graph comparison | Requires an operator-configured `--craft-config` launcher matching the reviewed version and commit. |
 | Extracted Electron | Main/preload/renderer and candidate IPC boundaries | Installed package extraction and runtime controls are separate prerequisites. |
 | Investigation kernel | Cases, probe ranking, finite verification and bounded reduction | Works on declared models/receipts; evidence quality remains explicit. |
-| MCP | Local stdio, 31 tools, workspace-scoped input/export, local comparisons, finite receipt verification and explicit repair/replay | Chromium and Craft launchers are optional startup configuration. |
+| MCP | Local stdio, 35 tools, workspace-scoped input/export, local comparisons, finite receipt verification and explicit repair/replay | Chromium and Craft launchers are optional startup configuration. |
 | Native/managed/mobile and other families | Task prompts for appropriate host tools; limited format classification where implemented | No bundled universal decompiler, mobile runtime or semantic recovery engine. |
 
 ## MCP tool catalog
@@ -315,6 +322,10 @@ MCP returns bounded summaries and session handles, then pages the selected secti
 | `compare_api_contract` | Match OpenAPI JSON operations to a saved HAR offline. |
 | `inspect_deployment_targets` / `compare_deployment_targets` | Read deployment declarations or detect a loss of support between local Apple or Java builds. |
 | `inspect_wasm_interface` / `compare_wasm_interfaces` | Inspect or compare a supported core module’s public declarations. |
+| `compare_jar_profiles` | Show which Java profiles observe an effective class change. |
+| `compare_wasm_behavior` | Compare bounded i32 results for declared inputs. |
+| `import_ghidra_evidence` | Bind a saved Ghidra export to local binary bytes. |
+| `verify_native_behavior` | Compare saved native runs against a finite oracle. |
 | `inspect_playwright_trace` | Import saved v10 action and page events with optional network counts. |
 | `check_release` | Evaluate file, ABI and saved evidence assertions under a local release policy. |
 | `create_case` | Start from an inspection's actual target identity and a chosen goal. |

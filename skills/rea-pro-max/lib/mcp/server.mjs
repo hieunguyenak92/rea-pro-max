@@ -3,7 +3,7 @@ import { isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { McpServer, z } from '../../assets/vendor/mcp-sdk.mjs';
 import { VERSION } from '../version.mjs';
-import { RpmError, canonical, pointer } from '../common.mjs';
+import { RpmError, canonical, parseJsonBytes, pointer } from '../common.mjs';
 import { createCase, reviseCase, addObservation, validateCase } from '../case.mjs';
 import { rankProbes } from '../planner.mjs';
 import { compareBehavior } from '../verification.mjs';
@@ -11,7 +11,9 @@ import { minimizeSequence } from '../reduction.mjs';
 import { inspectArtifact } from '../analysis/inspect.mjs';
 import { compareArtifacts, COMPARISON_LIMITS } from '../analysis/artifact-diff.mjs';
 import { compareApiContract } from '../analysis/api-contract.mjs';
-import { compareWasmInterfaces, inspectWasmInterface, WASM_INTERFACE_LIMITS } from '../analysis/wasm-interface.mjs';
+import { compareWasmBehavior, compareWasmInterfaces, inspectWasmInterface, WASM_BEHAVIOR_LIMITS, WASM_INTERFACE_LIMITS } from '../analysis/wasm-interface.mjs';
+import { compareJarProfiles, JAR_PROFILE_LIMITS } from '../analysis/jar-profiles.mjs';
+import { compareNativeRuns, importGhidraExport, NATIVE_LIMITS } from '../native-recovery/native.mjs';
 import { inspectPlaywrightEvidence } from '../analysis/playwright-evidence.mjs';
 import { compareDeploymentTargets, inspectDeploymentTargets, TARGET_LIMITS } from '../analysis/deployment-targets.mjs';
 import { checkRelease, RELEASE_LIMITS } from '../release-check.mjs';
@@ -56,6 +58,15 @@ function summary(entry) {
   if (entry.kind === 'api-contract-comparison') return { status: data.status, openapi_version: data.openapi_version, operations: data.operations.length, observations: data.observations.length };
   if (entry.kind === 'wasm-interface') return { status: data.status, imports: data.imports.length, exports: data.exports.length, sha256: data.sha256, abi_sha256: data.abi_sha256 };
   if (entry.kind === 'wasm-interface-comparison') return { status: data.status, counts: data.counts, receipt_sha256: data.receipt_sha256 };
+  if (entry.kind === 'wasm-behavior-comparison') return { status: data.status, coverage: data.coverage, receipt_sha256: data.receipt_sha256 };
+  if (entry.kind === 'jar-profile-comparison') return {
+    status: data.status, complete: data.complete, receipt_sha256: data.receipt_sha256,
+    profiles: data.profiles.map(({ java, status, changes, issues }) =>
+      ({ java, status, changes: changes.length, issues: issues.length })),
+  };
+  if (entry.kind === 'native-static-evidence' || entry.kind === 'native-behavior-comparison') {
+    return { status: data.status, authority: data.authority, receipt_sha256: data.receipt_sha256 };
+  }
   if (entry.kind === 'playwright-evidence') return { status: data.status, context: data.context, coverage: data.coverage, receipt_sha256: data.receipt_sha256 };
   if (entry.kind === 'deployment-targets') return { status: data.status, format: data.format, targets: data.targets.length, receipt_sha256: data.receipt_sha256 };
   if (entry.kind === 'deployment-target-comparison') return { status: data.status, changes: data.changes.length, receipt_sha256: data.receipt_sha256 };
@@ -80,6 +91,10 @@ function sections(entry) {
     'api-contract-comparison': ['status', 'openapi_version', 'operations', 'observations', 'coverage', 'limitations'],
     'wasm-interface': ['imports', 'exports', 'coverage', 'unknowns', 'abi_sha256', 'sha256', 'receipt_sha256'],
     'wasm-interface-comparison': ['changes', 'counts', 'reference', 'candidate', 'unknowns', 'receipt_sha256', '/reference/imports', '/reference/exports', '/candidate/imports', '/candidate/exports'],
+    'wasm-behavior-comparison': ['status', 'authority', 'coverage', 'cases', 'unknowns', 'scope', 'receipt_sha256'],
+    'jar-profile-comparison': ['status', 'authority', 'complete', 'profiles', 'reference', 'candidate', 'scope', 'receipt_sha256'],
+    'native-static-evidence': ['status', 'authority', 'binary', 'provider', 'functions', 'issues', 'scope', 'receipt_sha256'],
+    'native-behavior-comparison': ['status', 'authority', 'reference', 'candidate', 'oracle', 'contract', 'domain_size', 'compared', 'differences', 'issues', 'scope', 'receipt_sha256'],
     'playwright-evidence': ['context', 'sources', 'timeline', 'network', 'coverage', 'issues', 'limitations', 'receipt_sha256'],
     'deployment-targets': ['format', 'status', 'targets', 'issues', 'sha256', 'receipt_sha256'],
     'deployment-target-comparison': ['status', 'changes', 'reference', 'candidate', '/reference/targets', '/candidate/targets', 'scope', 'receipt_sha256'],
@@ -96,7 +111,13 @@ function sections(entry) {
     reconciliation: ['schema_version', 'kind', 'status', 'target', 'authority', 'matches', 'events', 'unknowns', 'unmatched_runtime', 'coverage', 'scope'],
     provider: ['status', 'data', 'error', 'provenance'],
   };
-  return ['summary', 'full', ...known[entry.kind].filter(key => key.startsWith('/') || Object.hasOwn(entry.data, key))];
+  const available = known[entry.kind].filter(key => key.startsWith('/') || Object.hasOwn(entry.data, key));
+  if (entry.kind === 'jar-profile-comparison') {
+    for (const [index] of entry.data.profiles.entries()) {
+      for (const field of ['reference', 'candidate', 'changes', 'issues']) available.push(`/profiles/${index}/${field}`);
+    }
+  }
+  return ['summary', 'full', ...available];
 }
 function receipt(store, handle) {
   const entry = store.get(handle);
@@ -120,7 +141,7 @@ function reportPayload(entry, store) {
   if (entry.kind === 'reconciliation') return { schema_version: 1, title: 'Static/runtime reconciliation', kind: 'verification', reconciliation: entry.data, narrative: { label: 'Derived static/runtime matches', description: entry.data.scope } };
   if (entry.kind === 'provider') return { schema_version: 1, title: 'Optional provider result', kind: 'inspection', inspection: entry.data };
   if (entry.kind === 'artifact-comparison' || entry.kind === 'api-contract-comparison') return { schema_version: 1, title: entry.kind === 'artifact-comparison' ? 'Artifact comparison' : 'API contract comparison', comparison: entry.data };
-  if (['wasm-interface', 'wasm-interface-comparison', 'deployment-targets', 'deployment-target-comparison', 'playwright-evidence', 'release-check'].includes(entry.kind)) return { schema_version: 1, title: entry.kind.replaceAll('-', ' '), result: entry.data };
+  if (['wasm-interface', 'wasm-interface-comparison', 'wasm-behavior-comparison', 'jar-profile-comparison', 'native-static-evidence', 'native-behavior-comparison', 'deployment-targets', 'deployment-target-comparison', 'playwright-evidence', 'release-check'].includes(entry.kind)) return { schema_version: 1, title: entry.kind.replaceAll('-', ' '), result: entry.data };
   if (entry.kind === 'plan') {
     const inspected = store.peek(entry.context.inspection_handle);
     return { schema_version: 1, title: 'Distinguishing experiments', kind: 'case', case: entry.context.case, planner: entry.data, ...(inspected ? { inspection: inspected.data } : {}) };
@@ -164,9 +185,9 @@ export function createReaMcpServer({ workspace, limits: overrides = {}, browserE
     });
   }
   tool('get_capabilities', 'Read the exact server scope, configured workspace, limits and execution policy before choosing tools.', emptySchema, () => ({
-    version: VERSION, transport: 'stdio', workspace: policy.root, implemented_targets: ['JavaScript', 'extracted web', 'web action replay', 'Manifest V3', 'extracted Electron', 'Mach-O deployment declarations', 'JVM class-format targets'],
-    limits: { ...limits, model: MODEL_LIMITS, inspection: DEFAULT_LIMITS, artifact_comparison: COMPARISON_LIMITS, wasm_interface: WASM_INTERFACE_LIMITS, deployment_targets: TARGET_LIMITS, release_check: RELEASE_LIMITS }, cache: store.stats(),
-    execution_policy: { target_execution: Boolean(browserExecutable), shell: false, arbitrary_oracle: false, browser_control: Boolean(browserExecutable), runtime: browserExecutable ? 'Opt-in MV3 and bounded web action execution in disposable profiles; not an OS/network sandbox.' : 'Disabled. Restart server with --browser ABSOLUTE_CHROMIUM to opt in.', craft_provider: { enabled: Boolean(craftLauncher), launcher: 'Operator configuration via --craft-config at startup.' }, native_mobile_provider: false, owned_lab: 'bundled trusted worker scripts only; controlled Chrome API model' },
+    version: VERSION, transport: 'stdio', workspace: policy.root, implemented_targets: ['JavaScript', 'extracted web', 'web action replay', 'Manifest V3', 'extracted Electron', 'Mach-O deployment declarations', 'JVM class-format targets', 'multi-release JAR class selection', 'bounded core Wasm i32 evaluation', 'saved Ghidra 12.2 evidence', 'saved native finite-run receipts'],
+    limits: { ...limits, model: MODEL_LIMITS, inspection: DEFAULT_LIMITS, artifact_comparison: COMPARISON_LIMITS, wasm_interface: WASM_INTERFACE_LIMITS, wasm_behavior: WASM_BEHAVIOR_LIMITS, jar_profiles: JAR_PROFILE_LIMITS, saved_native: NATIVE_LIMITS, deployment_targets: TARGET_LIMITS, release_check: RELEASE_LIMITS }, cache: store.stats(),
+    execution_policy: { target_execution: Boolean(browserExecutable), shell: false, arbitrary_oracle: false, browser_control: Boolean(browserExecutable), runtime: browserExecutable ? 'Opt-in MV3 and bounded web action execution in disposable profiles; not an OS/network sandbox.' : 'Disabled. Restart server with --browser ABSOLUTE_CHROMIUM to opt in.', wasm_evaluation: { enabled: true, subset: 'Bounded stateless straight-line i32 functions without imports, calls or module state.' }, craft_provider: { enabled: Boolean(craftLauncher), launcher: 'Operator configuration via --craft-config at startup.' }, native_mobile_provider: false, owned_lab: 'bundled trusted worker scripts only; controlled Chrome API model' },
     upstream_reference: REA_6_9_MANIFEST,
     state: 'Handles live only in this server process. Export/import cases to resume. Root restrictions are application policy, not an operating-system sandbox.',
   }));
@@ -205,6 +226,40 @@ export function createReaMcpServer({ workspace, limits: overrides = {}, browserE
     const result = compareWasmInterfaces(wasmBytes(reference_path), wasmBytes(candidate_path));
     checkCancelled(context);
     return commit('wasm-interface-comparison', result);
+  }, sessionWrite, true);
+  tool('compare_jar_profiles', 'Compare effective class selection and bytes in two local multi-release JARs under explicit Java feature versions. Offline static comparison.', z.object({
+    reference_path: pathSchema, candidate_path: pathSchema,
+    profiles: z.array(z.number().int().min(JAR_PROFILE_LIMITS.min_java).max(JAR_PROFILE_LIMITS.max_java)).min(1).max(JAR_PROFILE_LIMITS.max_profiles),
+  }).strict(), ({ reference_path, candidate_path, profiles }, context) => {
+    const read = path => policy.readBytes(path, JAR_PROFILE_LIMITS.max_file_bytes);
+    const result = compareJarProfiles(read(reference_path), read(candidate_path), profiles);
+    checkCancelled(context);
+    return commit('jar-profile-comparison', result);
+  }, sessionWrite, true);
+  tool('compare_wasm_behavior', 'Compare signed i32 results for a declared finite input set, only after validating both modules against a bounded, stateless core Wasm subset.', z.object({
+    reference_path: pathSchema, candidate_path: pathSchema, contract_path: pathSchema,
+  }).strict(), ({ reference_path, candidate_path, contract_path }, context) => {
+    const read = path => policy.readBytes(path, WASM_BEHAVIOR_LIMITS.max_file_bytes);
+    const contract = parseJsonBytes(policy.readBytes(contract_path, Math.min(limits.maxJsonBytes, 64 * 1024)));
+    const result = compareWasmBehavior(read(reference_path), read(candidate_path), contract);
+    checkCancelled(context);
+    return commit('wasm-behavior-comparison', result);
+  }, sessionWrite, true);
+  tool('import_ghidra_evidence', 'Import a saved Ghidra 12.2 evidence export and check its binding to the supplied binary. Does not launch Ghidra or the binary.', z.object({
+    binary_path: pathSchema, export_path: pathSchema,
+  }).strict(), ({ binary_path, export_path }, context) => {
+    const exported = parseJsonBytes(policy.readBytes(export_path, Math.min(limits.maxJsonBytes, NATIVE_LIMITS.export_bytes)));
+    const result = importGhidraExport(policy.readBytes(binary_path, NATIVE_LIMITS.binary_bytes), exported);
+    checkCancelled(context);
+    return commit(result.kind, result);
+  }, sessionWrite, true);
+  tool('verify_native_behavior', 'Check two saved native run receipts against a separate finite-domain oracle. Returns reported, bounded evidence.', z.object({
+    reference_path: pathSchema, candidate_path: pathSchema, oracle_path: pathSchema,
+  }).strict(), ({ reference_path, candidate_path, oracle_path }, context) => {
+    const read = path => parseJsonBytes(policy.readBytes(path, Math.min(limits.maxJsonBytes, NATIVE_LIMITS.export_bytes)));
+    const result = compareNativeRuns(read(reference_path), read(candidate_path), read(oracle_path));
+    checkCancelled(context);
+    return commit(result.kind, result);
   }, sessionWrite, true);
   tool('inspect_playwright_trace', 'Import a saved Playwright v10 trace event file and optional companion network snapshots as bounded, reduced evidence.', z.object({ trace_path: pathSchema, network_path: pathSchema.optional() }).strict(), ({ trace_path, network_path }, context) => {
     const result = inspectPlaywrightEvidence(policy.readBytes(trace_path, RELEASE_LIMITS.trace_bytes),

@@ -93,14 +93,36 @@ function observationMap(capture) {
   return map;
 }
 function expectedMap(contract) { return new Map(contract.expected.map(item => [item.action_id, item])); }
-function coverageUnknowns(capture, actionId, observation, requiredChannels) {
+function firstIncompatibleAction(capture, contract) {
+  const index = capture.actions.findIndex((action, offset) => !contract.actions[offset] ||
+    canonical(action) !== canonical(contract.actions[offset]));
+  return index === -1 ? Infinity : index;
+}
+
+function hasCoveredChannel(observation, channel) {
+  return Boolean(observation && own(observation, channel) &&
+    (observation.coverage.channels === undefined || observation.coverage.channels.includes(channel)));
+}
+
+function staleBaselineChannels(expected, reference, channels) {
+  if (expected?.coverage.complete !== true || reference?.coverage.complete !== true) return [];
+  const frozen = expected.observation;
+  return channels.filter(channel => {
+    // Runtime v0.8 contracts recorded an empty network summary without a
+    // collector or per-channel coverage. Do not freeze that placeholder.
+    if (channel === 'network' && frozen?.coverage.channels === undefined) return false;
+    return hasCoveredChannel(frozen, channel) && hasCoveredChannel(reference, channel) &&
+      canonical(frozen[channel]) !== canonical(reference[channel]);
+  });
+}
+
+function coverageUnknowns(observation) {
   const reasons = [];
   if (!observation) reasons.push('missing_observation');
   else {
-    if (observation.coverage.complete !== true || capture.coverage.complete !== true) reasons.push('incomplete_coverage');
+    if (observation.coverage.complete !== true) reasons.push('incomplete_coverage');
     if (observation.unknowns.length) reasons.push(...observation.unknowns.map(item => `unknown:${item.code}`));
     if (observation.authority.level === 'unknown' || observation.authority.level === 'inferred') reasons.push(`weak_authority:${observation.authority.level}`);
-    for (const channel of requiredChannels) if (!own(observation, channel)) reasons.push(`missing_channel:${channel}`);
   }
   return [...new Set(reasons)];
 }
@@ -114,25 +136,47 @@ function identityReasons(reference, candidate, contract) {
   return reasons;
 }
 
-function compareCase(action, referenceObservation, candidateObservation, expected, requiredChannels, options) {
-  const reasons = coverageUnknowns({ coverage: { complete: true } }, action.id, referenceObservation, requiredChannels);
-  reasons.push(...coverageUnknowns({ coverage: { complete: true } }, action.id, candidateObservation, requiredChannels));
-  // The capture-level coverage checks above are added by the caller. Keep this
-  // function focused on a single finite action and observable behavior.
+function compareCase(action, referenceObservation, candidateObservation, expected, requiredChannels, counts, options) {
+  const reasons = [...coverageUnknowns(referenceObservation), ...coverageUnknowns(candidateObservation)];
   const differences = [];
   if (referenceObservation && candidateObservation && reasons.length === 0) {
     for (const channel of requiredChannels) {
+      if (!hasCoveredChannel(referenceObservation, channel) || !hasCoveredChannel(candidateObservation, channel)) {
+        reasons.push(`missing_channel:${channel}`);
+        if (channel === 'network') for (const observation of [referenceObservation, candidateObservation]) {
+          const issues = observation.metadata?.network_issues;
+          if (!hasCoveredChannel(observation, channel) && Array.isArray(issues)) for (const issue of issues) reasons.push(`network:${issue}`);
+        }
+        continue;
+      }
       const result = deepDiff(referenceObservation[channel], candidateObservation[channel], options);
-      if (!result.equal) for (const difference of result.differences) differences.push({ channel, ...difference });
+      if (result.truncated) reasons.push(`diff_bounds:${channel}`);
+      for (const difference of result.differences) if (difference.kind !== 'bounds') differences.push({ channel, ...difference });
+      if (channel === 'network' && counts.length) {
+        for (const [side, observation] of [['reference', referenceObservation], ['candidate', candidateObservation]]) {
+          const starts = observation.network.summary;
+          if (!Array.isArray(starts) || starts.some(row => typeof row?.method !== 'string' || typeof row?.path !== 'string')) {
+            reasons.push(`unsupported_network_count_shape:${side}`);
+            continue;
+          }
+          for (const { method, path, count } of counts) {
+            const actual = starts.filter(row => row.method === method && row.path === path).length;
+            if (actual !== count) differences.push({
+              channel, path: `/count/${side}/${method}/${pointerToken(path)}`, kind: 'value', reference: count, candidate: actual,
+            });
+          }
+        }
+      }
     }
     for (const field of ['route', 'state', 'viewport']) {
       if (own(referenceObservation, field) || own(candidateObservation, field)) {
         const result = deepDiff(referenceObservation[field] ?? null, candidateObservation[field] ?? null, options);
-        if (!result.equal) for (const difference of result.differences) differences.push({ channel: field, ...difference });
+        if (result.truncated) reasons.push(`diff_bounds:${field}`);
+        for (const difference of result.differences) if (difference.kind !== 'bounds') differences.push({ channel: field, ...difference });
       }
     }
   }
-  return { id: action.id, status: reasons.length ? 'unknown' : differences.length ? 'fail' : 'pass', reasons, differences, expected: expected ? cloneJson(expected) : null };
+  return { id: action.id, status: differences.length ? 'fail' : reasons.length ? 'unknown' : 'pass', reasons: [...new Set(reasons)], differences, expected: expected ? cloneJson(expected) : null };
 }
 
 function baseResult(kind, status, cases, unknowns, mismatches, extra = {}) {
@@ -147,24 +191,41 @@ export function compareBehavior(referenceInput, candidateInput, contractInput = 
   let requestedContract = contractInput;
   if (requestedContract && requestedContract.kind !== 'web-recovery-contract' && !requestedContract.expected) { options = { ...requestedContract, ...options }; requestedContract = undefined; }
   const contract = validateContract(requestedContract ?? compileContract(reference, candidate));
-  const requiredChannels = (options.required_channels ?? contract.required_channels ?? ['dom', 'network', 'storage']).filter(channel => channel !== 'visual');
+  const requiredChannels = [...new Set([
+    ...(options.required_channels ?? contract.required_channels ?? ['dom', 'network', 'storage']),
+    ...(contract.network_counts?.length ? ['network'] : []),
+  ])].filter(channel => channel !== 'visual');
   if (!requiredChannels.length || requiredChannels.some(channel => !OBSERVATION_CHANNELS.includes(channel))) fail('web_compare_type', 'required_channels must contain known non-visual channels.');
   const expected = expectedMap(contract); const left = observationMap(reference); const right = observationMap(candidate);
   const actionIds = [...new Set([...contract.actions.map(item => item.id), ...left.keys(), ...right.keys()])].sort(textOrder);
-  const globalUnknowns = [...contract.unknowns, ...identityReasons(reference, candidate, contract)];
+  const staleIdentities = identityReasons(reference, candidate, contract);
+  const firstIncompatible = Math.min(firstIncompatibleAction(reference, contract), firstIncompatibleAction(candidate, contract));
+  const actionIndexes = new Map(contract.actions.map((action, index) => [action.id, index]));
+  const globalUnknowns = [...contract.unknowns, ...staleIdentities];
   if (reference.coverage.complete !== true) globalUnknowns.push('reference_incomplete_coverage');
   if (candidate.coverage.complete !== true) globalUnknowns.push('candidate_incomplete_coverage');
   const actions = actionMap(reference); const cases = [];
   for (const actionId of actionIds) {
     const action = actions.get(actionId) ?? contract.actions.find(item => item.id === actionId) ?? candidate.actions.find(item => item.id === actionId);
-    const item = compareCase(action ?? { id: actionId }, left.get(actionId), right.get(actionId), expected.get(actionId), requiredChannels, options);
+    const counts = (contract.network_counts ?? []).filter(clause => clause.action_id === actionId);
+    const item = compareCase(action ?? { id: actionId }, left.get(actionId), right.get(actionId), expected.get(actionId), requiredChannels, counts, options);
     if (!left.has(actionId)) { item.status = 'unknown'; item.reasons = [...new Set([...item.reasons, 'missing_reference_observation'])]; }
     if (!right.has(actionId)) { item.status = 'unknown'; item.reasons = [...new Set([...item.reasons, 'missing_candidate_observation'])]; }
-    if (globalUnknowns.length && item.status === 'pass') { item.status = 'unknown'; item.reasons = [...new Set([...item.reasons, 'contract_coverage_incomplete'])]; }
+    const incompatibleAction = (actionIndexes.get(actionId) ?? Infinity) >= firstIncompatible && firstIncompatible !== Infinity ||
+      contract.unknowns.some(unknown => unknown.code === 'action_input_mismatch' && unknown.action_id === actionId);
+    const staleChannels = staleBaselineChannels(expected.get(actionId), left.get(actionId), requiredChannels);
+    if (incompatibleAction || staleIdentities.length || staleChannels.length) {
+      item.status = 'unknown';
+      item.reasons.push(...staleIdentities, ...(incompatibleAction ? ['action_input_mismatch'] : []));
+      item.reasons.push(...staleChannels.map(channel => `stale_reference_observation:${channel}`));
+    } else if (globalUnknowns.length && item.status === 'pass') {
+      item.status = 'unknown';
+      item.reasons.push('contract_coverage_incomplete');
+    }
     cases.push(item);
   }
   const mismatches = cases.flatMap(item => item.status === 'fail' ? item.differences.map(difference => ({ action_id: item.id, ...difference })) : []);
-  const status = mismatches.length && !globalUnknowns.length ? 'fail' : cases.length && cases.every(item => item.status === 'pass') && !globalUnknowns.length ? 'pass' : 'unknown';
+  const status = mismatches.length ? 'fail' : cases.length && cases.every(item => item.status === 'pass') && !globalUnknowns.length ? 'pass' : 'unknown';
   return baseResult('web-recovery-behavior-result', status, cases, globalUnknowns, mismatches, {
     contract_sha256: digest(contract), capture_sha256: { reference: digest(reference), candidate: digest(candidate) },
     compared_channels: requiredChannels, visual_comparison: 'separate',
@@ -177,11 +238,18 @@ export function compareVisual(referenceInput, candidateInput, contractInput = un
   const contract = validateContract(contractInput ?? compileContract(reference, candidate));
   const expected = expectedMap(contract); const left = observationMap(reference); const right = observationMap(candidate);
   const actionIds = [...new Set([...contract.actions.map(item => item.id), ...left.keys(), ...right.keys()])].sort(textOrder);
-  const cases = []; const unknowns = [...contract.unknowns, ...identityReasons(reference, candidate, contract)];
+  const cases = []; const unknowns = [
+    ...contract.unknowns.filter(item => item.code !== 'reference_channel_missing'),
+    ...identityReasons(reference, candidate, contract),
+  ];
+  const firstIncompatible = Math.min(firstIncompatibleAction(reference, contract), firstIncompatibleAction(candidate, contract));
+  const actionIndexes = new Map(contract.actions.map((action, index) => [action.id, index]));
   for (const actionId of actionIds) {
     const a = left.get(actionId); const b = right.get(actionId); const reasons = [];
     if (!a || !b) reasons.push(!a ? 'missing_reference_observation' : 'missing_candidate_observation');
     if (a?.coverage.complete !== true || b?.coverage.complete !== true) reasons.push('incomplete_coverage');
+    if (firstIncompatible !== Infinity && (actionIndexes.get(actionId) ?? Infinity) >= firstIncompatible) reasons.push('action_input_mismatch');
+    for (const channel of staleBaselineChannels(expected.get(actionId), a, ['visual'])) reasons.push(`stale_reference_observation:${channel}`);
     const hashA = a?.visual?.artifact_hash; const hashB = b?.visual?.artifact_hash;
     if (hashA === undefined || hashB === undefined) reasons.push('missing_visual_artifact');
     const differences = reasons.length ? [] : hashA === hashB ? [] : [{ path: '/visual/artifact_hash', kind: 'value', reference: hashA, candidate: hashB }];

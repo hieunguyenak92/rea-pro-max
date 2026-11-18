@@ -8,13 +8,17 @@ Un conjunto independiente de herramientas de ingeniería inversa con MCP local, 
 
 [Explora el laboratorio grabado](https://hieunguyenak92.github.io/rea-pro-max/#explorer) · [Instala la skill](../INSTALL.md) · [Registro de verificación](../VALIDATION.md) · [Versiones](https://github.com/hieunguyenak92/rea-pro-max/releases)
 
-**La v0.8 detecta qué equipos dejan de estar cubiertos por una compilación.** Con dos archivos Mach-O o dos clases Java, `target-diff` identifica arquitecturas perdidas, aumentos de la versión mínima y requisitos de funciones preliminares de Java. En el ejemplo, CI permite modificar el archivo y aun así rechaza el aumento de Java 11 a 17. La comprobación lee las declaraciones sin ejecutar el programa. `unknown` indica que faltan datos. [Ejemplo reproducible en inglés](../NATIVE-TARGETS.md)
+**La v1.0 detecta qué equipos dejan de estar cubiertos por una compilación.** Con dos archivos Mach-O o dos clases Java, `target-diff` identifica arquitecturas perdidas, aumentos de la versión mínima y requisitos de funciones preliminares de Java. En el ejemplo, CI permite modificar el archivo y aun así rechaza el aumento de Java 11 a 17. La comprobación lee las declaraciones sin ejecutar el programa. `unknown` indica que faltan datos. [Ejemplo reproducible en inglés](../NATIVE-TARGETS.md)
 
 ![REA Pro Max — Understand the mechanism](../media/hero.png)
 
 ![Workbench real de REA Pro Max del laboratorio sintético propio](../media/workbench.png)
 
 *Informe real del modelo JavaScript con API de Chrome simuladas; no demuestra el ciclo de vida de Chromium real.*
+
+## Novedades en 1.0
+
+Compara las clases efectivas de un JAR multiversión según la versión de Java. Ejecuta una función Wasm i32 acotada para comparar sus resultados con entradas declaradas. La reproducción en Chromium registra la cobertura de red por acción y señala si falta evidencia. El ejemplo de guardado enlaza la acción con un registro del servidor y comprueba la lectura tras reiniciarlo. El análisis nativo importa datos de Ghidra 12.2 y compara registros de ejecución de dominio finito. [Ejemplos y alcance técnico en inglés](../VERIFIED-RECOVERY.md)
 
 ## Un guardado que resiste un reinicio real del worker
 
@@ -30,7 +34,7 @@ Asigna a `RPM_BROWSER` la ruta absoluta del ejecutable instalado de Chromium/Chr
 
 **La entrega es código que puedes ejecutar y evidencia que puedes revisar.** Este proveedor comprueba el protocolo de mensajes documentado `rpm-kv-v1` y los límites de reinicio seleccionados; no reconstruye automáticamente cualquier extensión. Los boot ID permanecen en la evidencia original; solo ese campo observacional declarado se excluye de la comparación. Los recibos de mensajes no prueban efectos de UI, red o archivos no observados.
 
-MCP ofrece **31 herramientas**. La captura y la reproducción en Chromium se habilitan al iniciar el servidor con `--browser "/absolute/path/to/chromium"` y se realizan en perfiles temporales separados. `reconcile_runtime` vincula canales de mensajes de un worker MV3 con eventos del mismo artefacto, comprobado por su hash, y conserva las ambigüedades. `read_source_evidence` devuelve fragmentos acotados con hash comprobado. `include`, `exclude` y `coverage` muestran los archivos admitidos, omitidos y sin analizar.
+MCP ofrece **35 herramientas**. La captura y la reproducción en Chromium se habilitan al iniciar el servidor con `--browser "/absolute/path/to/chromium"` y se realizan en perfiles temporales separados. `reconcile_runtime` vincula canales de mensajes de un worker MV3 con eventos del mismo artefacto, comprobado por su hash, y conserva las ambigüedades. `read_source_evidence` devuelve fragmentos acotados con hash comprobado. `include`, `exclude` y `coverage` muestran los archivos admitidos, omitidos y sin analizar.
 
 [Flujo de recuperación y límites, en inglés](../RECOVERY.md) · [Verificación por versión](../VALIDATION.md). `shrink` ejecuta el oracle en un proceso hijo nuevo por intento, con plazo. Su función `reset()` controla el estado externo. Un perfil nuevo o un proceso hijo no es un sandbox del sistema ni de red.
 
@@ -60,7 +64,7 @@ En Codex, selecciona la skill o añade `$rea-pro-max` al principio de la misma t
 
 ## Una herramienta. Tres formas de empezar.
 
-**La v0.8.0 ofrece 31 herramientas MCP locales** para comparar builds, medir la cobertura de API, inspeccionar firmware y comprobar una versión sin conexión. La skill guía al agente hasta una implementación ejecutable. La CLI comparte el núcleo y funciona sin instalar paquetes npm.
+**La v1.0.0 ofrece 35 herramientas MCP locales** para comparar builds, medir la cobertura de API, inspeccionar firmware y comprobar una versión sin conexión. La skill guía al agente hasta una implementación ejecutable. La CLI comparte el núcleo y funciona sin instalar paquetes npm.
 
 - `compare` en la CLI y `compare_artifacts` en MCP comparan dos archivos o árboles de directorios con SHA-256. En ZIP compatibles muestran cambios en el contenido de los miembros verificados y distinguen el reempaquetado de los cambios en los archivos.
 - `api-diff` y `compare_api_contract` cruzan métodos y rutas de un OpenAPI JSON con solicitudes de un HAR guardado. La cobertura se limita a esa captura y omite cuerpos, cabeceras y parámetros de consulta en el resultado.

@@ -142,6 +142,7 @@ export function compileContract(source, candidateArg, optionsArg) {
     authority: normalizeAuthority(options.authority ?? reference.authority),
     coverage,
     required_channels: [...requiredChannels],
+    ...(options.network_counts === undefined ? {} : { network_counts: options.network_counts }),
     unknowns: unknowns.map(normalizeUnknown),
     source: { reference_sha256: digest(reference), ...(candidate ? { candidate_sha256: digest(candidate) } : {}) },
   };
@@ -171,6 +172,24 @@ export function validateContract(value) {
   result.coverage = normalizeCoverage(result.coverage ?? { complete: false });
   result.required_channels ??= ['dom', 'network', 'storage'];
   if (!Array.isArray(result.required_channels) || result.required_channels.some(channel => !OBSERVATION_CHANNELS.includes(channel))) fail('web_contract_type', 'required_channels contains an unsupported channel.');
+  if (result.network_counts !== undefined) {
+    const actionIds = new Set(result.actions.map(action => action.id));
+    const selectors = new Set();
+    if (!result.required_channels.includes('network') || !Array.isArray(result.network_counts) || result.network_counts.length > 64) {
+      fail('web_contract_type', 'network_counts requires a network channel and at most 64 clauses.');
+    }
+    for (const row of result.network_counts) {
+      if (!object(row) || Object.keys(row).some(key => !['action_id', 'method', 'path', 'count'].includes(key)) ||
+          !actionIds.has(row.action_id) || typeof row.method !== 'string' || !/^[A-Z]{1,24}$/u.test(row.method) ||
+          typeof row.path !== 'string' || row.path.length > 512 || !/^\/[^?#\s]*$/u.test(row.path) ||
+          !Number.isSafeInteger(row.count) || row.count < 0 || row.count > 64) {
+        fail('web_contract_type', 'Each network count needs a known action, uppercase HTTP method, pathname and a count from 0 to 64.');
+      }
+      const selector = JSON.stringify([row.action_id, row.method, row.path]);
+      if (selectors.has(selector)) fail('web_contract_type', 'Each network count selector must be unique.');
+      selectors.add(selector);
+    }
+  }
   if (!Array.isArray(result.unknowns)) fail('web_contract_type', 'unknowns must be an array.');
   result.unknowns = result.unknowns.map(normalizeUnknown);
   return result;

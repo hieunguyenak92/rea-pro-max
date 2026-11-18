@@ -8,13 +8,17 @@ Claude Code、Codex、互換MCPクライアントのための独立したリバ�
 
 [記録済みラボを体験](https://hieunguyenak92.github.io/rea-pro-max/#explorer) · [スキルを導入](../INSTALL.md) · [検証記録](../VALIDATION.md) · [リリース](https://github.com/hieunguyenak92/rea-pro-max/releases)
 
-**v0.8 では、新しいビルドで対象外になる実行環境を確認できます。** Mach-O ファイル同士または Java クラスファイル同士を `target-diff` で比較すると、削除されたアーキテクチャ、最低 OS バージョンの引き上げ、Java のプレビュー機能要件の変化が分かります。付属例の CI はファイル変更を許可しても、Java 11 から 17 への引き上げを検出して失敗します。プログラムは実行せず、宣言から判定できない場合は `unknown` を返します。 [再現手順（英語）](../NATIVE-TARGETS.md)
+**v1.0 では、新しいビルドで対象外になる実行環境を確認できます。** Mach-O ファイル同士または Java クラスファイル同士を `target-diff` で比較すると、削除されたアーキテクチャ、最低 OS バージョンの引き上げ、Java のプレビュー機能要件の変化が分かります。付属例の CI はファイル変更を許可しても、Java 11 から 17 への引き上げを検出して失敗します。プログラムは実行せず、宣言から判定できない場合は `unknown` を返します。 [再現手順（英語）](../NATIVE-TARGETS.md)
 
 ![REA Pro Max — Understand the mechanism](../media/hero.png)
 
 ![自作合成ラボからの実際のREA Pro Maxワークベンチ](../media/workbench.png)
 
 *Chrome APIを模擬したJavaScriptモデルの実レポートです。実際のChromiumライフサイクルの証拠ではありません。*
+
+## 1.0 の新機能
+
+Java バージョンごとに、マルチリリース JAR で選ばれるクラスを比較します。限定された i32 Wasm 関数を実行して、指定入力での戻り値を比較します。Chromium リプレイは操作ごとにネットワークの観測範囲を記録し、証拠の不足を報告します。保存のサンプルでは、サーバーの受信記録と再起動後の読み出しを確認できます。ネイティブ用途では Ghidra 12.2 のエクスポートと有限範囲の実行記録を利用できます。 [実行例と技術上の範囲（英語）](../VERIFIED-RECOVERY.md)
 
 ## 実際のworker再起動を越えて保存を維持する
 
@@ -30,7 +34,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **成果物は、実行できるコードと確認できる証拠です。** このproviderは現在、文書化された`rpm-kv-v1`メッセージプロトコルと選択したリセット境界を検査します。任意の拡張を自動復元するものではありません。boot IDは生の証拠に残し、比較では宣言済みの観測フィールドだけを除外します。メッセージreceiptは未観測のUI・ネットワーク・ファイル効果を証明しません。
 
-MCPでは**31のツール**を利用できます。ランタイムは既定で無効です。サーバー登録時に `--browser "/absolute/path/to/chromium"` を追加すると `capture_feature`、`replay_feature`、`run_recovery` が使えます。Chromiumは専用の一時プロファイルで動作し、修正コードはホストエージェントが書きます。`reconcile_runtime` は、検査したMV3拡張機能と同じMCPセッションでキャプチャした対象のSHA-256が一致する場合に、サービスワーカーのメッセージチャネルを照合します。曖昧なチャネルや対応付けられなかったイベントも結果に残します。`read_source_evidence` はハッシュを再確認してから、範囲を限定したソースコードを返します。読み込み済み、除外、未解析のファイルが分かります。TypeScriptとJSXの意味解析は未対応です。
+MCPでは**35のツール**を利用できます。Chromium の実行は既定で無効です。サーバー登録時に `--browser "/absolute/path/to/chromium"` を追加すると `capture_feature`、`replay_feature`、`run_recovery` が使えます。Chromiumは専用の一時プロファイルで動作し、修正コードはホストエージェントが書きます。`reconcile_runtime` は、検査したMV3拡張機能と同じMCPセッションでキャプチャした対象のSHA-256が一致する場合に、サービスワーカーのメッセージチャネルを照合します。曖昧なチャネルや対応付けられなかったイベントも結果に残します。`read_source_evidence` はハッシュを再確認してから、範囲を限定したソースコードを返します。読み込み済み、除外、未解析のファイルが分かります。TypeScriptとJSXの意味解析は未対応です。
 
 [復元手順と制限・英語](../RECOVERY.md) · [バージョン別検証](../VALIDATION.md)。`shrink`は各試行を期限付きの新しい子プロセスで実行します。外部状態のリセットはoracleの`reset()`が担当します。新しいプロファイルや子プロセスはOS・ネットワークのサンドボックスではありません。
 

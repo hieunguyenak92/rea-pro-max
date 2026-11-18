@@ -74,7 +74,9 @@ test('adapting runtime receipts only admits screenshot digests to the visual cha
   const after = receipt('b'.repeat(64));
   const target = captureToWebIR(before, { id: 'reference' });
   const candidate = captureToWebIR(after, { id: 'candidate' });
-  assert.equal(compareBehavior(target, candidate).status, 'pass');
+  assert.equal(compareBehavior(target, candidate).status, 'unknown');
+  const domOnly = compileContract(target, candidate, { required_channels: ['dom'] });
+  assert.equal(compareBehavior(target, candidate, domOnly).status, 'pass');
   assert.equal(compareVisual(target, candidate).status, 'fail');
   assert.equal(target.observations[0].visual.artifact_hash, before.receipt.cases[0].output.screenshot_sha256);
   assert.deepEqual(target.observations[0].dom.summary, { title: 'Owned demo', text: 'Unchanged' });
@@ -117,6 +119,51 @@ test('incomplete coverage is unknown and does not become a behavior pass', () =>
   const result = compareBehavior(target, candidate, contract);
   assert.equal(result.status, 'unknown');
   assert.equal(result.cases.some(item => item.reasons.includes('incomplete_coverage')), true);
+});
+
+test('legacy replay IR with an invented empty network summary cannot certify network equality', () => {
+  const input = capture();
+  input.metadata = { environment_normalization: 'Origin and port are excluded from bounded URL observations; path/query/hash remain compared.' };
+  for (const observation of input.observations) observation.network.summary = [];
+  assert.equal(compareBehavior(input, input).status, 'unknown');
+  assert.equal(compareVisual(input, input).status, 'pass');
+  const different = structuredClone(input);
+  different.observations[0].dom.text = 'Verified DOM difference';
+  assert.equal(compareBehavior(input, different).status, 'fail');
+});
+
+test('explicit network count rejects two observed empty windows', () => {
+  const input = capture();
+  for (const observation of input.observations) observation.network.summary = [];
+  const rules = [{ action_id: 'submit', method: 'POST', path: '/save', count: 1 }];
+  const contract = compileContract(input, input, { required_channels: ['network'], network_counts: rules });
+  const result = compareBehavior(input, input, contract);
+  assert.equal(result.status, 'fail');
+  assert.ok(result.mismatches.some(row => row.action_id === 'submit' && row.path === '/count/candidate/POST/~1save' &&
+    row.reference === 1 && row.candidate === 0));
+  const valid = structuredClone(input);
+  valid.observations[2].network.summary = [{ method: 'POST', path: '/save' }];
+  assert.equal(compareBehavior(valid, valid, contract).status, 'pass');
+  const unavailable = structuredClone(input);
+  delete unavailable.observations[2].network;
+  assert.equal(compareBehavior(unavailable, unavailable, contract).status, 'unknown');
+  assert.throws(() => compileContract(input, input, { network_counts: [{ ...rules[0], action_id: 'wrong' }] }),
+    { code: 'web_contract_type' });
+});
+
+test('a supplied contract does not certify replay of another action or stale baseline', () => {
+  const old = capture();
+  const contract = compileContract(old, old);
+  const mismatchedInput = structuredClone(old);
+  mismatchedInput.actions[1].value = 'different';
+  const inputResult = compareBehavior(mismatchedInput, mismatchedInput, contract);
+  assert.equal(inputResult.status, 'unknown');
+  assert.ok(inputResult.cases.find(row => row.id === 'search').reasons.includes('action_input_mismatch'));
+  const mismatchedOutput = structuredClone(old);
+  mismatchedOutput.observations[1].dom.text = 'different';
+  const outputResult = compareBehavior(mismatchedOutput, mismatchedOutput, contract);
+  assert.equal(outputResult.status, 'unknown');
+  assert.ok(outputResult.cases.find(row => row.id === 'search').reasons.includes('stale_reference_observation:dom'));
 });
 
 test('deep diff is deterministic, path-addressable and bounded', () => {

@@ -2,7 +2,7 @@
 
 The runtime toolkit needs **Node.js 22 or later**. It uses Node built-ins, the bundled Acorn parser and a bundled official MCP SDK runtime for the MCP entry point. A runtime npm install, model API key and upstream REA server are not required. Claude Code or Codex needs filesystem and terminal access; runtime investigations additionally need appropriate browser, app or device tools.
 
-Download the packaged skill and its checksum from the [v0.8.0 release](https://github.com/hieunguyenak92/rea-pro-max/releases/tag/v0.8.0).
+Download the packaged skill and its checksum from the [v1.0.0 release](https://github.com/hieunguyenak92/rea-pro-max/releases/tag/v1.0.0).
 
 ## Choose your package layout
 
@@ -59,7 +59,7 @@ The local server entry for the Git checkout layout is:
 node /absolute/path/to/rea-pro-max/skills/rea-pro-max/scripts/mcp-server.mjs --workspace /absolute/path/to/your-workspace
 ```
 
-Choose an existing absolute workspace containing the intended targets and exports. The server uses local stdio and exposes 31 tools. It admits client-selected file paths only inside that workspace; it does not launch arbitrary targets or execute a supplied oracle. Its owned lab uses fixed bundled code and simulated Chrome APIs. Local build, deployment target, Wasm and API comparisons, saved trace inspection and release checks work immediately. The optional Chromium and Craft tools require operator startup configuration. [Release quickstart](RELEASE-CHECK.md) · [Offline examples](REA-6.9.md) · [Provider startup configuration](PROVIDERS.md).
+Choose an existing absolute workspace containing the intended targets and exports. The server uses local stdio and exposes 35 tools. It admits client-selected file paths only inside that workspace; browser execution is opt-in and Wasm execution is limited to the bounded i32 subset. Its owned lab uses fixed bundled code and simulated Chrome APIs. Local build, deployment target, Wasm and API comparisons, saved trace inspection and release checks work immediately. The optional Chromium and Craft tools require operator startup configuration. [Release quickstart](RELEASE-CHECK.md) · [Offline examples](REA-6.9.md) · [Provider startup configuration](PROVIDERS.md).
 
 See [MCP.md](MCP.md) for Claude Code/Codex registration, generic stdio configuration, the exact tool catalog, session lifetime and troubleshooting. Registration instructions are for you to run; the product does not automatically edit another application's configuration. The skill and CLI remain available without MCP registration.
 
