@@ -1,6 +1,6 @@
 # Web recovery lane
 
-REA Pro Max v0.4 can execute a bounded web scenario in a fresh Chromium profile and compare two explicit URLs. The lane is designed for recovering a concrete interaction: navigation, click, input, reload and wait actions produce bounded observations for the URL, title, DOM text/HTML digest, layout width, active element, local-storage keys and screenshot digest.
+REA Pro Max v0.6 can execute a bounded web scenario in a fresh Chromium profile and compare two explicit URLs. The lane is designed for recovering a concrete interaction: navigation, click, input, reload and wait actions produce bounded observations for the URL, title, DOM text/HTML digest, layout width, active element, local-storage keys and screenshot digest.
 
 ## Scenario
 
@@ -32,7 +32,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
   --scenario ./web-scenario.json --out ./replay.json
 ```
 
-The replay compiles a finite contract and reports behavior and visual results separately. Origin and port are removed from URL observations so two local servers can be compared; path, query and hash remain observable. A visual hash mismatch never becomes a behavior pass or fail. Missing observations, incomplete cleanup, unsupported browser state and provider errors remain `unknown` or an explicit failure. The output is evidence for the declared actions only; it is not pixel-perfect or whole-application equivalence.
+The replay compiles a finite contract and reports behavior and visual results separately. Origin and port are removed from URL observations so two local servers can be compared; path, query and hash remain observable. Screenshot digests feed the visual verdict. The built-in capture observes DOM, layout and sampled storage keys. Network observations must come from supplied evidence. Missing observations, incomplete cleanup, unsupported browser state and provider errors remain `unknown` or an explicit failure. The output is evidence for the declared actions only; it is not pixel-perfect or whole-application equivalence.
 
 The owned `assets/recovery-web/` fixture is a local, dependency-free example. It includes a reference, a deliberately defective starter and an independently authored recovered app. Its contract covers delayed responses, latest-wins cancellation, NFKC search normalization, empty/error/cancelled states, localStorage reload persistence, keyboard focus and responsive markup. The fixture is synthetic and does not call a network service.
 

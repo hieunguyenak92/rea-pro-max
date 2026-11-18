@@ -8,6 +8,8 @@
 
 [探索已记录的实验](https://hieunguyenak92.github.io/rea-pro-max/#explorer) · [安装技能](../INSTALL.md) · [验证记录](../VALIDATION.md) · [发行版本](https://github.com/hieunguyenak92/rea-pro-max/releases)
 
+**v0.8 可以找出新构建放弃了哪些运行环境。** 使用 `target-diff` 比较两个 Mach-O 文件或两个 Java 类文件，即可查看删除的架构、提高的最低系统版本或 Java 预览功能要求的变化。随附示例允许修改文件，但当最低 Java 版本从 11 升至 17 时，CI 仍会报错。检查只读取文件声明，无需运行程序；证据不足时返回 `unknown`。 [英文复现示例](../NATIVE-TARGETS.md)
+
 ![REA Pro Max — Understand the mechanism](../media/hero.png)
 
 ![自有合成实验中的真实 REA Pro Max 工作台](../media/workbench.png)
@@ -28,7 +30,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **交付物是可以运行的代码，以及可以核验的证据。** 该 provider 目前只检查文档化的 `rpm-kv-v1` 消息协议和选定的重置边界，不会自动重建任意扩展。原始证据保留 boot ID；比较时仅排除这一已声明的观察字段。消息 receipt 不证明未观察的 UI、网络或文件副作用。
 
-MCP 提供 **21 个工具**。运行时默认关闭；注册服务器时追加 `--browser "/absolute/path/to/chromium"`，即可启用 `capture_feature` 与 `replay_feature`。它们使用独立临时 profile；宿主智能体仍负责修复代码。`read_source_evidence` 返回有大小限制且经过 hash 检查的源码片段。include/exclude 和 coverage 会列明纳入、排除、未解析的文件；尚未提供 TypeScript/JSX 语义解析。
+MCP 提供 **31 个工具**。运行时默认关闭。注册服务器时添加 `--browser "/absolute/path/to/chromium"`，即可启用 `capture_feature`、`replay_feature` 和 `run_recovery`。Chromium 使用独立的临时配置，宿主智能体负责编写修复代码。当 SHA-256 确认已静态检查的 MV3 扩展与同一 MCP 会话捕获的扩展一致时，`reconcile_runtime` 会对照服务工作线程的消息通道，并保留有歧义的通道和未匹配的事件。`read_source_evidence` 重新校验哈希后返回长度受限的源码片段。结果列明已读取、排除及未解析的文件。TypeScript 和 JSX 的语义分析暂未支持。
 
 [恢复流程与限制（英文）](../RECOVERY.md) · [按版本验证](../VALIDATION.md)。`shrink` 每次尝试都在有期限的新子进程中执行 oracle；外部状态由 oracle 的 `reset()` 负责。新 profile 和子进程不是操作系统或网络沙箱。
 
@@ -58,7 +60,22 @@ REA Pro Max 把这些问题带入实现过程。分析已分发的 JavaScript，
 
 ## 一套工具，三种起步方式
 
-**v0.4 提供 21 个本地 MCP 工具**，增加可选的真实 Chromium capture/replay，以及经过 hash 检查的源码片段。技能引导智能体交付可运行实现；CLI 共用同一内核，使用时无需安装 npm 依赖。
+**v0.7 为 CLI 和本地 MCP 新增离线发布检查。** 技能指导智能体交付可运行的实现。使用这些工具时无需额外安装 npm 软件包。
+
+- CLI 的 `compare` 和 MCP 的 `compare_artifacts` 用 SHA-256 对照两个构建的文件树。结果列出新增、删除和变更的文件，并给出读取限额内成功核验的 ZIP 条目内容差异。
+- `api-diff` 和 `compare_api_contract` 将 OpenAPI JSON 中声明的 HTTP 方法和路径模板与已保存的 HAR 请求进行对照。结果标明已观测、未观测和存在歧义的操作。报告省略 HAR 的源（origin）、实际路径值、查询参数、标头和正文。
+- 检查 Intel HEX 的记录校验和及文件完整性。对于基础 UF2，检查块结构、地址范围和序列。报告保存已检查区域或数据块的 SHA-256，并说明超出限额或未获支持的范围。
+- `wasm-inspect` 读取 WebAssembly 模块的公开导入和导出声明。`wasm-diff` 比较两个模块的声明名称、类别和受支持的类型。`playwright-trace` 汇总已保存的 Playwright v10 追踪记录中的操作。
+
+[支持范围及 REA 6.9 对照说明（英文）](../REA-6.9.md)
+
+### 从源码检出目录运行发布检查
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs release-check skills/rea-pro-max/assets/labs/release/policy.json
+```
+
+CLI 的 `release-check` 与 MCP 的 `check_release` 应用同一项策略。它一次检查允许列表中明确指定的文件变更、内容一致的 ZIP 重新打包、Wasm 的公开 ABI，以及限定在指定 HTTP 源（origin）内的 HAR 必需请求观测。策略也可要求提供 Playwright v10 追踪记录中的操作证据。`pass`、`fail` 或 `unknown` 判定仅适用于所提供的策略和证据。 [发布检查指南（英文）](../RELEASE-CHECK.md)
 
 ### 将 MCP 连接到 Claude Code 或 Codex
 
@@ -107,6 +124,7 @@ node /absolute/path/to/rea-pro-max/skills/rea-pro-max/scripts/mcp-server.mjs --w
 | `record_observation` | 保留观察、来源、authority 与声明的 bindings。 |
 | `rank_probes` | 为允许的实验排序，不执行实验。 |
 | `verify_behavior` | 按有限契约比较观察记录文件。 |
+| `check_release` | 根据本地证据检查已声明的发布条件。 |
 | `export_artifact` | 在 workspace 新文件中导出 JSON 或独立 HTML。 |
 | `run_owned_lab` | 只运行同梱自有 worker 的受控模型。 |
 | `list_task_prompts` | 按家族与分页浏览 36 个模板。 |
@@ -226,4 +244,4 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
 
 `assets/recovery-web/` 是无网络的自有 fixture：reference、故意有缺陷的 starter 和独立编写的 recovered 覆盖延迟响应、latest-wins 取消、NFKC Unicode、空/错误状态、localStorage、键盘焦点与响应式标记。详见 [WEB-RECOVERY.md](../WEB-RECOVERY.md)。
 
-Craft Anything 是可选 provider，并非依赖。适配器只调用 `js_app_map`、`web_site_capture`、`app_graphs_compare` 三个类型化 alias，并检查 MCP handshake、固定版本/commit、工具列表、路径、时间/字节限制和清理。无法证明 commit 的 binary 会被拒绝。不会自动安装 Craft，也不包含其代码或品牌；请阅读 [PROVIDERS.md](../PROVIDERS.md)。
+Craft Anything 是可选提供程序。运维人员启动 MCP 服务时可通过 `--craft-config /absolute/path/to/craft-launcher.json` 启用。适配器检查固定的版本与提交、MCP 握手、工具列表、路径、时间和字节限额，以及进程清理情况。可用操作包括 `js_app_map`、`web_site_capture` 和 `app_graphs_compare`。启用前请单独安装 Craft。[提供程序指南（英文）](../PROVIDERS.md)。

@@ -1,6 +1,6 @@
 import { constants, closeSync, lstatSync, openSync, realpathSync, unlinkSync, writeSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
-import { RpmError, hashBytes, readJson as readBoundedJson } from '../common.mjs';
+import { RpmError, hashBytes, readBoundedBytes, readJson as readBoundedJson } from '../common.mjs';
 
 export const MCP_LIMITS = Object.freeze({ maxArtifacts: 16, maxCacheBytes: 32 * 1024 * 1024, maxJsonBytes: 4 * 1024 * 1024, maxResponseBytes: 64 * 1024, maxPage: 50, maxPromptPage: 10, maxQueryChars: 200, maxToolInputElements: 50_000, maxInputBufferBytes: 4 * 1024 * 1024, maxConcurrentHeavy: 2 });
 export function checkCancelled(context) {
@@ -38,7 +38,7 @@ export class WorkspacePolicy {
     if (!contained(this.root, path)) throw new RpmError('outside_workspace', 'The requested path is outside the configured workspace. Use a relative workspace path.');
     this.checkComponents(path);
     const stat = lstatSync(path);
-    if (type === 'json' ? !stat.isFile() : !stat.isFile() && !stat.isDirectory()) throw new RpmError('unsupported_input', 'Use a regular local file or artifact directory; special files are not admitted.');
+    if (type === 'artifact' ? !stat.isFile() && !stat.isDirectory() : !stat.isFile()) throw new RpmError('unsupported_input', 'Use an admitted regular local file or artifact directory.');
     if (!contained(this.root, realpathSync(path))) throw new RpmError('outside_workspace', 'The requested path no longer belongs to the workspace.');
     return path;
   }
@@ -56,6 +56,9 @@ export class WorkspacePolicy {
     // Path admission remains the workspace boundary; the shared reader owns the
     // descriptor, size, identity and UTF-8 checks so CLI and MCP cannot drift.
     return readBoundedJson(path, this.limits.maxJsonBytes);
+  }
+  readBytes(request, maxBytes) {
+    return readBoundedBytes(this.resolveInput(request, 'file'), maxBytes);
   }
   writeNew(request, content, context) {
     if (typeof request !== 'string' || !request.trim() || request.length > 4096 || isAbsolute(request) || request.includes('\0')) throw new RpmError('invalid_output_path', 'Use a relative new output filename within the configured workspace.');

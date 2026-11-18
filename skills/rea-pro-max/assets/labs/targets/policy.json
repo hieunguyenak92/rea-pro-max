@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "reference_path": "java11",
+  "candidate_path": "java17",
+  "allowed_changes": [
+    {
+      "path": "TargetSample.class",
+      "status": "modified"
+    }
+  ],
+  "deployment_targets": ["TargetSample.class"]
+}

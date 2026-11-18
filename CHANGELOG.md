@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.8.0 — 2026-11-18
+
+- Detect lost deployment targets across compiler-produced Apple Mach-O and JVM class files from the CLI and local MCP. Use exact CPU subtypes, per-slice platform minimums and Java preview-release constraints.
+- Distinguish universal Mach-O and Java class files sharing the same signature in ordinary artifact inspection.
+- Require preserved deployment targets at named paths in a release policy. Reject explicit null rule lists. A known ZIP member change fails a repack rule even when another member cannot be verified.
+- Bound directory enumeration as entries arrive, including pending siblings, and retain deterministic traversal order.
+
+## 0.7.0 — local release candidate, 2026-11-18
+
+- Add an executable release policy that combines exact file changes, required paths, verified ZIP repacks, Wasm interfaces and saved HTTP/Playwright assertions.
+- Inspect and diff public WebAssembly ABI declarations. Keep unsupported modules unknown and retain host validation details.
+- Import one unpacked Playwright v10 context with action timing, page events and bounded companion network statistics. Omit raw traffic, DOM and action inputs.
+- Require in-origin observed status evidence in the HAR release check. Retain exact source hashes through partial results.
+- Expose the added workflows through 29 MCP tools and standalone CLI commands, with a packaged release fixture and nine localized READMEs.
+
+## 0.6.0 — local release candidate, 2026-11-18
+
+- Compare file and tree snapshots by SHA-256. Identify uniquely relocated content, verified ZIP member changes and repackaged archives with identical verified file contents.
+- Validate bounded ZIP members, Intel HEX regions and basic UF2 blocks. Retain header-only coverage for the wider native, model and container catalog.
+- Correlate OpenAPI JSON operations with saved HAR requests offline. Preserve ambiguous paths, unobserved declarations, unmatched requests and omission reasons.
+- Run typed Chromium replay with reviewed hash-bound patch plans. Preserve earlier attempts when a later patch or replay fails. Restrict MV3 writes to the receiving project and stop before patching incomplete observations.
+- Bind MV3 static/runtime correlations to one artifact digest. Saved CLI captures retain reported authority. Keep web screenshot hashes exclusive to the visual verdict.
+- Put Craft launcher configuration at server startup and send tools/call only after the checked MCP identity and tool advertisement. Record upstream REA 6.9.0 as a source reference.
+- Ship the shared CLI/MCP workflows, owned API example and updated documentation in nine languages.
+
 ## 0.4.0 — 2026-11-11
 
 - Add a bounded web recovery IR and contract kernel with route/state/viewport inputs, typed actions, explicit authority/coverage, deterministic diffs, separate behavior versus visual verdicts and dependency-aware counterexample shrinking.

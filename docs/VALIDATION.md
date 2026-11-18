@@ -1,6 +1,53 @@
 # REA Pro Max — verification record
 
-Recorded 2026-11-06. This record separates executable engine checks, a controlled model and actual app observations. No comparison with another reverse-engineering product was run.
+## v0.8.0 — release verification
+
+On November 18, 2026, the full suite passed **270/270** on macOS arm64 with Node 22.23.0, Chrome for Testing 156.0.8078.4 and the natural-idle test enabled. The default run passed 266 tests and skipped four opt-in browser tests. Lint, documentation, vendored SDK verification, and the extracted archive's CLI and official MCP client checks passed. Both MCP initialization modes discovered 31 tools.
+
+- Apple clang compiled and linked a two-architecture macOS 11 reference and an arm64 macOS 12 candidate. The inspector agreed with `otool` and `lipo`. The forward comparison returned two losses and exited 2. Reversing the same executable inputs returned two gains and exited 0. The packaged object files reproduce both changes.
+- OpenJDK javac compiled the same source for Java 11 and Java 17. The bundled policy accepted the byte change and failed the declared Java target check. The standalone comparison and the policy recorded the same comparison digest.
+- A separate corpus check supplied all 7,406 class files extracted from the installed OpenJDK 26.0.2 `java.base.jmod` individually to the public inspector. All had major version 70. The inventory contained 6,261 classes, 868 interfaces, 239 enums, 37 annotations and one module descriptor. This measures static input coverage on one distribution.
+- Regression tests cover shared JVM and universal Mach-O magic, preview-release transitions, null policy lists, and a verified ZIP member mismatch alongside an unsupported member. The directory entry budget also accounts for pending siblings during enumeration.
+
+[Compiler commands and limits](NATIVE-TARGETS.md) · [Measured receipt digests and corpus identity](evidence/targets-v0.8.json)
+
+The local ZIP contains 127 entries and 1,730,271 bytes, SHA-256 `1bae8b426fba316fa934f14757b0d4bec768a857f453c3025c2a0fd33e0e5010`. The archive checksum was verified after writing. Publication, remote CI, and device or JVM execution are outside this acceptance run.
+
+## v0.7.0 — local release candidate
+
+Tested on November 18, 2026 with Node 22.23.0 and Chrome for Testing 156.0.8078.4 on macOS arm64. The suite passed **245 of 245** with the Chrome executable and natural-idle tests enabled. The default command passed **241 of 245** with four explicit browser skips. Lint, documentation, SDK bundle verification and the extracted package smoke passed. Both legacy MCP initialization and 2026-07-28 discovery exercised 29 tools, including the four new surfaces through the extracted package.
+
+| Acceptance case | Observed result |
+| --- | --- |
+| Stable interface, changed Wasm body and re-encoded ZIP | The bundled policy passed all four checks. The Wasm raw-file hashes differ, its public declarations match and the ZIP member contents match. |
+| Allowed file edit changes the public Wasm return type | The file change check passed and the ABI check failed at `get`. The overall CLI verdict returned exit 2. |
+| Incorrect, malformed or missing saved observations | The tests retain wrong-origin counts, reject unexpected HTTP statuses and keep unreadable traces and malformed HARs unknown. Known trace or page errors and scoped unmatched HAR requests fail their checks. |
+| Real Playwright import | Playwright Core 1.64.1 recorded a click and resulting fetch on an owned loopback page. The v10 importer recovered six completed actions and two HTTP 2xx resources. The reduced receipt omitted the loopback URL, query marker and response text. |
+| End-to-end acceptance with the real trace | The release check passed the admitted HTTP and browser observations and passed the valid build. A deliberate ABI change failed only the ABI check using the same saved observations. The current MCP client returned the same trace and failure receipt digests as CLI. |
+
+The raw browser actions only describe the owned page. The Wasm and ZIP checks read the separate build artifacts. The release check is finite and records saved runtime evidence as reported. [Measured receipt summary](evidence/release-v0.7.json) · [Reproduce the bundled case](RELEASE-CHECK.md) · [Release regression tests](../tests/release-check.test.mjs)
+
+The local `dist/rea-pro-max-0.7.0.zip` contains 117 entries and 1,664,430 bytes. SHA-256 `8e88728d3a47905bb5fa70ce915796c6cccb29ef26dd18ee82c36861611eb105`. Hosted publication, Windows/Linux browser runtime and market comparisons were outside this verification run.
+
+## v0.6.0 — local release candidate
+
+Verified on November 18, 2026 on macOS arm64, Node 22.23.0 and Chrome for Testing 156.0.8078.4. The acceptance gates came from the pinned upstream release review and the independent REA Pro Max workflows. [REA 6.9.0 reference, coverage and examples](REA-6.9.md)
+
+| Gate | Result and reproducible evidence |
+| --- | --- |
+| Build comparison | The same fixture produces matching CLI and MCP receipts. A repack changes ZIP bytes while preserving member content identity. A deliberate member edit reports the correct file, while partial member evidence leaves absences unresolved. [Artifact comparison tests](../tests/artifact-diff.test.mjs) |
+| Archive and firmware structure | ZIP fixtures cover local/central consistency, descriptors, CRC, safe file identity, Zstandard frame bounds and shared decode limits. An independently made Python streaming ZIP was also checked. Intel HEX reports checksum-verified regions, and basic UF2 reports validated blocks. Corrupt, ambiguous and unsupported cases retain explicit evidence. [ZIP tests](../tests/zip.test.mjs) · [Firmware tests](../tests/firmware.test.mjs) |
+| API coverage | The bundled synthetic HAR matches two OpenAPI operations. One declaration is unobserved and one HAR row is unmatched. The exported report keeps templates and entry indices. [Contract tests](../tests/api-contract.test.mjs) · [Local fixture](../skills/rea-pro-max/assets/labs/api/openapi.json) |
+| Actual MV3 correction | The owned starter failed at `cold-read` after forced worker stop. One SHA-256-bound edit fixed it and replay verified all seven actions, with the reference worker digest preserved. Another run qualified natural idle by observing worker absence, a new boot identity and persisted state. [Recovery engine tests](../tests/recovery-engine.test.mjs) · [Lifecycle tests](../tests/runtime-provider.test.mjs) |
+| Actual web comparison | A CSS-only paint change on owned loopback pages altered the screenshot digest. The finite behavioral verdict passed and the visual verdict failed. The built-in capture records DOM, layout and sampled storage keys. Network effects require separately supplied evidence. [Web verification tests](../tests/web-recovery-core.test.mjs) |
+| Actual MCP | Official legacy initialization and current 2026-07-28 discovery both passed with 25 tools, including file diff, HAR comparison and browser-enabled capture/replay. A separate in-session fixture matched two literal worker channels to two real same-artifact message events. [MCP checks](../tools/check-mcp.mjs) |
+| Package and docs | The packaged skill is reproducible and passed standalone CLI and both MCP client routes after extraction. All nine README selectors and 36 task templates passed the documentation checker. SDK bundle hash and licenses matched the vendor receipt. [Package smoke](../tools/package_skill.py) |
+
+The browser-enabled test suite passed **219 of 219** tests. Standard `npm test` passed **215 of 219** with four explicit browser skips when no executable was supplied. Lint, docs, SDK bundle verification and `git diff --check` passed.
+
+The local `dist/rea-pro-max-0.6.0.zip` contains 105 files and 1,597,685 bytes. SHA-256 `bef4311360940fab5250a74182ed54fb69ab2af6564b705ffa1504ec8685bde3`.
+
+This evidence covers owned fixtures on the stated host. An optional Craft binary was represented by protocol fixtures. Linux/Windows runtime validation, remote release and comparative market performance remain unverified for this candidate.
 
 ## v0.4 — web recovery and optional provider boundary
 

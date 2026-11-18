@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
 import {
   captureToWebIR,
   createWebRecoveryIR,
@@ -11,6 +12,7 @@ import {
   deepDiff,
 } from '../skills/rea-pro-max/lib/web-recovery/compare.mjs';
 import { shrinkActions } from '../skills/rea-pro-max/lib/web-recovery/reducer.mjs';
+import { replayWebFeature } from '../skills/rea-pro-max/lib/runtime/web-replay.mjs';
 
 const actions = [
   { id: 'open', kind: 'navigate', route: '/' },
@@ -56,6 +58,57 @@ test('behavior ignores visual hash differences while visual comparison reports t
   const visual = compareVisual(target, candidate, contract);
   assert.equal(visual.status, 'fail');
   assert.equal(visual.mismatches[0].path, '/visual/artifact_hash');
+});
+
+test('adapting runtime receipts only admits screenshot digests to the visual channel', () => {
+  const receipt = screenshot_sha256 => ({
+    kind: 'web-runtime-capture',
+    complete: true,
+    receipt: {
+      complete: true,
+      cases: [{ id: 'one', input: { kind: 'wait', milliseconds: 0 },
+        output: { title: 'Owned demo', text: 'Unchanged', screenshot_sha256 }, state: {}, effects: [] }],
+    },
+  });
+  const before = receipt('a'.repeat(64));
+  const after = receipt('b'.repeat(64));
+  const target = captureToWebIR(before, { id: 'reference' });
+  const candidate = captureToWebIR(after, { id: 'candidate' });
+  assert.equal(compareBehavior(target, candidate).status, 'pass');
+  assert.equal(compareVisual(target, candidate).status, 'fail');
+  assert.equal(target.observations[0].visual.artifact_hash, before.receipt.cases[0].output.screenshot_sha256);
+  assert.deepEqual(target.observations[0].dom.summary, { title: 'Owned demo', text: 'Unchanged' });
+});
+
+test('actual Chromium separates a paint-only change from identical finite web behavior', { skip: !process.env.RPM_BROWSER_EXECUTABLE, timeout: 120_000 }, async t => {
+  async function serve(color) {
+    const server = createServer((request, response) => {
+      if (request.url === '/style.css') {
+        response.writeHead(200, { 'content-type': 'text/css' });
+        response.end(`body { background: ${color}; }`);
+      } else {
+        response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+        response.end('<!doctype html><title>Owned control</title><link rel="stylesheet" href="/style.css"><main>Identical behavior</main>');
+      }
+    });
+    await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    t.after(() => new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve())));
+    return `http://127.0.0.1:${server.address().port}/`;
+  }
+  const [referenceUrl, candidateUrl] = await Promise.all([serve('#ffe600'), serve('#22aaff')]);
+  const result = await replayWebFeature({
+    referenceUrl, candidateUrl,
+    executablePath: process.env.RPM_BROWSER_EXECUTABLE,
+    scenario: { schema_version: 1, name: 'Owned CSS variant', actions: [{ id: 'inspect', kind: 'wait', milliseconds: 0 }] },
+  });
+  assert.equal(result.reference.complete, true, JSON.stringify(result.reference.failure));
+  assert.equal(result.candidate.complete, true, JSON.stringify(result.candidate.failure));
+  assert.equal(result.verification.behavior.status, 'pass', JSON.stringify(result.verification.behavior.mismatches));
+  assert.equal(result.verification.visual.status, 'fail');
+  assert.equal(result.verification.visual.mismatches[0].path, '/visual/artifact_hash');
 });
 
 test('incomplete coverage is unknown and does not become a behavior pass', () => {

@@ -1,19 +1,27 @@
 #!/usr/bin/env node
-import { mkdirSync, cpSync, lstatSync, realpathSync } from 'node:fs';
+import { mkdirSync, cpSync, lstatSync, realpathSync, writeFileSync, openSync, closeSync, unlinkSync } from 'node:fs';
 import { dirname, resolve, join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { RpmError, pathExists, readJson, writeJsonAtomic } from '../lib/common.mjs';
+import { RpmError, pathExists, readBoundedBytes, readJson, writeJsonAtomic } from '../lib/common.mjs';
 import { createCase, reviseCase, addObservation, validateCase } from '../lib/case.mjs';
 import { rankProbes } from '../lib/planner.mjs';
 import { compareBehavior } from '../lib/verification.mjs';
 import { minimizeSequence, minimizeSequenceIsolated } from '../lib/reduction.mjs';
 import { inspectArtifact } from '../lib/analysis/inspect.mjs';
+import { compareArtifacts } from '../lib/analysis/artifact-diff.mjs';
+import { compareApiContract } from '../lib/analysis/api-contract.mjs';
+import { compareWasmInterfaces, inspectWasmInterface, WASM_INTERFACE_LIMITS } from '../lib/analysis/wasm-interface.mjs';
+import { compareDeploymentTargets, inspectDeploymentTargets, TARGET_LIMITS } from '../lib/analysis/deployment-targets.mjs';
+import { inspectPlaywrightEvidence } from '../lib/analysis/playwright-evidence.mjs';
+import { checkRelease, RELEASE_LIMITS } from '../lib/release-check.mjs';
 import { readEvidenceSource } from '../lib/analysis/source.mjs';
 import { captureMv3, runtimeDoctor } from '../lib/runtime/mv3.mjs';
 import { captureWebScenario } from '../lib/runtime/web.mjs';
 import { replayWebFeature } from '../lib/runtime/web-replay.mjs';
 import { replayFeature } from '../lib/runtime/replay.mjs';
 import { initializeRecovery } from '../lib/recovery.mjs';
+import { runRecoveryPlan } from '../lib/recovery-engine.mjs';
+import { reconcileRuntime } from '../lib/reconciliation.mjs';
 import { writeReport } from '../lib/report.mjs';
 import { DEFAULT_SEQUENCE, FIXTURE_BINDINGS, demonstrationCase, simulateWorker, behaviorDocument, mismatchOracle } from '../lib/lab.mjs';
 const skill = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -32,12 +40,40 @@ function argumentsOf(tokens) {
   return { positionals, flags };
 }
 function requireValue(value, name) { if (typeof value !== 'string' || !value.trim()) throw new RpmError('arguments', `Provide ${name}.`); return value; }
+function reserveOutput(path) {
+  requireValue(path, '--out FILE');
+  if (pathExists(path)) throw new RpmError('output_exists', 'Choose a new output path.');
+  let descriptor;
+  try { descriptor = openSync(path, 'wx', 0o600); }
+  catch (error) {
+    if (error.code === 'EEXIST') throw new RpmError('output_exists', 'Choose a new output path.');
+    throw error;
+  }
+  let written = false;
+  return {
+    write(json) { writeFileSync(descriptor, json + '\n', 'utf8'); written = true; },
+    close() {
+      try { closeSync(descriptor); }
+      finally { if (!written) unlinkSync(path); }
+    },
+  };
+}
 function output(value, path) {
-  if (path) { requireValue(path, '--out FILE'); if (pathExists(path)) throw new RpmError('output_exists', 'Choose a new output path.'); writeJsonAtomic(path, value); }
-  console.log(JSON.stringify(value, null, 2));
+  const json = JSON.stringify(value, null, 2);
+  if (path) {
+    const destination = reserveOutput(path);
+    try { destination.write(json); } finally { destination.close(); }
+  }
+  console.log(json);
 }
 function accepted(flags, names) { for (const name of Object.keys(flags)) if (!names.includes(name)) throw new RpmError('arguments', `Unknown option --${name}.`); }
 function loadCase(path) { return validateCase(readJson(requireValue(path, 'CASE.json'))); }
+function loadScope(path) {
+  if (path === undefined) return {};
+  const scope = readJson(path);
+  if (!scope || typeof scope !== 'object' || Array.isArray(scope) || Object.keys(scope).some(key => !['include', 'exclude'].includes(key))) throw new RpmError('invalid_scope', 'Scope JSON contains include/exclude relative prefixes only.');
+  return scope;
+}
 export async function generateDemo(directory) {
   const out = resolve(directory); if (pathExists(out)) throw new RpmError('output_exists', 'Choose a new lab directory.');
   mkdirSync(dirname(out), { recursive: true }); mkdirSync(out); cpSync(join(skill, 'assets/labs'), join(out, 'fixtures'), { recursive: true });
@@ -61,13 +97,13 @@ export async function generateDemo(directory) {
 }
 async function main(tokens) {
   const { positionals: p, flags: f } = argumentsOf(tokens); const command = p.shift();
-  const expected = { inspect: 1, report: 1, plan: 1, verify: 0, shrink: 0, demo: 0, prompts: 0, version: 0 };
+  const expected = { inspect: 1, compare: 2, 'api-diff': 2, 'target-inspect': 1, 'target-diff': 2, 'wasm-inspect': 1, 'wasm-diff': 2, 'playwright-trace': 1, 'release-check': 1, report: 1, plan: 1, verify: 0, reconcile: 2, shrink: 0, recover: 1, demo: 0, prompts: 0, version: 0 };
   if (Object.hasOwn(expected, command) && p.length !== expected[command]) throw new RpmError('arguments', `Command ${command} expects ${expected[command]} positional arguments.`);
   for (const [key, value] of Object.entries(f)) if (value === true && key !== 'help') throw new RpmError('arguments', `Provide a value for --${key}.`);
   if (!command || command === 'help' || command === '--help') {
-    console.log(`REA Pro Max ${VERSION}\n\ninspect TARGET --out inspection.json\nreport DATA.json --out report.html\ncase init --inspection inspection.json --goal TEXT --out case.json\ncase revise CASE.json --patch patch.json --revision NUMBER\ncase observe CASE.json --receipt observation.json --revision NUMBER\nplan CASE.json [--bindings bindings.json] [--budget NUMBER] [--out plan.json]\nverify --reference reference.json --candidate candidate.json [--contract contract.json] [--out verdict.json]\nshrink --input actions.json --oracle ./owned-oracle.mjs [--max-tests NUMBER] [--timeout-ms NUMBER] [--out reduction.json]\nruntime doctor --browser ABSOLUTE_CHROMIUM\nruntime capture --extension DIRECTORY --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--timeout-ms NUMBER] [--out CAPTURE.json]\nweb capture --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--timeout-ms NUMBER] [--out CAPTURE.json]\nweb replay --reference-url URL --candidate-url URL --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--contract CONTRACT.json] [--timeout-ms NUMBER] [--out REPLAY.json]\ndemo --out NEW_DIRECTORY\nprompts [--target TARGET]\nmcp --workspace ABSOLUTE_DIRECTORY\n\nInspect reads artifacts without executing them. Runtime capture executes only an explicitly selected MV3 extension in a disposable Chromium profile and records provider evidence; it is not an OS or network sandbox. Shrink runs the explicitly supplied oracle in a fresh child process per trial. Reports are local standalone HTML. Cases support one writer at a time.`); return;
+    console.log(`REA Pro Max ${VERSION}\n\ninspect TARGET --out inspection.json\ncompare REFERENCE CANDIDATE [--scope scope.json] [--out diff.json]\napi-diff OPENAPI.json SAVED.har [--out coverage.json]\ntarget-inspect FILE [--out targets.json]\ntarget-diff REFERENCE CANDIDATE [--out changes.json]\nwasm-inspect MODULE.wasm [--out interface.json]\nwasm-diff REFERENCE.wasm CANDIDATE.wasm [--out abi.json]\nplaywright-trace ACTIONS.trace [--network ACTIONS.network] [--out trace.json]\nrelease-check POLICY.json [--out verdict.json]\nreport DATA.json --out report.html\ncase init --inspection inspection.json --goal TEXT --out case.json\ncase revise CASE.json --patch patch.json --revision NUMBER\ncase observe CASE.json --receipt observation.json --revision NUMBER\nplan CASE.json [--bindings bindings.json] [--budget NUMBER] [--out plan.json]\nverify --reference reference.json --candidate candidate.json [--contract contract.json] [--out verdict.json]\nreconcile inspection.json runtime.json --out reconciliation.json\nrecover PLAN.json --out recovery.json\nshrink --input actions.json --oracle ./owned-oracle.mjs [--max-tests NUMBER] [--timeout-ms NUMBER] [--out reduction.json]\nruntime doctor --browser ABSOLUTE_CHROMIUM\nruntime capture --extension DIRECTORY --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--timeout-ms NUMBER] [--out CAPTURE.json]\nweb capture --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--timeout-ms NUMBER] [--out CAPTURE.json]\nweb replay --reference-url URL --candidate-url URL --browser ABSOLUTE_CHROMIUM --scenario SCENARIO.json [--contract CONTRACT.json] [--timeout-ms NUMBER] [--out REPLAY.json]\ndemo --out NEW_DIRECTORY\nprompts [--target TARGET]\nmcp --workspace ABSOLUTE_DIRECTORY [--browser ABSOLUTE_CHROMIUM] [--craft-config FILE]\n\nInspect reads artifacts without executing them. Runtime capture executes only an explicitly selected MV3 extension in a disposable Chromium profile and records provider evidence; it is not an OS or network sandbox. Reconcile correlates literal MV3 service-worker channels with events from the same target digest. Saved receipts carry reported authority. Recover applies only hash-bound text patches from a declarative plan and replays the typed provider after every patch. Shrink runs the explicitly supplied oracle in a fresh child process per trial. Reports are local standalone HTML. Cases support one writer at a time.`); return;
   }
-  if (command === 'mcp') { accepted(f, ['workspace', 'browser']); if (p.length) throw new RpmError('arguments', 'mcp takes --workspace DIRECTORY.'); const { startServer } = await import('./mcp-server.mjs'); await startServer(requireValue(f.workspace, '--workspace DIRECTORY'), f.browser); return; }
+  if (command === 'mcp') { accepted(f, ['workspace', 'browser', 'craft-config']); if (p.length) throw new RpmError('arguments', 'mcp takes --workspace DIRECTORY.'); const { startServer } = await import('./mcp-server.mjs'); await startServer(requireValue(f.workspace, '--workspace DIRECTORY'), f.browser, f['craft-config']); return; }
   if (command === 'runtime') {
     const action = p.shift();
     if (action === 'doctor') { if (p.length) throw new RpmError('arguments', 'runtime doctor takes no positional arguments.'); accepted(f, ['browser']); output(await runtimeDoctor(resolve(requireValue(f.browser, '--browser ABSOLUTE_CHROMIUM')))); return; }
@@ -105,7 +141,52 @@ async function main(tokens) {
     throw new RpmError('arguments', 'Use recovery init or recovery replay.');
   }
   if (command === 'version') { accepted(f, []); console.log(VERSION); return; }
-  if (command === 'inspect') { accepted(f, ['out', 'scope']); const scope = f.scope ? readJson(f.scope) : {}; if (Object.keys(scope).some(key => !['include', 'exclude'].includes(key))) throw new RpmError('invalid_scope', 'Scope JSON contains include/exclude relative prefixes only.'); output(await inspectArtifact(resolve(requireValue(p[0], 'TARGET')), scope), f.out); return; }
+  if (command === 'inspect') { accepted(f, ['out', 'scope']); output(await inspectArtifact(resolve(requireValue(p[0], 'TARGET')), loadScope(f.scope)), f.out); return; }
+  if (command === 'compare') {
+    accepted(f, ['out', 'scope']);
+    const result = await compareArtifacts(p[0], p[1], loadScope(f.scope));
+    output(result, f.out);
+    process.exitCode = result.status === 'different' ? 2 : result.coverage.both_snapshots_unfiltered ? 0 : 3;
+    return;
+  }
+  if (command === 'api-diff') {
+    accepted(f, ['out']);
+    const result = compareApiContract(readJson(p[0]), readJson(p[1]));
+    output(result, f.out);
+    process.exitCode = result.status === 'partial' ? 3 : 0;
+    return;
+  }
+  if (command === 'target-inspect' || command === 'target-diff') {
+    accepted(f, ['out']);
+    const bytes = p.map(path => readBoundedBytes(path, TARGET_LIMITS.max_file_bytes));
+    const result = command === 'target-inspect' ? inspectDeploymentTargets(bytes[0]) : compareDeploymentTargets(...bytes);
+    output(result, f.out);
+    process.exitCode = result.status === 'unknown' ? 3 : result.status === 'narrowed' ? 2 : 0;
+    return;
+  }
+  if (command === 'wasm-inspect' || command === 'wasm-diff') {
+    accepted(f, ['out']);
+    const bytes = p.map(path => readBoundedBytes(path, WASM_INTERFACE_LIMITS.max_file_bytes));
+    const result = command === 'wasm-inspect' ? inspectWasmInterface(bytes[0]) : compareWasmInterfaces(...bytes);
+    output(result, f.out);
+    process.exitCode = result.status === 'unknown' ? 3 : result.status === 'changed-interface' ? 2 : 0;
+    return;
+  }
+  if (command === 'playwright-trace') {
+    accepted(f, ['network', 'out']);
+    const result = inspectPlaywrightEvidence(readBoundedBytes(p[0], RELEASE_LIMITS.trace_bytes),
+      f.network ? readBoundedBytes(f.network, RELEASE_LIMITS.trace_bytes) : undefined);
+    output(result, f.out);
+    process.exitCode = result.status === 'complete' ? 0 : 3;
+    return;
+  }
+  if (command === 'release-check') {
+    accepted(f, ['out']);
+    const result = await checkRelease(resolve(p[0]));
+    output(result, f.out);
+    process.exitCode = result.status === 'fail' ? 2 : result.status === 'unknown' ? 3 : 0;
+    return;
+  }
   if (command === 'source') { if (p.length !== 1) throw new RpmError('arguments', 'source takes one inspection JSON path.'); accepted(f, ['evidence', 'max-chars']); output(await readEvidenceSource(readJson(p[0]), requireValue(f.evidence, '--evidence ID'), { maxChars: f['max-chars'] ? Number(f['max-chars']) : 4000 })); return; }
   if (command === 'report') { accepted(f, ['out']); const data = readJson(requireValue(p[0], 'DATA.json')); const payload = data.artifact ? { schema_version: 1, kind: 'inspection', title: 'Artifact boundaries', inspection: data } : data; console.log(writeReport(payload, resolve(requireValue(f.out, '--out REPORT.html')))); return; }
   if (command === 'demo') { accepted(f, ['out']); output(await generateDemo(requireValue(f.out, '--out NEW_DIRECTORY'))); return; }
@@ -120,6 +201,20 @@ async function main(tokens) {
   }
   if (command === 'plan') { accepted(f, ['bindings', 'budget', 'out']); const record = loadCase(p[0]); const bindings = f.bindings ? readJson(f.bindings) : undefined; if (bindings?.target_sha256 !== undefined && bindings.target_sha256 !== record.target.sha256) throw new RpmError('binding_mismatch', 'Plan bindings must target the current case artifact. Historical observations remain stored but are not applied to a revised target.'); output(rankProbes({ ...record, bindings, budget: f.budget ? Number(f.budget) : Infinity }), f.out); return; }
   if (command === 'verify') { accepted(f, ['reference', 'candidate', 'contract', 'out']); const result = compareBehavior(readJson(requireValue(f.reference, '--reference FILE')), readJson(requireValue(f.candidate, '--candidate FILE')), f.contract ? readJson(f.contract) : {}); output(result, f.out); process.exitCode = result.status === 'fail' ? 2 : result.status === 'unknown' ? 3 : 0; return; }
+  if (command === 'reconcile') { accepted(f, ['out']); const result = reconcileRuntime(readJson(requireValue(p[0], 'INSPECTION.json')), readJson(requireValue(p[1], 'RUNTIME.json'))); output(result, f.out); process.exitCode = result.status === 'matched' ? 0 : 3; return; }
+  if (command === 'recover') {
+    accepted(f, ['out']);
+    const plan = readJson(requireValue(p[0], 'PLAN.json'));
+    const destination = f.out ? reserveOutput(f.out) : null;
+    try {
+      const result = await runRecoveryPlan(plan);
+      const json = JSON.stringify(result, null, 2);
+      console.log(json);
+      destination?.write(json);
+      process.exitCode = result.status === 'fail' ? 2 : result.status === 'unknown' ? 3 : 0;
+    } finally { destination?.close(); }
+    return;
+  }
   if (command === 'shrink') {
     accepted(f, ['input', 'oracle', 'max-tests', 'timeout-ms', 'out']); const file = resolve(requireValue(f.oracle, '--oracle MODULE.mjs')); const stat = lstatSync(file);
     if (!stat.isFile() || stat.isSymbolicLink() || extname(file) !== '.mjs' || stat.size > 1024 * 1024) throw new RpmError('oracle_input', 'Use a regular owned .mjs oracle module up to1MiB.');

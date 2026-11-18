@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "reference_path": "reference",
+  "candidate_path": "candidate",
+  "required_files": [
+    "openapi.json"
+  ],
+  "allowed_changes": [
+    {
+      "path": "engine.wasm",
+      "status": "modified"
+    }
+  ],
+  "repack_only": [
+    "assets.zip"
+  ],
+  "wasm_interfaces": [
+    "engine.wasm"
+  ],
+  "api": {
+    "contract_path": "openapi.json",
+    "har_path": "traffic.har",
+    "origin": "https://catalog.invalid",
+    "required_operations": [
+      {
+        "method": "GET",
+        "path": "/items/{itemId}",
+        "expected_status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/items/search",
+        "expected_status": 200
+      }
+    ]
+  },
+  "playwright": {
+    "trace_path": "catalog.trace",
+    "expected_categories": [
+      "navigation",
+      "interaction",
+      "wait",
+      "read"
+    ],
+    "max_action_duration_ms": 100
+  }
+}

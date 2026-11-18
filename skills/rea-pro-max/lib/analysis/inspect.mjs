@@ -2,6 +2,7 @@ import { extname } from 'node:path';
 import { digest, RpmError } from '../common.mjs';
 import { analyzeJavascript, parserVersion } from './javascript.mjs';
 import { classifyBytes, compareText, decodeText, inventory, resolveLocal } from './inventory.mjs';
+import { inventoryFormats } from './formats.mjs';
 
 const jsExtensions = new Set(['.js', '.mjs', '.cjs']);
 const htmlExtensions = new Set(['.html', '.htm']);
@@ -28,6 +29,7 @@ function htmlScripts(text) {
 
 export async function inspectArtifact(inputPath, options = {}) {
   const scope = await inventory(inputPath, options);
+  const artifactDetails = inventoryFormats(scope.entries);
   const contexts = new Map(), nodes = new Map(), edges = new Map(), evidence = new Map(), findings = new Map(), unknowns = new Map();
   const parsed = new Map();
   const analyzed = new Set();
@@ -275,15 +277,17 @@ export async function inspectArtifact(inputPath, options = {}) {
     if (compatible) edge(sender.id, receiver.id, 'candidate-message-route', 'candidate', [sender.evidenceId, receiver.evidenceId]);
   }
   if (![...parsed.values()].some(result => result.source_type)) {
-    const detected = scope.inputFile && classifyBytes(scope.files.get(scope.inputFile).bytes);
+    const detected = scope.inputFile && (artifactDetails.find(detail => detail.path === scope.inputFile)?.format ?? classifyBytes(scope.files.get(scope.inputFile).bytes));
     if (detected) artifactKind = detected;
-    unknown(detected ? 'provider_required' : 'no_javascript_entrypoint', detected ? `Detected ${detected} bytes only. Semantic/native/mobile/package recovery is not provided by this static JavaScript lane.` : 'No supported JavaScript entrypoint was analyzed in the supplied scope.');
+    unknown(detected ? 'provider_required' : 'no_javascript_entrypoint', detected ? `Detected ${detected}. See artifact_details for static format coverage. Semantic analysis needs a format-specific provider.` : 'No supported JavaScript entrypoint was analyzed in the supplied scope.');
   }
+  for (const detail of artifactDetails) capabilities.add(`static-format:${detail.format}`);
   return {
     schema_version: 1,
     artifact: { kind: artifactKind, path: scope.path, source_root: scope.root, input_file: scope.inputFile, sha256: scope.sha256, file_count: scope.files.size, bytes: scope.bytes },
     contexts: [...contexts.values()].sort((a, b) => compareText(a.id, b.id)), nodes: [...nodes.values()].sort((a, b) => compareText(a.id, b.id)), edges: [...edges.values()].sort((a, b) => compareText(a.id, b.id)), evidence: [...evidence.values()].sort((a, b) => compareText(a.id, b.id)), findings: [...findings.values()].sort((a, b) => compareText(a.id, b.id)), unknowns: [...unknowns.values()].sort((a, b) => compareText(digest(a), digest(b))),
     capabilities: [...capabilities].sort(compareText),
+    artifact_details: { static_only: true, executed: false, formats: artifactDetails },
     limits: { coverage: 'bounded-static', target_executed: false, max_files: scope.limits.maxFiles, max_file_bytes: scope.limits.maxFileBytes, max_total_bytes: scope.limits.maxTotalBytes, max_ast_nodes: scope.limits.maxAstNodes, max_directory_depth: scope.limits.maxDepth, max_contexts: scope.limits.maxContexts, max_nodes: scope.limits.maxNodes, max_edges: scope.limits.maxEdges, max_evidence: scope.limits.maxEvidence, max_analysis_occurrences: scope.limits.maxAnalysisOccurrences, max_diagnostics: scope.limits.maxDiagnostics, analyzed_occurrences: analyzed.size, parser: `acorn-${parserVersion}` },
     coverage: { admitted_files: scope.entries.map(file => file.path), visited_files: [...visitedFiles].sort(compareText), analyzed_files: [...processedSources].sort(compareText), unparsed_files: unparsedFiles.sort(compareText), omitted_files: scope.scope.omitted, scope: scope.scope, max_visited_entries: scope.limits.maxVisitedEntries, max_omissions: scope.limits.maxOmissions },
   };

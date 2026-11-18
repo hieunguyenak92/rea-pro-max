@@ -12,6 +12,7 @@ import { behaviorDocument, simulateWorker } from '../skills/rea-pro-max/lib/lab.
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const cli = join(root, 'skills/rea-pro-max/scripts/rea-pro-max.mjs');
+const packageVersion = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version;
 const fixture = join(root, 'skills/rea-pro-max/assets/labs/mv3/reference');
 const hash = character => character.repeat(64);
 function workspace(t) {
@@ -29,6 +30,29 @@ function run(args, status = 0) {
 }
 const parse = result => JSON.parse(result.stdout);
 const read = file => JSON.parse(readFileSync(file, 'utf8'));
+
+test('offline compare and api-diff expose reproducible local results', t => {
+  const directory = workspace(t);
+  const left = join(directory, 'left.txt'), right = join(directory, 'right.txt');
+  writeFileSync(left, 'old'); writeFileSync(right, 'new');
+  const destination = join(directory, 'comparison.json');
+  const comparison = parse(run(['compare', left, right, '--out', destination], 2));
+  assert.deepEqual(comparison, read(destination));
+  assert.equal(comparison.changes[0].status, 'modified');
+  const fixtures = join(root, 'skills/rea-pro-max/assets/labs/api');
+  const coverage = parse(run(['api-diff', join(fixtures, 'openapi.json'), join(fixtures, 'traffic.har')]));
+  assert.equal(coverage.coverage.operations.unobserved, 1);
+  assert.equal(coverage.coverage.observations.unmatched, 1);
+});
+
+test('recover refuses an existing output before validating the plan or starting a replay', t => {
+  const directory = workspace(t);
+  const plan = join(directory, 'invalid.json'), destination = join(directory, 'retained.json');
+  writeFileSync(plan, '{}'); writeFileSync(destination, 'retained');
+  assert.equal(JSON.parse(run(['recover', plan, '--out', destination], 1).stderr).error, 'output_exists');
+  assert.equal(readFileSync(destination, 'utf8'), 'retained');
+});
+
 function save(directory, name, value) {
   const file = join(directory, name); writeFileSync(file, JSON.stringify(value)); return file;
 }
@@ -205,7 +229,7 @@ test('CLI invoked through a symlinked parent directory still executes its entryp
   catch (error) { if (['EPERM', 'EACCES'].includes(error.code)) { t.skip('Directory symlink privilege is unavailable.'); return; } throw error; }
   const result = spawnSync(process.execPath, [join(alias, 'scripts/rea-pro-max.mjs'), 'help'], { cwd: directory, encoding: 'utf8', timeout: 20000 });
   assert.equal(result.error, undefined); assert.equal(result.status, 0); assert.equal(result.stderr, '');
-  assert.match(result.stdout, /REA Pro Max 0\.4\.0/u);
+  assert.equal(result.stdout.split('\n')[0], 'REA Pro Max ' + packageVersion);
 });
 
 test('malformed JSON, ambiguous options and extra positional arguments are rejected', t => {
@@ -219,8 +243,8 @@ test('malformed JSON, ambiguous options and extra positional arguments are rejec
 });
 
 test('help, version and prompt inventory are available without external services', () => {
-  assert.match(run(['help']).stdout, /REA Pro Max 0\.4\.0/u);
-  assert.equal(run(['version']).stdout.trim(), '0.4.0');
+  assert.equal(run(['help']).stdout.split('\n')[0], 'REA Pro Max ' + packageVersion);
+  assert.equal(run(['version']).stdout.trim(), packageVersion);
   const prompts = parse(run(['prompts'])); assert.ok(prompts.length >= 5);
   const target = prompts[0].target; const selected = parse(run(['prompts', '--target', target]));
   assert.ok(selected.length); assert.equal(selected.every(item => item.target === target), true);

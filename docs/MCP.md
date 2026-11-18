@@ -1,6 +1,6 @@
 # REA Pro Max MCP
 
-REA Pro Max v0.4 exposes its shared kernel as **21 local MCP tools**. An agent can inspect a scoped artifact, read hash-checked source snippets, maintain a case, rank experiments, compare receipts and export a portable result. Explicitly enabled runtime tools can capture and replay the documented MV3 protocol in actual Chromium.
+REA Pro Max v0.8 exposes its shared kernel through **31 local MCP tools**. Compare two builds, correlate a saved HAR with OpenAPI, inspect a scoped artifact or verify a finite behavior contract. An explicitly configured Chromium also enables typed MV3/web capture, replay and reviewed hash-bound patch plans.
 
 The server uses the bundled official MCP SDK runtime over **stdio**. It requires no service account and does not call a model API. Static operations open no network listener; optional runtime execution launches a disposable browser with a loopback debugging endpoint. Node.js22+ is required; runtime npm installation is unnecessary. Client availability and permissions remain subject to your installed host.
 
@@ -113,15 +113,25 @@ Arguments below describe the product's input names. The schemas discovered throu
 | Tool | Arguments | Effect |
 | --- | --- | --- |
 | `get_capabilities` | `{}` | Returns version, workspace, target scope, limits and execution policy. |
-| `inspect_artifact` | `path`, optional `include`, `exclude` | Static analysis; exact relative file/directory prefixes select scope. Read coverage for omitted/unparsed files. |
+| `inspect_artifact` | `path`, optional `include`, `exclude` | Static analysis with exact relative file/directory scope. Format evidence is available at `/artifact_details/formats`. |
+| `compare_artifacts` | `reference_path`, `candidate_path`, optional `include`, `exclude` | Compare two files or two build trees. Page `changes` and `archives`. |
+| `compare_api_contract` | `openapi_path`, `har_path` | Correlate OpenAPI JSON declarations and saved HAR requests offline. Page `operations` and `observations`. |
+| `inspect_deployment_targets` | `path` | Read the target declarations in a Mach-O object, binary or JVM class. |
+| `compare_deployment_targets` | `reference_path`, `candidate_path` | Identify removed targets, raised minimums or changed Java preview requirements. [Compiled examples](NATIVE-TARGETS.md) |
+| `inspect_wasm_interface` | `path` | Inspect supported core Wasm public interface declarations. |
+| `compare_wasm_interfaces` | `reference_path`, `candidate_path` | Compare public ABI declarations in two Wasm modules. |
+| `inspect_playwright_trace` | `trace_path`, optional `network_path` | Import saved Playwright v10 action and page evidence with bounded optional network counts. |
+| `check_release` | `path` | Apply a local release policy to two builds and supplied evidence. [Release check](RELEASE-CHECK.md) |
 | `read_artifact` | `handle`, `section`, `offset`, `limit`, optional `query` | Reads a bounded section/page of a retained artifact. |
 | `read_source_evidence` | Inspection handle, evidence ID, optional character bound; see discovered schema | Reads a hash-checked snippet for an evidence record; stale source is rejected. |
 | `capture_feature` | `extension_path`, `scenario_path`, optional `timeout_ms` | With runtime enabled, executes one declared MV3 scenario in a disposable Chromium profile. |
 | `replay_feature` | `reference_path`, `candidate_path`, `scenario_path`, optional `timeout_ms` | Runs both extensions in separate profiles; retains verdict, full captures and first mismatch. |
 | `capture_web` | `scenario_path`, optional `timeout_ms` | With runtime enabled, executes one bounded web scenario in a disposable Chromium profile. |
 | `replay_web` | `reference_url`, `candidate_url`, `scenario_path`, optional `contract_path`, `timeout_ms` | Runs two explicit web URLs and compares behavior separately from visual hashes. |
-| `craft_provider_doctor` | `executable_path`, optional `args`, `timeout_ms` | Performs the pinned Craft Anything MCP handshake and capability check. |
-| `craft_provider_inspect` / `craft_provider_capture` / `craft_provider_compare` | `executable_path`, optional `args`, `input`, `timeout_ms` | Calls only the typed Craft aliases and retains provider provenance. |
+| `craft_provider_doctor` | Optional `timeout_ms` | Checks the startup-configured Craft launcher identity and tool list. |
+| `craft_provider_inspect` / `craft_provider_capture` / `craft_provider_compare` | Optional `input`, `timeout_ms` | Calls a typed Craft alias and retains provider provenance. |
+| `run_recovery` | `plan_path` | Replays a declared scenario and applies an explicit patch after a qualified mismatch. |
+| `reconcile_runtime` | `inspection_handle`, `runtime_handle` | Correlates literal MV3 worker channels with an in-session capture of the same artifact digest. |
 | `create_case` | `inspection_handle`, `goal`, `capabilities` | Creates an in-memory case using the inspection's actual target identity. |
 | `revise_case` | `case_handle`, `expected_revision`, `patch` | Validates and commits a model revision. |
 | `record_observation` | `case_handle`, `expected_revision`, `observation` | Retains the receipt's source, authority and bindings. |
@@ -134,12 +144,11 @@ Arguments below describe the product's input names. The schemas discovered throu
 
 Tools that retain results return bounded `structuredContent` including `handle`, `kind`, `summary` and available `sections`. Handles are opaque; do not construct them or assume another server has the same handle.
 
-#
 ## Web replay and optional Craft provider
 
 With `--browser` configured, `capture_web` accepts the same bounded scenario shape as the CLI. `replay_web` runs that action list against `reference_url` and `candidate_url` in fresh profiles. It stores a web recovery IR, a finite contract and two verdicts: behavior channels (DOM, network summary and storage) and visual artifact hashes. A visual mismatch does not prove a behavior mismatch; incomplete coverage remains unknown. See [WEB-RECOVERY.md](WEB-RECOVERY.md).
 
-The Craft Anything adapter is optional. `craft_provider_doctor` and the three typed operations require an absolute executable path and the reviewed `0.4.0`/`49af55e4e4f4b729152a1e61c845a5b10f7b6d9b` identity. The adapter does not install Craft, expose arbitrary tool names or accept paths outside the workspace. Provider drift, malformed output, timeout or missing commit identity fails closed. See [PROVIDERS.md](PROVIDERS.md).
+The Craft Anything tools are disabled by default. Supply the launcher via `--craft-config` at startup. The handshake checks the reviewed `0.4.0`/`49af55e4e4f4b729152a1e61c845a5b10f7b6d9b` identity before sending any typed request. See [PROVIDERS.md](PROVIDERS.md).
 
 ## Read only the section you need
 
@@ -154,7 +163,7 @@ The Craft Anything adapter is optional. `craft_provider_doctor` and the three ty
 }
 ```
 
-Replace `<returned_handle>` with the exact handle returned by the preceding tool. Select a section listed by that artifact. `full` is available only when the serialized result fits the response bound; otherwise use its sections or export it. This keeps a large investigation available without repeating the entire graph in each response; no token-saving percentage is claimed.
+Replace `<returned_handle>` with the exact handle returned by the preceding tool. Select a section listed by that artifact. `full` is available only when the serialized result fits the response bound; otherwise use its sections or export it. For a large ZIP comparison row, page `/archives/0/changes` or export the structured result. This keeps a large investigation available without repeating the entire graph in each response; no token-saving percentage is claimed.
 
 ### Revise deliberately
 
@@ -194,7 +203,7 @@ Updates and imports must fit these limits; a rejected change does not replace th
 - Static artifact analysis also has its own inventory, source-byte, AST and graph limits.
 - Prompt browsing is paginated, with at most10 templates per response.
 - Session state is in memory. No hidden background database or automatic case upload is used.
-- No arbitrary shell, generic oracle execution or native/mobile provider tool is exposed. Target execution is limited to the optional typed MV3 provider and requires a browser configured at startup. The executable cannot be selected through tool-call arguments.
+- MV3 and web execution use an explicitly configured browser. Craft uses an operator-supplied launcher from its startup configuration.
 
 The workspace policy restricts paths admitted by these tools; it is not an operating-system sandbox for Node or for other tools in your AI host. Bundled trusted lab assets are an explicit internal exception to client workspace intake. They do not grant arbitrary access to the skill directory.
 

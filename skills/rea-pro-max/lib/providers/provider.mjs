@@ -3,6 +3,7 @@ import { lstat, realpath } from 'node:fs/promises';
 import { lstatSync } from 'node:fs';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { StringDecoder } from 'node:string_decoder';
 import { canonical, digest, RpmError } from '../common.mjs';
 import { VERSION } from '../version.mjs';
 
@@ -57,13 +58,32 @@ function contained(root, path) {
 
 // Path-bearing arguments may be absolute aliases, but only when they resolve to
 // the selected workspace. This remains an admission policy, not an OS sandbox.
-const PATH_FIELDS = new Set(['path', 'target_path', 'artifact_path', 'source_path', 'input_path', 'output_path', 'output_directory', 'project_path', 'workspace_path']);
+const PATH_FIELDS = new Set([
+  'path', 'paths', 'target_path', 'target_paths', 'artifact_path', 'artifact_paths',
+  'source_path', 'source_paths', 'input_path', 'input_paths', 'output_path', 'output_paths',
+  'output_directory', 'project_path', 'workspace_path', 'working_directory', 'directory_path',
+  'binary_path', 'bundle_path', 'archive_path', 'apk_path', 'ipa_path', 'asar_path',
+  'database_path', 'firmware_path', 'recording_path', 'trace_path', 'capture_path',
+  'core_path', 'snapshot_path', 'evidence_path', 'left_target_path', 'right_target_path',
+  'left_target_paths', 'right_target_paths', 'left_path', 'right_path', 'root_path', 'source_root',
+  'har_path', 'pcap_path', 'qlog_path', 'manifest_path', 'symbol_path', 'device_path'
+]);
 function checkPayloadPaths(root, value, key = '') {
   if (Array.isArray(value)) { for (const item of value) checkPayloadPaths(root, item, key); return; }
   if (!object(value)) {
     if (PATH_FIELDS.has(key)) {
       if (typeof value !== 'string' || !value || value.includes('\0')) throw new RpmError('provider_scope', 'Provider input paths must be nonempty strings without NUL bytes.');
-      if (!contained(root, resolve(root, value))) throw new RpmError('provider_scope', 'Provider input paths must stay inside the selected workspace.');
+      const path = resolve(root, value);
+      if (!contained(root, path)) throw new RpmError('provider_scope', 'Provider input paths must stay inside the selected workspace.');
+      let component = root;
+      for (const part of relative(root, path).split(sep).filter(Boolean)) {
+        component = resolve(component, part);
+        const stat = lstatSync(component, { throwIfNoEntry: false });
+        if (!stat) break; // New output paths may name a non-existing leaf.
+        if (stat.isSymbolicLink() || (!stat.isDirectory() && (component !== path || !stat.isFile()))) {
+          throw new RpmError('provider_scope', 'Provider path components must be regular local files or directories.');
+        }
+      }
     }
     return;
   }
@@ -98,7 +118,7 @@ function checkRpc(value, id) {
   if (!object(value) || value.jsonrpc !== JSON_RPC_VERSION || value.id !== id) throw new RpmError('provider_protocol', 'Provider returned an invalid JSON-RPC response envelope.');
   if (value.error !== undefined) {
     if (!object(value.error) || typeof value.error.code !== 'number' || typeof value.error.message !== 'string') throw new RpmError('provider_protocol', 'Provider JSON-RPC errors must include a numeric code and message.');
-    throw new RpmError('provider_error', value.error.message, { rpc_code: value.error.code, data: value.error.data });
+    throw new RpmError('provider_error', value.error.message, { rpc_code: value.error.code, ...(Object.hasOwn(value.error, 'data') ? { data: value.error.data } : {}) });
   }
   if (!Object.hasOwn(value, 'result')) throw new RpmError('provider_protocol', 'Provider JSON-RPC response has no result.');
   return value.result;
@@ -149,21 +169,31 @@ export class JsonRpcProvider {
     checkPayloadPaths(admitted.workspace, input);
     const payload = normalizePayloadPaths(admitted.workspace, input);
     if (Buffer.byteLength(canonical(payload)) > Math.min(MAX_INPUT_BYTES, this.maxBytes)) throw new RpmError('provider_input', 'Provider command input exceeded its byte budget after workspace normalization.');
-    const requests = [
-      { jsonrpc: JSON_RPC_VERSION, id: 1, method: 'initialize', params: { protocolVersion: MCP_PROTOCOL_VERSION, capabilities: {}, clientInfo: { name: 'rea-pro-max-provider', version: VERSION } } },
-      { jsonrpc: JSON_RPC_VERSION, method: 'notifications/initialized' },
-      { jsonrpc: JSON_RPC_VERSION, id: 2, method: 'tools/list', params: {} },
-    ];
     const tool = this.commands[command];
-    if (tool) requests.push({ jsonrpc: JSON_RPC_VERSION, id: 3, method: 'tools/call', params: { name: tool, arguments: JSON.parse(canonical(payload)) } });
+    const decoder = new StringDecoder('utf8');
     let child; let stdoutBuffer = ''; let stderr = ''; let stderrBytes = 0; let bytes = 0; let terminalError; let handshake; let capabilities = []; let response; let nextExpected = 1; let timeout; let killTimer; let abortHandler; let closed = false;
     const cleanup = { process_spawned: false, process_terminated: false, stdin_closed: false, forced_kill: false };
     let resolveResult; const resultPromise = new Promise(resolve => { resolveResult = resolve; });
     const finish = result => { if (closed) return; closed = true; resolveResult(result); };
     const terminate = force => { if (!child || child.exitCode !== null || child.signalCode !== null) return; if (force) { cleanup.forced_kill = true; child.kill('SIGKILL'); } else child.kill('SIGTERM'); };
-    const gracefulTerminate = () => { terminate(false); killTimer ||= setTimeout(() => terminate(true), 250); };
+    const closeInput = () => { if (cleanup.stdin_closed || !child?.stdin || child.stdin.destroyed) return; try { child.stdin.end(); cleanup.stdin_closed = true; } catch {} };
+    const gracefulTerminate = () => {
+      terminate(false);
+      killTimer ||= setTimeout(() => {
+        terminate(true);
+        child.stdin.destroy();
+        child.stdout.destroy();
+        child.stderr.destroy();
+      }, 250);
+    };
     try { child = spawn(admitted.executable, this.args, { cwd: admitted.workspace, shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: safeEnvironment() }); cleanup.process_spawned = true; }
     catch (error) { return failure('provider_error', errorRecord('provider_spawn', error.message), provenance({ manifest: this.manifest, command, executable: admitted.executable, workspace: admitted.workspace, requestId, startedAt, finishedAt: new Date().toISOString(), cleanup, bytes: 0, exitCode: null, signalCode: null })); }
+    const send = message => child.stdin.write(JSON.stringify({ jsonrpc: JSON_RPC_VERSION, ...message }) + '\n');
+    child.stdin.on('error', error => {
+      if (nextExpected === (tool ? 4 : 3)) return;
+      terminalError ||= new RpmError('provider_io', error.message);
+      gracefulTerminate();
+    });
     const parseLine = line => {
       if (!line.trim()) return;
       let value; try { value = JSON.parse(line); } catch { throw new RpmError('provider_protocol', 'Provider returned a non-JSON line.'); }
@@ -175,16 +205,19 @@ export class JsonRpcProvider {
         if (!object(result) || result.protocolVersion !== MCP_PROTOCOL_VERSION || !object(result.serverInfo) || result.serverInfo.name !== this.provider || typeof result.serverInfo.version !== 'string') throw new RpmError('provider_drift', 'Provider initialize response is missing the pinned server identity or protocol version.');
         for (const [key, expected] of Object.entries(this.expectedServer)) if (result.serverInfo[key] !== expected) throw new RpmError('provider_drift', `Provider serverInfo.${key} does not match the pinned manifest.`, { expected, received: result.serverInfo[key] });
         handshake = result;
+        send({ method: 'notifications/initialized' });
+        send({ id: 2, method: 'tools/list', params: {} });
       } else if (nextExpected === 2) {
         if (!object(result) || !Array.isArray(result.tools) || result.tools.length > 2048) throw new RpmError('provider_protocol', 'Provider tools/list response is not bounded.');
         capabilities = result.tools.map(item => item?.name).filter(name => typeof name === 'string');
         if (!capabilities.includes(tool) && tool) throw new RpmError('provider_capability', `Provider did not advertise approved tool ${tool}.`);
+        if (tool) send({ id: 3, method: 'tools/call', params: { name: tool, arguments: payload } });
       } else if (nextExpected === 3) response = result;
       nextExpected++;
-      if (!tool && nextExpected === 3) gracefulTerminate();
-      if (tool && nextExpected === 4) gracefulTerminate();
+      if (!tool && nextExpected === 3) { closeInput(); gracefulTerminate(); }
+      if (tool && nextExpected === 4) { closeInput(); gracefulTerminate(); }
     };
-    child.stdout.on('data', chunk => { bytes += chunk.byteLength; if (bytes > this.maxBytes) { terminalError ||= new RpmError('provider_bounds', 'Provider output exceeded its byte budget.'); terminate(true); return; } stdoutBuffer += chunk.toString('utf8'); if (stdoutBuffer.length > this.maxBytes) { terminalError ||= new RpmError('provider_bounds', 'Provider output exceeded its byte budget.'); terminate(true); return; } while (!closed && !terminalError) { const newline = stdoutBuffer.indexOf('\n'); if (newline < 0) break; const line = stdoutBuffer.slice(0, newline).replace(/\r$/u, ''); stdoutBuffer = stdoutBuffer.slice(newline + 1); try { parseLine(line); } catch (error) { terminalError ||= error instanceof RpmError ? error : new RpmError('provider_protocol', error.message); terminate(true); break; } } });
+    child.stdout.on('data', chunk => { bytes += chunk.byteLength; if (bytes > this.maxBytes) { terminalError ||= new RpmError('provider_bounds', 'Provider output exceeded its byte budget.'); terminate(true); return; } stdoutBuffer += decoder.write(chunk); while (!closed && !terminalError) { const newline = stdoutBuffer.indexOf('\n'); if (newline < 0) break; const line = stdoutBuffer.slice(0, newline).replace(/\r$/u, ''); stdoutBuffer = stdoutBuffer.slice(newline + 1); try { parseLine(line); } catch (error) { terminalError ||= error instanceof RpmError ? error : new RpmError('provider_protocol', error.message); terminate(true); break; } } });
     child.stderr.on('data', chunk => { stderrBytes += chunk.byteLength; stderr = (stderr + chunk.toString('utf8')).slice(-4096); if (stderrBytes > this.maxBytes) { terminalError ||= new RpmError('provider_bounds', 'Provider diagnostics exceeded its byte budget.'); terminate(true); } });
     child.on('error', error => { terminalError ||= new RpmError('provider_spawn', error.message); });
     child.on('close', (exitCode, signalCode) => {
@@ -197,13 +230,16 @@ export class JsonRpcProvider {
       } else {
         const error = terminalError || new RpmError('provider_protocol', 'Provider exited without a complete MCP response.', { stderr });
         const status = ['provider_drift', 'provider_capability', 'provider_protocol', 'provider_bounds', 'request_cancelled'].includes(error.code) ? 'unknown' : 'provider_error';
-        finish(failure(status, errorRecord(error.code, error.message, { stderr, rpc_id: nextExpected }), proof));
+        finish(failure(status, errorRecord(error.code, error.message, { ...error.details, stderr, rpc_id: nextExpected }), proof));
       }
     });
-    timeout = setTimeout(() => { terminalError ||= new RpmError('provider_timeout', 'Provider exceeded its deadline.'); terminate(false); killTimer ||= setTimeout(() => terminate(true), 250); }, this.timeoutMs);
-    abortHandler = () => { terminalError ||= new RpmError('request_cancelled', 'Provider execution was cancelled.'); if (child.stdin.writable) { try { child.stdin.write(`${JSON.stringify({ jsonrpc: JSON_RPC_VERSION, method: 'notifications/cancelled', params: { requestId: 3 } })}\n`); } catch {} } terminate(false); killTimer ||= setTimeout(() => terminate(true), 250); };
+    timeout = setTimeout(() => { terminalError ||= new RpmError('provider_timeout', 'Provider exceeded its deadline.'); closeInput(); gracefulTerminate(); }, this.timeoutMs);
+    abortHandler = () => { terminalError ||= new RpmError('request_cancelled', 'Provider execution was cancelled.'); if (nextExpected <= (tool ? 3 : 2) && child.stdin.writable) { try { send({ method: 'notifications/cancelled', params: { requestId: nextExpected } }); } catch {} } closeInput(); gracefulTerminate(); };
     signal?.addEventListener('abort', abortHandler, { once: true }); if (signal?.aborted) abortHandler();
-    try { child.stdin.write(requests.map(request => JSON.stringify(request)).join('\n') + '\n'); child.stdin.end(); cleanup.stdin_closed = true; } catch (error) { terminalError = new RpmError('provider_io', error.message); terminate(true); }
+    if (!terminalError) {
+      try { send({ id: 1, method: 'initialize', params: { protocolVersion: MCP_PROTOCOL_VERSION, capabilities: {}, clientInfo: { name: 'rea-pro-max-provider', version: VERSION } } }); }
+      catch (error) { terminalError = new RpmError('provider_io', error.message); closeInput(); terminate(true); }
+    }
     const result = await resultPromise; clearTimeout(timeout); clearTimeout(killTimer); signal?.removeEventListener('abort', abortHandler); return result;
   }
 

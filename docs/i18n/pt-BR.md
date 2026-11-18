@@ -8,6 +8,8 @@ Um conjunto independente de ferramentas de engenharia reversa com MCP local, ski
 
 [Explore o laboratório gravado](https://hieunguyenak92.github.io/rea-pro-max/#explorer) · [Instale a skill](../INSTALL.md) · [Registro de verificação](../VALIDATION.md) · [Versões](https://github.com/hieunguyenak92/rea-pro-max/releases)
 
+**A v0.8 identifica quais ambientes perdem suporte entre dois builds.** Com dois arquivos Mach-O ou duas classes Java, `target-diff` aponta arquiteturas removidas, aumentos da versão mínima e exigências de recursos de prévia do Java. No exemplo, a CI permite alterar o arquivo e ainda assim rejeita o aumento do requisito de Java 11 para 17. A análise lê as declarações sem executar o programa. `unknown` indica dados insuficientes. [Exemplo reproduzível em inglês](../NATIVE-TARGETS.md)
+
 ![REA Pro Max — Understand the mechanism](../media/hero.png)
 
 ![Workbench real do REA Pro Max no laboratório sintético próprio](../media/workbench.png)
@@ -28,7 +30,7 @@ Defina `RPM_BROWSER` como o caminho absoluto do executável instalado do Chromiu
 
 **A entrega é código que você pode executar e evidência que pode inspecionar.** Este provedor verifica o protocolo de mensagens documentado `rpm-kv-v1` e os limites de reset selecionados; não reconstrói automaticamente qualquer extensão. Os boot IDs continuam na evidência bruta; só esse campo observacional declarado é excluído da comparação. Recibos de mensagens não comprovam efeitos de UI, rede ou arquivos não observados.
 
-O MCP oferece **21 ferramentas**. O runtime vem desativado; acrescente `--browser "/absolute/path/to/chromium"` ao registrar o servidor para habilitar `capture_feature` e `replay_feature`. Eles usam perfis temporários separados; o agente do ambiente escreve a correção. `read_source_evidence` lê trechos limitados com hash verificado. include/exclude e coverage mostram arquivos admitidos, omitidos e não analisados; análise semântica de TypeScript/JSX ainda não é fornecida.
+O MCP oferece **31 ferramentas**. A captura e a reprodução em Chromium são habilitadas ao iniciar o servidor com `--browser "/absolute/path/to/chromium"` e usam perfis temporários separados. `reconcile_runtime` associa canais de mensagens de um worker MV3 a eventos do mesmo artefato, identificado pelo hash, e preserva ambiguidades. `read_source_evidence` lê trechos limitados com hash verificado. `include`, `exclude` e `coverage` registram os arquivos admitidos, omitidos e ainda sem análise.
 
 [Fluxo de recuperação e limites, em inglês](../RECOVERY.md) · [Verificação por versão](../VALIDATION.md). `shrink` executa o oracle num processo filho novo por tentativa, com prazo. A função `reset()` cuida do estado externo. Perfil novo e processo filho não são sandbox do sistema ou de rede.
 
@@ -58,7 +60,25 @@ No Codex, selecione a skill ou acrescente `$rea-pro-max` no início da mesma tar
 
 ## Uma ferramenta. Três formas de começar.
 
-**A v0.4 oferece MCP local com 21 ferramentas**, captura/replay opcional no Chromium real e trechos de código com hash verificado. A skill conduz o agente até uma implementação executável; a CLI compartilha o núcleo e dispensa instalação npm no uso.
+**A v0.8.0 oferece 31 ferramentas MCP locais** para comparar builds, medir a cobertura de APIs, inspecionar firmware e verificar uma versão offline. A skill orienta o agente até uma implementação executável. A CLI usa o mesmo núcleo e funciona sem instalar pacotes npm.
+
+- `compare` na CLI e `compare_artifacts` no MCP comparam dois arquivos ou árvores de diretórios por SHA-256. Em ZIPs compatíveis, registram alterações no conteúdo dos membros verificados e identificam casos de reempacotamento.
+- `api-diff` e `compare_api_contract` cruzam métodos e rotas de um OpenAPI JSON com requisições de um HAR salvo. A cobertura se limita à captura e o resultado omite corpos, cabeçalhos e parâmetros de consulta.
+- A inspeção estática valida registros e somas de verificação em Intel HEX, além da estrutura e dos intervalos de blocos em UF2 básico. O resultado registra os limites e as coberturas parciais.
+
+[Guia de cobertura e relação com o REA 6.9.0, em inglês](../REA-6.9.md).
+
+### Verifique uma versão offline
+
+`release-check` na CLI e `check_release` no MCP aplicam uma política JSON a dois diretórios de build. A mesma verificação reúne alterações de arquivos permitidas por caminho e tipo, reempacotamentos de ZIP com conteúdo verificado, a ABI pública declarada de WebAssembly, observações HTTP exigidas de um HAR restrito à origem informada e, opcionalmente, ações de um trace Playwright v10 salvo.
+
+Na raiz do repositório, rode a política do exemplo incluído.
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs release-check skills/rea-pro-max/assets/labs/release/policy.json
+```
+
+O relatório retorna `pass`, `fail` ou `unknown` de acordo com as regras e as evidências fornecidas. Para examinar cada resultado separadamente, use `wasm-inspect`, `wasm-diff` ou `playwright-trace`. [Guia de verificação de versões, em inglês](../RELEASE-CHECK.md)
 
 ### Conecte MCP ao Claude Code ou Codex
 
@@ -98,6 +118,11 @@ A demo abaixo funciona sem MCP. Escolha skill, MCP ou CLI conforme seu ambiente;
 | --- | --- |
 | `get_capabilities` | Consulta versão, workspace, escopo, limites e política de execução. |
 | `inspect_artifact` | Analisa estaticamente o alvo admitido e mantém o resultado completo por um handle. |
+| `compare_artifacts` | Compara arquivos ou árvores locais e o conteúdo verificado de ZIPs compatíveis. |
+| `compare_api_contract` | Cruza métodos e rotas de um OpenAPI JSON com requisições de um HAR salvo. |
+| `check_release` | Verifica dois builds locais e as evidências de QA segundo uma política explícita. |
+| `inspect_wasm_interface` / `compare_wasm_interfaces` | Inspecionam ou comparam declarações da ABI pública de módulos WebAssembly compatíveis. |
+| `inspect_playwright_trace` | Lê um trace Playwright v10 salvo e seu arquivo de rede opcional, reduzindo os dados a metadados. |
 | `read_artifact` | Lê seções ou páginas sem repetir todo o grafo. |
 | `read_source_evidence` | Lê trecho limitado por evidência, com hash verificado. |
 | `capture_feature` | Captura cenário MV3 em Chromium real quando o runtime está habilitado. |
@@ -226,4 +251,4 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
 
 `assets/recovery-web/` é um fixture próprio sem rede: reference, starter com defeitos intencionais e recovered independente cobrem respostas atrasadas, cancelamento latest-wins, Unicode NFKC, estados vazio/erro, localStorage, foco de teclado e markup responsivo. Veja [WEB-RECOVERY.md](../WEB-RECOVERY.md).
 
-Craft Anything é opcional e não é dependência. O adaptador chama somente aliases tipados para `js_app_map`, `web_site_capture` e `app_graphs_compare`, verificando handshake MCP, versão/commit fixados, ferramentas anunciadas, caminhos, limites de tempo/bytes e limpeza. Um binário sem commit verificável é rejeitado. O projeto não instala Craft nem inclui seu código ou marca; consulte [PROVIDERS.md](../PROVIDERS.md).
+Para habilitar o Craft Anything, inicie o servidor com `--craft-config FILE` e um executável configurado pelo operador. O adaptador verifica o handshake MCP, a versão e o commit, as ferramentas anunciadas e os limites de caminho, tempo e bytes. Ele só chama `js_app_map`, `web_site_capture` e `app_graphs_compare`. Consulte o [guia de provedores, em inglês](../PROVIDERS.md).

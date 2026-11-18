@@ -8,6 +8,8 @@ Bộ công cụ reverse engineering độc lập với MCP cục bộ, skill cho
 
 [Khám phá bản lab đã ghi lại](https://hieunguyenak92.github.io/rea-pro-max/#explorer) · [Cài skill](../INSTALL.md) · [Hồ sơ kiểm chứng](../VALIDATION.md) · [Bản phát hành](https://github.com/hieunguyenak92/rea-pro-max/releases)
 
+**v0.8 phát hiện khi bản build mới bỏ hỗ trợ một nhóm người dùng.** So sánh hai tệp bằng `target-diff` để thấy kiến trúc Apple bị bỏ, mức macOS tối thiểu tăng hoặc yêu cầu Java thay đổi. Trong ví dụ đi kèm, CI cho phép sửa tệp nhưng vẫn chặn bản tăng từ Java 11 lên 17. `unknown` nghĩa là dữ liệu khai báo chưa đủ để kết luận. Phép kiểm tra đọc tệp tại chỗ, không chạy ứng dụng. [Ví dụ và cách tái lập bằng tiếng Anh](../NATIVE-TARGETS.md)
+
 ![REA Pro Max — Understand the mechanism](../media/hero.png)
 
 ![Workbench REA Pro Max thực tế từ lab tổng hợp do dự án sở hữu](../media/workbench.png)
@@ -28,7 +30,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **Kết quả là mã chạy được cùng bằng chứng có thể kiểm tra.** Provider hiện chỉ hỗ trợ giao thức thông điệp `rpm-kv-v1` đã mô tả và các ranh giới reset được chọn. Đây không phải cơ chế tự khôi phục mọi extension. Boot ID được giữ trong bằng chứng thô; chỉ trường quan sát đã khai báo này được loại khỏi đối chiếu. Receipt thông điệp không chứng minh các hiệu ứng UI, mạng hay tệp chưa quan sát.
 
-MCP có **21 công cụ**. Runtime mặc định tắt; thêm `--browser "/absolute/path/to/chromium"` khi đăng ký server để bật `capture_feature` và `replay_feature`. Chúng dùng profile tạm riêng; agent của host vẫn viết phần sửa. `read_source_evidence` đọc đoạn source có giới hạn và kiểm tra hash. Scope include/exclude cùng coverage nêu rõ tệp đã đọc, bị loại và chưa parse; TypeScript/JSX chưa được parse ngữ nghĩa.
+MCP có **31 công cụ**. Runtime mặc định tắt. Thêm `--browser "/absolute/path/to/chromium"` khi đăng ký server để bật `capture_feature`, `replay_feature` và `run_recovery`. Chromium chạy trong profile tạm riêng và agent trong ứng dụng chủ viết phần sửa. `reconcile_runtime` đối chiếu kênh thông điệp của service worker MV3 với bản ghi trong cùng phiên MCP khi SHA-256 xác nhận đúng gói extension đã phân tích. Kết quả giữ lại các kênh mơ hồ và sự kiện chưa ghép được. `read_source_evidence` đọc đoạn mã nguồn có giới hạn và kiểm tra lại hash. Kết quả phân tích nêu rõ tệp đã đọc, bị loại và chưa phân tích được. Phân tích ngữ nghĩa TypeScript/JSX chưa được hỗ trợ.
 
 [Quy trình recovery và giới hạn — tiếng Anh](../RECOVERY.md) · [Kiểm chứng theo phiên bản](../VALIDATION.md). `shrink` chạy oracle trong process con mới cho mỗi lần thử, có deadline; `reset()` của oracle chịu trách nhiệm trạng thái bên ngoài. Profile mới và process con không phải sandbox hệ điều hành hoặc mạng.
 
@@ -60,7 +62,22 @@ Các công việc phù hợp:
 
 ## Một bộ công cụ. Ba cách bắt đầu.
 
-**v0.4 cung cấp MCP cục bộ với 21 công cụ**, thêm thu thập/replay Chromium theo lựa chọn và đoạn source đã kiểm tra hash. Skill hướng agent giao mã triển khai chạy được; CLI dùng cùng kernel và không cần cài npm khi sử dụng.
+**v0.7 bổ sung quy trình kiểm tra điều kiện phát hành ngoại tuyến trên CLI và MCP cục bộ.** Skill hướng dẫn agent bàn giao mã triển khai chạy được. Các công cụ này không cần cài thêm gói npm khi sử dụng.
+
+- `compare` trên CLI và `compare_artifacts` trên MCP dùng SHA-256 để đối chiếu cây tệp của hai bản build. Kết quả chỉ rõ tệp được thêm, xóa hoặc thay đổi và chênh lệch nội dung các mục ZIP đã xác minh trong giới hạn đọc.
+- `api-diff` và `compare_api_contract` đối chiếu phương thức HTTP và mẫu đường dẫn giữa OpenAPI JSON và HAR đã lưu. Kết quả chỉ rõ các thao tác đã quan sát, chưa quan sát hoặc còn mơ hồ. Báo cáo không đưa vào origin, giá trị đường dẫn thực tế, query, header hay body từ bản ghi HAR.
+- Trình phân tích kiểm tra checksum từng bản ghi và tính đầy đủ của Intel HEX. Với UF2 cơ bản, trình phân tích kiểm tra cấu trúc, vùng địa chỉ và thứ tự logic của các khối. Báo cáo giữ SHA-256 của vùng hoặc khối đã đọc cùng các phần vượt giới hạn hay chưa được hỗ trợ.
+- `wasm-inspect` đọc khai báo import/export công khai của mô-đun WebAssembly. `wasm-diff` đối chiếu tên, loại và kiểu được hỗ trợ giữa hai mô-đun. `playwright-trace` tóm tắt các thao tác trong bản ghi Playwright v10 đã lưu.
+
+[Phạm vi hỗ trợ và đối chiếu với REA 6.9 — tiếng Anh](../REA-6.9.md)
+
+### Kiểm tra điều kiện phát hành từ thư mục mã nguồn
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs release-check skills/rea-pro-max/assets/labs/release/policy.json
+```
+
+`release-check` trên CLI và `check_release` trên MCP áp dụng cùng một chính sách. Một lần chạy đối chiếu đúng các thay đổi tệp được phép, kiểm chứng ZIP đóng gói lại, so sánh ABI công khai của Wasm và tìm các quan sát HTTP bắt buộc trong HAR theo origin đã chỉ định. Chính sách có thể yêu cầu thêm bằng chứng thao tác từ bản ghi Playwright v10. Kết quả `pass`, `fail` hoặc `unknown` chỉ áp dụng cho chính sách và bằng chứng đã cung cấp. [Hướng dẫn kiểm tra phát hành — tiếng Anh](../RELEASE-CHECK.md)
 
 ### Kết nối MCP với Claude Code hoặc Codex
 
@@ -109,6 +126,7 @@ Lệnh demo ngay bên dưới chạy độc lập với MCP. Bạn có thể dù
 | `record_observation` | Lưu quan sát, nguồn, authority và bindings đã khai báo. |
 | `rank_probes` | Xếp hạng phép thử hợp lệ; không tự chạy phép thử. |
 | `verify_behavior` | So sánh tệp receipt theo hợp đồng hành vi hữu hạn. |
+| `check_release` | Kiểm tra các điều kiện phát hành đã khai báo bằng dữ liệu cục bộ. |
 | `export_artifact` | Xuất JSON hoặc HTML độc lập vào tệp workspace mới. |
 | `run_owned_lab` | Chạy mô hình kiểm soát với worker đi kèm do dự án sở hữu. |
 | `list_task_prompts` | Xem 36 template theo nhóm và phân trang. |
@@ -228,4 +246,4 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
 
 Fixture `assets/recovery-web/` là ví dụ tự sở hữu, không gọi mạng: reference, starter cố ý lỗi và recovered độc lập. Nó bao phủ phản hồi trễ, latest-wins, hủy, Unicode NFKC, trạng thái rỗng/lỗi, localStorage, keyboard focus và markup responsive. Xem [WEB-RECOVERY.md](../WEB-RECOVERY.md).
 
-Craft Anything là provider tùy chọn, không phải dependency. Adapter chỉ gọi các alias kiểu hóa cho `js_app_map`, `web_site_capture` và `app_graphs_compare`, kiểm tra MCP handshake, version/commit đã ghim, tool list, path, timeout, byte limit và cleanup. Bản binary không chứng minh được commit sẽ bị từ chối. Không tự cài Craft, không đóng gói mã/branding của Craft; xem [PROVIDERS.md](../PROVIDERS.md).
+Craft Anything là provider tùy chọn. Để bật, người vận hành truyền `--craft-config /absolute/path/to/craft-launcher.json` khi khởi động MCP. Adapter kiểm tra phiên bản, commit, quá trình bắt tay MCP, danh sách công cụ, đường dẫn, giới hạn thời gian và dữ liệu, cùng việc dọn dẹp tiến trình. Provider cung cấp ba thao tác `js_app_map`, `web_site_capture` và `app_graphs_compare`. Cài Craft riêng trước khi bật. [Hướng dẫn provider — tiếng Anh](../PROVIDERS.md).

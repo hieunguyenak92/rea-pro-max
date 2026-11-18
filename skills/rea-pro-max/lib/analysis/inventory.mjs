@@ -1,4 +1,4 @@
-import { lstat, open, readdir, realpath } from 'node:fs/promises';
+import { lstat, open, opendir, realpath } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { digest, hashBytes, RpmError } from '../common.mjs';
@@ -77,13 +77,13 @@ export async function inventory(inputPath, options = {}) {
   const root = initial.isDirectory() ? path : dirname(path);
   const files = new Map();
   const omitted = [];
-  let bytes = 0, visited = 0;
+  let bytes = 0, visited = 0, discovered = 1;
   function omit(name, reason, kind = 'entry') {
     if (omitted.length >= limits.maxOmissions) throw new RpmError('artifact_bounds', 'Artifact omissions exceed the admitted bound; choose a narrower scope.', { max_omissions: limits.maxOmissions });
     omitted.push({ path: name, reason, kind });
   }
   async function visit(absolute, depth, hint) {
-    if (++visited > limits.maxVisitedEntries) throw new RpmError('artifact_bounds', 'Artifact traversal exceeds the admitted entry bound; choose a narrower scope.', { max_visited_entries: limits.maxVisitedEntries });
+    visited++;
     if (depth > limits.maxDepth) throw new RpmError('artifact_bounds', 'Artifact directory depth exceeds the admitted bound.', { max_depth: limits.maxDepth });
     const name = posix(relative(root, absolute));
     // Explicitly omitted entries are never followed, even when they are links.
@@ -94,8 +94,11 @@ export async function inventory(inputPath, options = {}) {
     const stat = await lstat(absolute);
     if (stat.isSymbolicLink()) throw new RpmError('symlink_input', 'Artifact symlinks are not followed.', { file: name });
     if (stat.isDirectory()) {
-      const children = await readdir(absolute, { withFileTypes: true });
-      if (children.length > limits.maxVisitedEntries - visited) throw new RpmError('artifact_bounds', 'Artifact directory exceeds the remaining traversal budget; choose a narrower root.', { file: name, max_visited_entries: limits.maxVisitedEntries });
+      const children = [];
+      for await (const child of await opendir(absolute)) {
+        if (++discovered > limits.maxVisitedEntries) throw new RpmError('artifact_bounds', 'Artifact directory exceeds the remaining traversal budget; choose a narrower root.', { file: name, max_visited_entries: limits.maxVisitedEntries });
+        children.push(child);
+      }
       const after = await lstat(absolute);
       if (!after.isDirectory() || after.isSymbolicLink() || after.dev !== stat.dev || after.ino !== stat.ino) throw new RpmError('input_changed', 'Artifact directory changed during traversal.', { file: name });
       for (const child of children.sort((a, b) => compareText(a.name, b.name))) await visit(resolve(absolute, child.name), depth + 1, child);
@@ -145,7 +148,8 @@ export function resolveLocal(fromFile, request, fileMap) {
 export function classifyBytes(bytes) {
   if (bytes.length >= 4 && bytes[0] === 0x7f && bytes.subarray(1, 4).toString() === 'ELF') return 'elf';
   if (bytes.length >= 2 && bytes.subarray(0, 2).toString() === 'MZ') return 'pe-candidate';
-  if (bytes.length >= 4 && ['feedface', 'feedfacf', 'cefaedfe', 'cffaedfe', 'cafebabe', 'bebafeca', 'cafebabf', 'bfbafeca'].includes(bytes.subarray(0, 4).toString('hex'))) return 'mach-o-candidate';
+  if (bytes.length >= 4 && bytes.readUInt32BE(0) === 0xcafebabe) return 'jvm-or-mach-o-candidate';
+  if (bytes.length >= 4 && ['feedface', 'feedfacf', 'cefaedfe', 'cffaedfe', 'bebafeca', 'cafebabf', 'bfbafeca'].includes(bytes.subarray(0, 4).toString('hex'))) return 'mach-o-candidate';
   if (bytes.length >= 4 && bytes.subarray(0, 4).equals(Buffer.from([0, 97, 115, 109]))) return 'wasm';
   if (bytes.length >= 4 && ['504b0304', '504b0506', '504b0708'].includes(bytes.subarray(0, 4).toString('hex'))) return 'zip-container';
   return null;

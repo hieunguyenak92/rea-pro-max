@@ -4,7 +4,7 @@
 
 **Turn an unfamiliar feature into a working implementation you can explain, exercise and verify.**
 
-REA Pro Max is an independent reverse-engineering toolkit with a local MCP server, an agent skill and a direct CLI. Built for Claude Code, Codex and compatible MCP clients, it connects artifact analysis to experiments, implementation and finite behavioral verification. Version 0.4 adds a bounded web recovery lane and an optional pinned Craft Anything provider on top of the documented MV3 loop: run a real extension, reproduce its persistence failure, repair a receiving project and replay the same actions with retained evidence.
+REA Pro Max is an independent reverse-engineering toolkit with a local MCP server, an agent skill and a direct CLI. Built for Claude Code, Codex and compatible MCP clients, it connects artifact analysis to experiments, implementation and finite behavioral verification. Version 0.8 checks whether a new build drops an Apple architecture or raises a Java runtime requirement. Its offline release policy runs over both builds. It checks exact file changes, ZIP member content, WebAssembly public interfaces, required HTTP outcomes and saved Playwright v10 actions in one command. Its Chromium recovery loop can replay an owned regression, apply an explicit hash-bound repair and verify the result against the same finite scenario. The core runs independently of upstream REA. [Coverage against the REA 6.9.0 reference](docs/REA-6.9.md)
 
 [English](README.md) · [Tiếng Việt](docs/i18n/vi.md) · [한국어](docs/i18n/ko.md) · [日本語](docs/i18n/ja.md) · [Español](docs/i18n/es.md) · [Português](docs/i18n/pt-BR.md) · [简体中文](docs/i18n/zh-CN.md) · [ไทย](docs/i18n/th.md) · [Français](docs/i18n/fr.md)
 
@@ -13,6 +13,17 @@ REA Pro Max is an independent reverse-engineering toolkit with a local MCP serve
 ![Actual REA Pro Max investigation workbench showing the owned persistence lab](docs/media/workbench.png)
 
 *An actual standalone report from the owned synthetic lab. Its worker execution uses simulated Chrome APIs; separately exercised app observations are documented below.*
+
+## Catch a build regression before shipping
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs release-check \
+  skills/rea-pro-max/assets/labs/release/policy.json
+```
+
+The bundled release case accepts a changed Wasm implementation with the same public signature and a ZIP repack with the same verified contents. It also checks recorded HTTP responses and ordered browser actions. An interface change fails even when the file modification is allowed. [Release policy and reproducible example](docs/RELEASE-CHECK.md)
+
+The second bundled case allows the compiler to change a class file but requires Java 11 support. Rebuilding for Java 17 fails that check. Another case identifies the lost Intel slice and the higher macOS minimum for Apple Silicon. Both read compiler-produced files. [Run both cases](docs/NATIVE-TARGETS.md)
 
 ## The valuable part lives beneath the interface
 
@@ -33,7 +44,8 @@ REA Pro Max brings them into the development loop. Inspect the artifact, map the
 | Rebuild a web search interaction | Runnable search code, normalization and ordering rules, checked inputs and remaining differences. |
 | Recover an extension's save/restore feature | Popup/content/worker/storage boundaries, selected persistence contract and runtime cases the host actually exercised. |
 | Understand an Electron export flow | Main/preload/renderer candidates, observed request/response behavior and a working implementation of the selected feature. |
-| Explain a regression between two builds | Comparable receipts, a concrete mismatch and the affected observable behavior. |
+| Explain a regression between two builds | A SHA-256 file diff, uniquely relocated content, verified ZIP member changes and a separate finite replay verdict. |
+| Find gaps in an API capture | OpenAPI operations matched to saved HAR entries, with unobserved routes, ambiguity and unmatched requests visible. |
 | Shrink a recurring failure | A smaller action sequence that preserves the stable failure fingerprint, with a bounded reduction record. |
 | Investigate an unfamiliar target family | A scoped plan executed with available host tools, precise prerequisites and explicit unsupported claims. |
 
@@ -79,7 +91,7 @@ The same kernel serves both tool paths. The host agent connects the investigatio
 
 ### 1. Connect your agent through MCP
 
-REA Pro Max exposes 21 focused tools over local stdio. The server receives an explicit existing workspace; client-selected files and exports stay inside that boundary.
+REA Pro Max exposes 31 tools over local stdio. The server receives an explicit existing workspace; client-selected files, provider inputs and exports stay inside that boundary.
 
 Claude Code registration, using your actual absolute paths:
 
@@ -150,7 +162,7 @@ MCP users can enable the same kernel by appending `--browser "/absolute/path/to/
 
 ## Recover a web workflow with evidence
 
-Version 0.4 extends the same discipline to ordinary web applications. Give the CLI or MCP server a bounded scenario and two explicit URLs. It captures finite actions such as navigation, clicks, inputs, reloads and waits in fresh disposable Chromium profiles, then keeps behavioral channels separate from visual artifact hashes. That separation prevents a screenshot resemblance from being mistaken for interaction equivalence.
+Version 0.6 separates web behavior from screenshot evidence. Give the CLI or MCP server a finite scenario and two explicit URLs. It captures navigation, clicks, inputs, reloads and waits in fresh disposable Chromium profiles, then keeps behavioral channels separate from visual artifact hashes. That separation prevents a screenshot resemblance from being mistaken for interaction equivalence.
 
 ```sh
 node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
@@ -162,9 +174,30 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
 
 The result records the URL, title, bounded DOM text/HTML digest, layout width, active element, storage keys, screenshot digest, cleanup and provider identity. Unknown or incomplete cases remain unknown. The bundled `assets/recovery-web/` fixture demonstrates delayed responses, cancellation, latest-wins ordering, Unicode normalization, empty/error states, localStorage persistence, keyboard focus and responsive markup; its `starter` is intentionally defective and `recovered` is independently authored. The fixture's contract is an owned acceptance example, not a claim about arbitrary websites. See [web recovery](docs/WEB-RECOVERY.md).
 
+## Apply a reviewed repair and replay it
+
+The v0.6 recovery loop accepts a declared MV3 or web plan. Each patch names a relative file, the exact pre-patch SHA-256, one search string and its replacement. The engine refuses stale files, traversal, ambiguous replacement counts and oversized edits. It applies a patch after a complete mismatch, replays the typed scenario and retains each attempt with its stop reason.
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs recover ./recovery-plan.json --out ./recovery-result.json
+```
+
+This is an execution aid for reviewed repairs. It does not generate arbitrary code or provide an OS sandbox. The MCP equivalent is `run_recovery` when the server starts with an explicit `--browser`. See [recovery plans](docs/RECOVERY.md) for the schema.
+
+## Compare a build or an API capture
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs compare ./old-build ./new-build --out build-diff.json
+node skills/rea-pro-max/scripts/rea-pro-max.mjs api-diff \
+  skills/rea-pro-max/assets/labs/api/openapi.json \
+  skills/rea-pro-max/assets/labs/api/traffic.har --out coverage.json
+```
+
+The bundled API example shows two observed operations, an unobserved delete declaration and one unmatched request. The report keeps OpenAPI templates and HAR entry indices while omitting traffic values. Export to a new file or page the same evidence through MCP. [Input formats, limits and exit codes](docs/REA-6.9.md)
+
 ## Optional Craft Anything bridge
 
-Craft Anything can supply richer inspected application maps when its own pinned MCP server is installed separately. REA Pro Max invokes only three typed aliases (`js_app_map`, `web_site_capture`, `app_graphs_compare`) after a fresh MCP handshake and tools-list check. Every result retains the reviewed repository, commit, version, license, executable and cleanup provenance. Missing commit identity, schema drift, malformed output, timeout or path escape fails closed as unknown/error. No Craft code, branding or assets are bundled and no installation is performed. Read [provider boundaries](docs/PROVIDERS.md) before enabling it.
+Craft Anything can supply richer inspected application maps when its reviewed MCP server is installed separately and the operator supplies a startup launcher via `--craft-config`. REA Pro Max invokes only three typed aliases (`js_app_map`, `web_site_capture`, `app_graphs_compare`) after a fresh MCP handshake and tools-list check. Every result retains the reviewed repository, commit, version, license, executable and cleanup provenance. Missing commit identity, schema drift, malformed output, timeout or path escape fails closed as unknown/error. No Craft code, branding or assets are bundled and no installation is performed. Read [provider boundaries](docs/PROVIDERS.md) before enabling it.
 
 ## A lab with a question worth answering
 
@@ -244,17 +277,22 @@ The workbench is a standalone HTML viewer with working search, context filters, 
 
 MCP returns bounded summaries and session handles, then pages the selected sections. Export saves JSON or HTML to a new workspace path. Session handles live only for the server process; exported case files can be imported when resuming an investigation.
 
-## What v0.4 supports
+## What v0.8 supports
 
 | Area | Built-in capability | Boundary |
 | --- | --- | --- |
 | JavaScript/web artifacts | Bounded source inventory, AST analysis, contexts and candidate relationships | Local files/extracted sources; dynamic behavior requires host observations. |
 | Manifest V3 | Static contexts plus optional actual Chromium capture/replay for the documented `rpm-kv-v1` message protocol | Requires an explicit Chromium executable and an extension implementing that protocol. Other extensions need an appropriate adapter. |
-| Web recovery | Bounded action capture/replay with DOM, state, storage, network summaries and separate visual hashes | Requires an explicit Chromium executable and URLs/scenarios supplied by the host; finite evidence is not whole-app equivalence. |
-| Craft Anything provider | Optional pinned MCP adapter for typed application maps, web capture and graph comparison | Requires a separately installed, caller-selected binary matching the pinned version/commit; core REA Pro Max works without it. |
+| Web recovery | Bounded action capture/replay with DOM, layout, storage keys and a separate visual hash verdict | Requires an explicit Chromium executable and URLs/scenarios supplied by the host; finite evidence is not whole-app equivalence. |
+| Deployment targets | Compare architecture, CPU subtype, artifact kind and OS floor for Mach-O slices, or class format and preview requirements for JVM classes | One file per side. Runtime, linking and dependencies need separate evidence. |
+| Static format inventory | Header and container metadata, validated Intel HEX/UF2 subsets, and verified ZIP member content hashes | ZIP members use bounded in-memory decoding. See deployment targets for Mach-O and JVM coverage. |
+| Release policy | Evaluate two builds and the evidence for the changes you intended to ship | Local directories, deployment targets, declaration-level Wasm comparison and saved HTTP/Playwright evidence. |
+| Build and API comparison | Two local builds by SHA-256 and OpenAPI 3.0–3.2 JSON against saved HAR entries | Comparison reports retain scope omissions and ambiguity. |
+| Declarative recovery loop | Hash-bound candidate patches followed by typed MV3/web replay, retained attempts and bounded pass/fail/unknown outcome | The plan supplies patches explicitly; it does not generate arbitrary code or provide an OS sandbox. |
+| Craft Anything provider | Optional pinned MCP adapter for typed application maps, web capture and graph comparison | Requires an operator-configured `--craft-config` launcher matching the reviewed version and commit. |
 | Extracted Electron | Main/preload/renderer and candidate IPC boundaries | Installed package extraction and runtime controls are separate prerequisites. |
 | Investigation kernel | Cases, probe ranking, finite verification and bounded reduction | Works on declared models/receipts; evidence quality remains explicit. |
-| MCP | Local stdio, 21 tools, workspace-scoped input/export, web replay and an optional pinned Craft provider; no arbitrary shell/oracle tool | Runtime capture/replay is disabled until `--browser` is configured. No arbitrary shell/oracle tool. |
+| MCP | Local stdio, 31 tools, workspace-scoped input/export, local comparisons, finite receipt verification and explicit repair/replay | Chromium and Craft launchers are optional startup configuration. |
 | Native/managed/mobile and other families | Task prompts for appropriate host tools; limited format classification where implemented | No bundled universal decompiler, mobile runtime or semantic recovery engine. |
 
 ## MCP tool catalog
@@ -269,8 +307,16 @@ MCP returns bounded summaries and session handles, then pages the selected secti
 | `replay_feature` | Run reference and receiving extensions separately; retain finite verdict and mismatch evidence. |
 | `capture_web` | Capture a bounded web action scenario in actual Chromium. |
 | `replay_web` | Replay two explicit web URLs and compare behavior separately from visual hashes. |
+| `reconcile_runtime` | Correlate literal MV3 worker message channels with same-digest capture events and retain ambiguity. |
+| `run_recovery` | Apply explicit hash-bound candidate patches and replay a typed MV3/web provider after each patch. |
 | `craft_provider_doctor` | Handshake with the pinned optional Craft Anything MCP provider. |
 | `craft_provider_inspect` / `craft_provider_capture` / `craft_provider_compare` | Call only the typed Craft aliases and retain provider provenance. |
+| `compare_artifacts` | Compare two local files or build trees and page the verified ZIP member differences. |
+| `compare_api_contract` | Match OpenAPI JSON operations to a saved HAR offline. |
+| `inspect_deployment_targets` / `compare_deployment_targets` | Read deployment declarations or detect a loss of support between local Apple or Java builds. |
+| `inspect_wasm_interface` / `compare_wasm_interfaces` | Inspect or compare a supported core module’s public declarations. |
+| `inspect_playwright_trace` | Import saved v10 action and page events with optional network counts. |
+| `check_release` | Evaluate file, ABI and saved evidence assertions under a local release policy. |
 | `create_case` | Start from an inspection's actual target identity and a chosen goal. |
 | `revise_case` | Validate a bounded model update against the expected revision. |
 | `record_observation` | Append provenance-bearing observations with explicit revision checks. |
@@ -324,7 +370,7 @@ The bundled CLI/MCP server has no telemetry uploads or model API calls. MCP uses
 
 **Are MCP and the skill both required?** No. MCP exposes structured tools; the skill supplies the workflow. The CLI remains directly usable, and upstream REA is not required.
 
-**Is the lab a real Chromium worker test?** The original `demo` and `run_owned_lab` use simulated Chrome APIs. The separate v0.4 runtime capture/replay path runs actual Chromium. Its lifecycle receipts distinguish page reopen, forced worker stop and qualified natural idle; see the exact browser/version evidence in the verification record.
+**Is the lab a real Chromium worker test?** The original `demo` and `run_owned_lab` use simulated Chrome APIs. The separate v0.6 runtime capture/replay path runs actual Chromium when configured. Its lifecycle receipts distinguish page reopen, forced worker stop and qualified natural idle; see the exact browser/version evidence in the verification record.
 
 **Does `pass` prove the entire rebuilt app is equivalent?** No. It covers the declared comparable finite cases and contract. Missing/incomplete evidence can produce `unknown`.
 

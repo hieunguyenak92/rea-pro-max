@@ -1,6 +1,6 @@
 # Privacy and execution boundaries
 
-REA Pro Max's bundled CLI and MCP server perform local processing. It contains no telemetry client, upload endpoint, analytics beacon or model API call. A standard `inspect`, case, `plan`, `verify`, `report`, `prompts` or owned-model `demo` operation does not make network requests. The MCP server uses local stdio and uses the same kernel. Optional runtime capture/replay launches Chromium with a loopback debugging endpoint and a disposable profile; the browser and selected extension can make network requests permitted by their environment.
+REA Pro Max's bundled CLI and MCP server perform local processing. It keeps analysis, receipts and exports local. A standard `inspect`, case, `plan`, `verify`, `report`, `prompts` or owned-model `demo` operation does not make network requests. The MCP server uses local stdio and uses the same kernel. Optional runtime capture/replay launches Chromium with a loopback debugging endpoint and a disposable profile; the browser and selected extension can make network requests permitted by their environment.
 
 This boundary applies to this toolkit. Claude Code, Codex, browser/app tools, MCP servers, downloaded dependencies and any external provider operate under their own settings and data policies. Adding a skill does not make a hosted AI session local or change your account's retention policy.
 
@@ -16,7 +16,9 @@ Inspection/case/plan/verdict/lab handles live in a bounded in-memory cache, limi
 
 | Operation | Local behavior |
 | --- | --- |
-| `inspect` | Reads the selected regular file or extracted directory within bounded inventory limits; parses source without launching it. Symlinks are rejected. |
+| `inspect` | Reads selected regular files, validates supported ZIP members in memory and parses source without launching it. Symlinks are rejected. |
+| `compare` / `compare_artifacts` | Reads two local snapshots and emits hashes, relative file paths and scoped differences. |
+| `api-diff` / `compare_api_contract` | Reads OpenAPI JSON and a saved HAR. Output retains contract paths and HAR entry indices and omits the concrete traffic values. |
 | Case commands | Read/write the named case and patch/observation files. The workflow assumes one writer at a time and uses explicit revisions. |
 | `plan` | Reads supplied hypotheses, capabilities, constraints, observations and current bindings; produces a ranking. It does not execute probes. |
 | `verify` | Compares supplied behavior records and contract data. It does not attach to the target, run the candidate or authenticate the origin of receipts. |

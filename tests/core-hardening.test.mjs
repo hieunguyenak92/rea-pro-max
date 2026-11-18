@@ -80,6 +80,15 @@ test('include scopes omit irrelevant directory trees before enumeration and boun
   await assert.rejects(inspectArtifact(folder, { exclude: ['src', 'vendor'], maxOmissions: 1 }), error => error.code === 'artifact_bounds');
 });
 
+test('directory entry budgets include pending siblings while enumerating a nested directory', async t => {
+  const folder = await fixture(t, { 'a/one.txt': '', 'a/two.txt': '', 'b.txt': '' });
+  await assert.rejects(inspectArtifact(folder, { maxVisitedEntries: 4 }),
+    error => error.code === 'artifact_bounds' && error.details.file === 'a');
+  const result = await inspectArtifact(folder, { maxVisitedEntries: 5 });
+  assert.equal(result.coverage.scope.visited_entries, 5);
+  assert.deepEqual(result.coverage.admitted_files, ['a/one.txt', 'a/two.txt', 'b.txt']);
+});
+
 test('explicit policy contributes to a selected-file identity', async t => {
   const folder = await fixture(t, { 'app.js': 'fetch("/owned");' });
   const direct = await inspectArtifact(join(folder, 'app.js'));

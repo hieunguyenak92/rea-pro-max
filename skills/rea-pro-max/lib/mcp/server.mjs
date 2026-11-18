@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
+import { isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { McpServer, z } from '../../assets/vendor/mcp-sdk.mjs';
 import { VERSION } from '../version.mjs';
@@ -8,12 +9,21 @@ import { rankProbes } from '../planner.mjs';
 import { compareBehavior } from '../verification.mjs';
 import { minimizeSequence } from '../reduction.mjs';
 import { inspectArtifact } from '../analysis/inspect.mjs';
+import { compareArtifacts, COMPARISON_LIMITS } from '../analysis/artifact-diff.mjs';
+import { compareApiContract } from '../analysis/api-contract.mjs';
+import { compareWasmInterfaces, inspectWasmInterface, WASM_INTERFACE_LIMITS } from '../analysis/wasm-interface.mjs';
+import { inspectPlaywrightEvidence } from '../analysis/playwright-evidence.mjs';
+import { compareDeploymentTargets, inspectDeploymentTargets, TARGET_LIMITS } from '../analysis/deployment-targets.mjs';
+import { checkRelease, RELEASE_LIMITS } from '../release-check.mjs';
 import { readEvidenceSource } from '../analysis/source.mjs';
 import { captureMv3 } from '../runtime/mv3.mjs';
 import { replayFeature } from '../runtime/replay.mjs';
 import { captureWebScenario } from '../runtime/web.mjs';
 import { replayWebFeature } from '../runtime/web-replay.mjs';
+import { runRecoveryPlan } from '../recovery-engine.mjs';
+import { reconcileRuntime } from '../reconciliation.mjs';
 import { CraftAnythingProvider } from '../providers/craft-anything.mjs';
+import { REA_6_9_MANIFEST } from '../providers/rea-6-9.mjs';
 import { DEFAULT_LIMITS } from '../analysis/inventory.mjs';
 import { renderReport } from '../report.mjs';
 import { DEFAULT_SEQUENCE, FIXTURE_BINDINGS, demonstrationCase, simulateWorker, behaviorDocument, mismatchOracle } from '../lab.mjs';
@@ -22,7 +32,7 @@ import { SessionStore } from './store.mjs';
 
 const fixture = fileURLToPath(new URL('../../assets/labs/mv3/reference', import.meta.url));
 const prompts = JSON.parse(readFileSync(new URL('../../assets/prompts.json', import.meta.url), 'utf8'));
-export const SERVER_INSTRUCTIONS = 'Start with get_capabilities, inspect_artifact and read_artifact pages. The host agent implements the requested feature. Use case handles for hypotheses/probes, export important work, and preserve reported/static authority. Optional capture_feature/replay_feature and capture_web/replay_web require a browser explicitly configured at server startup; they execute selected local or remote targets in disposable profiles and are not OS/network sandboxes. Craft Anything calls are optional, pinned and fail closed on provider drift; the core works without Craft. No shell or arbitrary oracle tool is exposed. Read execution_policy before runtime work.';
+export const SERVER_INSTRUCTIONS = 'Start with get_capabilities, inspect_artifact and read_artifact pages. The host agent implements the requested feature. Use check_release to evaluate local build files, deployment targets, declared Wasm interfaces and saved QA evidence under one explicit policy. Use the individual comparison tools for drill-down. Optional browser and Craft workflows use operator startup configuration. Read execution_policy before runtime work.';
 const pathSchema = z.string().min(1).max(4096);
 const handleSchema = z.string().min(1).max(128);
 const textList = z.array(z.string().min(1).max(256)).max(2000);
@@ -41,7 +51,15 @@ function checkModel(record) {
 
 function summary(entry) {
   const data = entry.data;
-  if (entry.kind === 'inspection') return { artifact: data.artifact, counts: Object.fromEntries(['contexts', 'nodes', 'edges', 'evidence', 'findings', 'unknowns'].map(key => [key, data[key].length])), authority: 'bounded-static; target not executed', limits: data.limits };
+  if (entry.kind === 'inspection') return { artifact: data.artifact, counts: { ...Object.fromEntries(['contexts', 'nodes', 'edges', 'evidence', 'findings', 'unknowns'].map(key => [key, data[key].length])), formats: data.artifact_details.formats.length }, authority: 'bounded-static; target not executed', limits: data.limits };
+  if (entry.kind === 'artifact-comparison') return { status: data.status, counts: data.counts, coverage: data.coverage, receipt_sha256: data.receipt_sha256 };
+  if (entry.kind === 'api-contract-comparison') return { status: data.status, openapi_version: data.openapi_version, operations: data.operations.length, observations: data.observations.length };
+  if (entry.kind === 'wasm-interface') return { status: data.status, imports: data.imports.length, exports: data.exports.length, sha256: data.sha256, abi_sha256: data.abi_sha256 };
+  if (entry.kind === 'wasm-interface-comparison') return { status: data.status, counts: data.counts, receipt_sha256: data.receipt_sha256 };
+  if (entry.kind === 'playwright-evidence') return { status: data.status, context: data.context, coverage: data.coverage, receipt_sha256: data.receipt_sha256 };
+  if (entry.kind === 'deployment-targets') return { status: data.status, format: data.format, targets: data.targets.length, receipt_sha256: data.receipt_sha256 };
+  if (entry.kind === 'deployment-target-comparison') return { status: data.status, changes: data.changes.length, receipt_sha256: data.receipt_sha256 };
+  if (entry.kind === 'release-check') return { status: data.status, checks: data.checks.map(({ id, status, path }) => ({ id, status, ...(path ? { path } : {}) })), receipt_sha256: data.receipt_sha256 };
   if (entry.kind === 'case') return { id: data.id, revision: data.revision, goal: short(data.goal), target: { kind: data.target.kind, sha256: data.target.sha256 }, hypotheses: data.hypotheses.length, probes: data.probes.length, observations: data.observations.length };
   if (entry.kind === 'plan') return { status: data.status, surviving_ids: data.surviving_ids.slice(0, 50), surviving_count: data.surviving_ids.length, next_probe_id: data.next_probe_id, ranked_count: data.ranked.length, scope: data.scope };
   if (entry.kind === 'verification') return { status: data.status, summary: data.summary, comparability: { status: data.comparability.status, reasons: data.comparability.reasons.slice(0, 20).map(short), reason_count: data.comparability.reasons.length, reasons_truncated: data.comparability.reasons.length > 20 || data.comparability.reasons.some(item => item.length > 240) }, receipt_sha256: data.receipt_sha256, scope: data.scope };
@@ -50,12 +68,22 @@ function summary(entry) {
   if (entry.kind === 'replay') return { status: data.status, summary: data.verification.summary, first_mismatch: data.mismatch?.first_action ?? null, fingerprint: data.mismatch?.fingerprint ?? null, scope: data.scope };
   if (entry.kind === 'web-runtime') return { complete: data.complete, actions: data.receipt.cases.length, authority: data.provenance.authority, unknown_count: data.unknowns.length, provider: data.provenance.toolchain?.provider ?? null };
   if (entry.kind === 'web-replay') return { status: data.status, behavior: data.verification.behavior.status, visual: data.verification.visual.status, first_mismatch: data.mismatch?.first_action ?? null, scope: data.scope };
+  if (entry.kind === 'recovery-run') return { status: data.status, attempts: data.attempts.length, patches: data.patches.length, plan_sha256: data.plan_sha256, stop_reason: data.stop_reason, ...(data.failure ? { error: data.failure.code } : {}), scope: data.scope };
+  if (entry.kind === 'reconciliation') return { status: data.status, coverage: data.coverage, unknowns: data.unknowns.length, unmatched_runtime: data.unmatched_runtime.length, scope: data.scope };
   if (entry.kind === 'provider') return { status: data.status, provider: data.provenance?.provider?.provider ?? null, command: data.provenance?.command ?? null, error: data.error?.code ?? null };
   throw new RpmError('unknown_artifact_kind', 'Unsupported session artifact kind.');
 }
 function sections(entry) {
   const known = {
-    inspection: ['schema_version', 'artifact', 'contexts', 'nodes', 'edges', 'evidence', 'findings', 'unknowns', 'capabilities', 'limits', 'coverage'],
+    inspection: ['schema_version', 'artifact', 'contexts', 'nodes', 'edges', 'evidence', 'findings', 'unknowns', 'capabilities', 'limits', 'coverage', '/artifact_details/formats'],
+    'artifact-comparison': ['status', 'reference', 'candidate', 'scope', 'counts', 'changes', 'archives', 'coverage', 'receipt_sha256'],
+    'api-contract-comparison': ['status', 'openapi_version', 'operations', 'observations', 'coverage', 'limitations'],
+    'wasm-interface': ['imports', 'exports', 'coverage', 'unknowns', 'abi_sha256', 'sha256', 'receipt_sha256'],
+    'wasm-interface-comparison': ['changes', 'counts', 'reference', 'candidate', 'unknowns', 'receipt_sha256', '/reference/imports', '/reference/exports', '/candidate/imports', '/candidate/exports'],
+    'playwright-evidence': ['context', 'sources', 'timeline', 'network', 'coverage', 'issues', 'limitations', 'receipt_sha256'],
+    'deployment-targets': ['format', 'status', 'targets', 'issues', 'sha256', 'receipt_sha256'],
+    'deployment-target-comparison': ['status', 'changes', 'reference', 'candidate', '/reference/targets', '/candidate/targets', 'scope', 'receipt_sha256'],
+    'release-check': ['checks', 'policy_sha256', 'artifacts', '/artifacts/changes', '/artifacts/archives', 'authority', 'scope', 'receipt_sha256'],
     case: ['schema_version', 'id', 'revision', 'goal', 'target', 'capabilities', 'hypotheses', 'probes', 'observations', 'created_at'],
     plan: ['status', 'surviving_ids', 'ranked', 'ignored_observations', 'applied_observations', 'excluded', 'next_probe_id', 'scope'],
     verification: ['schema_version', 'status', 'cases', 'summary', 'contract', 'comparability', 'receipt_sha256', 'bindings', 'scope', '/comparability/reasons'],
@@ -64,9 +92,11 @@ function sections(entry) {
     replay: ['schema_version', 'status', 'scenario', 'reference', 'candidate', 'verification', 'mismatch', 'scope', '/reference/lifecycle', '/candidate/lifecycle', '/verification/cases'],
     'web-runtime': ['schema_version', 'kind', 'complete', 'receipt', 'events', 'unknowns', 'provenance', 'failure'],
     'web-replay': ['schema_version', 'kind', 'status', 'scenario', 'reference', 'candidate', 'reference_ir', 'candidate_ir', 'contract', 'verification', 'mismatch', 'scope'],
+    'recovery-run': ['schema_version', 'kind', 'status', 'attempts', 'patches', 'plan_sha256', 'scope', 'stop_reason', 'failure'],
+    reconciliation: ['schema_version', 'kind', 'status', 'target', 'authority', 'matches', 'events', 'unknowns', 'unmatched_runtime', 'coverage', 'scope'],
     provider: ['status', 'data', 'error', 'provenance'],
   };
-  return ['summary', 'full', ...known[entry.kind]];
+  return ['summary', 'full', ...known[entry.kind].filter(key => key.startsWith('/') || Object.hasOwn(entry.data, key))];
 }
 function receipt(store, handle) {
   const entry = store.get(handle);
@@ -86,7 +116,11 @@ function reportPayload(entry, store) {
   if (entry.kind === 'replay') return { schema_version: 1, title: 'Feature recovery replay', kind: 'verification', verification: entry.data.verification, replay: entry.data, narrative: { label: 'Actual Chromium replay', description: entry.data.scope } };
   if (entry.kind === 'web-runtime') return { schema_version: 1, title: 'Actual web capture', kind: 'runtime', capture: entry.data, narrative: { label: 'Provider-captured web evidence', description: entry.data.provenance.observables } };
   if (entry.kind === 'web-replay') return { schema_version: 1, title: 'Web feature replay', kind: 'verification', verification: entry.data.verification.behavior, replay: entry.data, narrative: { label: 'Actual web replay', description: entry.data.scope } };
+  if (entry.kind === 'recovery-run') return { schema_version: 1, title: 'Bounded recovery run', kind: 'verification', recovery: entry.data, narrative: { label: 'Typed replay and patch loop', description: entry.data.scope } };
+  if (entry.kind === 'reconciliation') return { schema_version: 1, title: 'Static/runtime reconciliation', kind: 'verification', reconciliation: entry.data, narrative: { label: 'Derived static/runtime matches', description: entry.data.scope } };
   if (entry.kind === 'provider') return { schema_version: 1, title: 'Optional provider result', kind: 'inspection', inspection: entry.data };
+  if (entry.kind === 'artifact-comparison' || entry.kind === 'api-contract-comparison') return { schema_version: 1, title: entry.kind === 'artifact-comparison' ? 'Artifact comparison' : 'API contract comparison', comparison: entry.data };
+  if (['wasm-interface', 'wasm-interface-comparison', 'deployment-targets', 'deployment-target-comparison', 'playwright-evidence', 'release-check'].includes(entry.kind)) return { schema_version: 1, title: entry.kind.replaceAll('-', ' '), result: entry.data };
   if (entry.kind === 'plan') {
     const inspected = store.peek(entry.context.inspection_handle);
     return { schema_version: 1, title: 'Distinguishing experiments', kind: 'case', case: entry.context.case, planner: entry.data, ...(inspected ? { inspection: inspected.data } : {}) };
@@ -95,7 +129,7 @@ function reportPayload(entry, store) {
   return { schema_version: 1, title: 'Investigation case', kind: 'case', case: entry.data, ...(inspected ? { inspection: inspected.data } : {}), ...(plan?.context.case?.revision === entry.data.revision ? { planner: plan.data } : {}) };
 }
 
-export function createReaMcpServer({ workspace, limits: overrides = {}, browserExecutable }) {
+export function createReaMcpServer({ workspace, limits: overrides = {}, browserExecutable, craftLauncher }) {
   const limits = checkedMcpLimits(overrides), policy = new WorkspacePolicy(workspace, limits), store = new SessionStore(limits);
   let heavyOperations = 0;
   const server = new McpServer({ name: 'rea-pro-max', version: VERSION }, { instructions: SERVER_INSTRUCTIONS, maxToolInputElements: limits.maxToolInputElements });
@@ -130,14 +164,58 @@ export function createReaMcpServer({ workspace, limits: overrides = {}, browserE
     });
   }
   tool('get_capabilities', 'Read the exact server scope, configured workspace, limits and execution policy before choosing tools.', emptySchema, () => ({
-    version: VERSION, transport: 'stdio', workspace: policy.root, implemented_targets: ['JavaScript', 'extracted web', 'web action replay', 'Manifest V3', 'extracted Electron'],
-    limits: { ...limits, model: MODEL_LIMITS, inspection: DEFAULT_LIMITS }, cache: store.stats(),
-    execution_policy: { target_execution: Boolean(browserExecutable), shell: false, arbitrary_oracle: false, browser_control: Boolean(browserExecutable), runtime: browserExecutable ? 'Opt-in MV3 and bounded web action execution in disposable profiles; not an OS/network sandbox.' : 'Disabled. Restart server with --browser ABSOLUTE_CHROMIUM to opt in.', craft_provider: 'Optional pinned Craft Anything MCP adapter; executable is caller supplied, no installation occurs, and unpinned/drifted provider identity remains unknown.', native_mobile_provider: false, owned_lab: 'bundled trusted worker scripts only; controlled Chrome API model' },
+    version: VERSION, transport: 'stdio', workspace: policy.root, implemented_targets: ['JavaScript', 'extracted web', 'web action replay', 'Manifest V3', 'extracted Electron', 'Mach-O deployment declarations', 'JVM class-format targets'],
+    limits: { ...limits, model: MODEL_LIMITS, inspection: DEFAULT_LIMITS, artifact_comparison: COMPARISON_LIMITS, wasm_interface: WASM_INTERFACE_LIMITS, deployment_targets: TARGET_LIMITS, release_check: RELEASE_LIMITS }, cache: store.stats(),
+    execution_policy: { target_execution: Boolean(browserExecutable), shell: false, arbitrary_oracle: false, browser_control: Boolean(browserExecutable), runtime: browserExecutable ? 'Opt-in MV3 and bounded web action execution in disposable profiles; not an OS/network sandbox.' : 'Disabled. Restart server with --browser ABSOLUTE_CHROMIUM to opt in.', craft_provider: { enabled: Boolean(craftLauncher), launcher: 'Operator configuration via --craft-config at startup.' }, native_mobile_provider: false, owned_lab: 'bundled trusted worker scripts only; controlled Chrome API model' },
+    upstream_reference: REA_6_9_MANIFEST,
     state: 'Handles live only in this server process. Export/import cases to resume. Root restrictions are application policy, not an operating-system sandbox.',
   }));
   tool('inspect_artifact', 'Statically inspect a workspace artifact without executing it. Optional include/exclude are exact relative file/directory prefixes, not globs. Read coverage to see admitted, unparsed and omitted files.', z.object({ path: pathSchema, include: z.array(pathSchema).max(256).optional(), exclude: z.array(pathSchema).max(256).optional() }).strict(), async ({ path, include, exclude }, context) => {
     const result = await inspectArtifact(policy.resolveInput(path), { include, exclude }); checkCancelled(context);
     return commit('inspection', result);
+  }, sessionWrite, true);
+  tool('compare_artifacts', 'Compare two local workspace files or directories by SHA-256. Reports path changes and verified ZIP member content differences where coverage permits.', z.object({ reference_path: pathSchema, candidate_path: pathSchema, include: z.array(pathSchema).max(256).optional(), exclude: z.array(pathSchema).max(256).optional() }).strict(), async ({ reference_path, candidate_path, include, exclude }, context) => {
+    const result = await compareArtifacts(policy.resolveInput(reference_path), policy.resolveInput(candidate_path), { include, exclude });
+    checkCancelled(context);
+    return commit('artifact-comparison', result);
+  }, sessionWrite, true);
+  tool('compare_api_contract', 'Compare an OpenAPI JSON contract with a saved HAR JSON capture. Correlates methods and path templates offline and retains operation coverage.', z.object({ openapi_path: pathSchema, har_path: pathSchema }).strict(), ({ openapi_path, har_path }, context) => {
+    const result = compareApiContract(policy.readJson(openapi_path), policy.readJson(har_path));
+    checkCancelled(context);
+    return commit('api-contract-comparison', result);
+  }, sessionWrite, true);
+  const wasmBytes = path => policy.readBytes(path, WASM_INTERFACE_LIMITS.max_file_bytes);
+  const targetBytes = path => policy.readBytes(path, TARGET_LIMITS.max_file_bytes);
+  tool('inspect_deployment_targets', 'Read declared Apple Mach-O deployment targets or JVM class version requirements from a local file.', z.object({ path: pathSchema }).strict(), ({ path }, context) => {
+    const result = inspectDeploymentTargets(targetBytes(path));
+    checkCancelled(context);
+    return commit(result.kind, result);
+  }, sessionWrite, true);
+  tool('compare_deployment_targets', 'Check whether the candidate retains the declared Apple or JVM deployment targets of the reference.', z.object({ reference_path: pathSchema, candidate_path: pathSchema }).strict(), ({ reference_path, candidate_path }, context) => {
+    const result = compareDeploymentTargets(targetBytes(reference_path), targetBytes(candidate_path));
+    checkCancelled(context);
+    return commit(result.kind, result);
+  }, sessionWrite, true);
+  tool('inspect_wasm_interface', 'Inspect the declared public interface of a local core WebAssembly module without running it.', z.object({ path: pathSchema }).strict(), ({ path }, context) => {
+    const result = inspectWasmInterface(wasmBytes(path));
+    checkCancelled(context);
+    return commit('wasm-interface', result);
+  }, sessionWrite, true);
+  tool('compare_wasm_interfaces', 'Compare the public declaration interfaces of two local core WebAssembly modules.', z.object({ reference_path: pathSchema, candidate_path: pathSchema }).strict(), ({ reference_path, candidate_path }, context) => {
+    const result = compareWasmInterfaces(wasmBytes(reference_path), wasmBytes(candidate_path));
+    checkCancelled(context);
+    return commit('wasm-interface-comparison', result);
+  }, sessionWrite, true);
+  tool('inspect_playwright_trace', 'Import a saved Playwright v10 trace event file and optional companion network snapshots as bounded, reduced evidence.', z.object({ trace_path: pathSchema, network_path: pathSchema.optional() }).strict(), ({ trace_path, network_path }, context) => {
+    const result = inspectPlaywrightEvidence(policy.readBytes(trace_path, RELEASE_LIMITS.trace_bytes),
+      network_path ? policy.readBytes(network_path, RELEASE_LIMITS.trace_bytes) : undefined);
+    checkCancelled(context);
+    return commit('playwright-evidence', result);
+  }, sessionWrite, true);
+  tool('check_release', 'Evaluate a local release policy against two build directories and check deployment targets, Wasm interfaces or saved browser evidence. Resolves policy inputs relative to the policy file.', z.object({ path: pathSchema }).strict(), async ({ path }, context) => {
+    const result = await checkRelease(policy.resolveInput(path, 'file'), { signal: context?.signal });
+    checkCancelled(context);
+    return commit('release-check', result);
   }, sessionWrite, true);
   tool('read_source_evidence', 'Read a bounded source excerpt for an inspected evidence ID. Rechecks workspace admission and file content hash; changed source must be inspected again.', z.object({ inspection_handle: handleSchema, evidence_id: handleSchema, max_chars: z.number().int().min(1).max(8000).default(2000) }).strict(), async ({ inspection_handle, evidence_id, max_chars }) => {
     const inspection = store.get(inspection_handle, 'inspection').data;
@@ -164,16 +242,30 @@ export function createReaMcpServer({ workspace, limits: overrides = {}, browserE
     const result = await replayWebFeature({ referenceUrl: reference_url, candidateUrl: candidate_url, executablePath: browserExecutable, scenario: policy.readJson(scenario_path), contract: contract_path ? policy.readJson(contract_path) : undefined, timeoutMs: timeout_ms, signal: context?.signal });
     return commit('web-replay', result);
   }, { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true }, true);
-  const providerArgs = z.array(z.string().max(4096)).max(64).default([]);
+  tool('run_recovery', 'Opt-in end-to-end recovery loop: read a workspace plan, replay the typed MV3 or web provider, apply only hash-bound text patches inside the configured workspace, and replay after each patch. The loop stops on pass, unknown, or its bounded attempt budget.', z.object({ plan_path: pathSchema }).strict(), async ({ plan_path }, context) => {
+    if (!browserExecutable) throw new RpmError('runtime_disabled', 'Runtime is disabled. Configure --browser ABSOLUTE_CHROMIUM at server startup to opt in.');
+    const supplied = policy.readJson(plan_path);
+    if (!supplied || typeof supplied.candidate_root !== 'string' || !isAbsolute(supplied.candidate_root) ||
+        realpathSync.native(policy.resolveInput(supplied.candidate_root)) !== policy.root) {
+      throw new RpmError('recovery_scope', 'The recovery plan candidate_root must name the configured MCP workspace.');
+    }
+    const plan = { ...supplied, candidate_root: policy.root, browser_executable: browserExecutable };
+    const result = await runRecoveryPlan(plan, { signal: context?.signal, onProgress: value => checkCancelled({ signal: context?.signal }) || value });
+    return commit('recovery-run', result);
+  }, { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true }, true);
   const providerInput = z.record(z.string(), z.unknown()).default({});
-  const makeCraftProvider = ({ executable_path, args, timeout_ms }) => new CraftAnythingProvider({ executablePath: executable_path, args, workspace: policy.root, timeoutMs: timeout_ms });
-  const craftTool = (name, description, method) => tool(name, description, z.object({ executable_path: z.string().min(1).max(4096), args: providerArgs, input: providerInput, timeout_ms: z.number().int().min(100).max(240000).optional() }).strict(), async ({ executable_path, args, input, timeout_ms }, context) => {
-    const provider = makeCraftProvider({ executable_path, args, timeout_ms });
+  const timeoutSchema = z.number().int().min(100).max(240000).optional();
+  const makeCraftProvider = timeoutMs => {
+    if (!craftLauncher) throw new RpmError('provider_disabled', 'Configure a trusted Craft launcher at server startup with --craft-config.');
+    return new CraftAnythingProvider({ ...craftLauncher, workspace: policy.root, timeoutMs });
+  };
+  const craftTool = (name, description, method) => tool(name, description, z.object({ input: providerInput, timeout_ms: timeoutSchema }).strict(), async ({ input, timeout_ms }, context) => {
+    const provider = makeCraftProvider(timeout_ms);
     const result = await provider[method](input, { signal: context?.signal });
     return commit('provider', result);
   }, { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true }, true);
-  tool('craft_provider_doctor', 'Run the pinned Craft Anything MCP handshake and tools/list check. The executable is caller supplied; no installation is performed and a missing pinned commit fails closed.', z.object({ executable_path: z.string().min(1).max(4096), args: providerArgs, timeout_ms: z.number().int().min(100).max(240000).optional() }).strict(), async ({ executable_path, args, timeout_ms }, context) => {
-    const provider = makeCraftProvider({ executable_path, args, timeout_ms });
+  tool('craft_provider_doctor', 'Run the handshake and tools/list check for the startup-configured Craft Anything launcher.', z.object({ timeout_ms: timeoutSchema }).strict(), async ({ timeout_ms }, context) => {
+    const provider = makeCraftProvider(timeout_ms);
     return commit('provider', await provider.doctor({ signal: context?.signal }));
   }, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true }, true);
   craftTool('craft_provider_inspect', 'Call the pinned, typed Craft Anything JavaScript application map operation and retain provider provenance.', 'inspect');
@@ -223,6 +315,11 @@ export function createReaMcpServer({ workspace, limits: overrides = {}, browserE
   tool('verify_behavior', 'Compare bounded workspace JSON receipts. A valid finite fail/unknown is a successful tool result; supplied receipts do not independently attest execution.', z.object({ reference_path: pathSchema, candidate_path: pathSchema, contract_path: pathSchema.optional() }).strict(), ({ reference_path, candidate_path, contract_path }) => {
     const result = compareBehavior(policy.readJson(reference_path), policy.readJson(candidate_path), contract_path ? policy.readJson(contract_path) : {});
     return commit('verification', result);
+  }, sessionWrite);
+  tool('reconcile_runtime', 'Correlate MV3 worker message channels with an in-session capture of the exact inspected target. The join records candidates and ambiguity.', z.object({ inspection_handle: handleSchema, runtime_handle: handleSchema }).strict(), ({ inspection_handle, runtime_handle }) => {
+    const inspection = store.get(inspection_handle, 'inspection').data;
+    const runtime = store.get(runtime_handle, 'runtime');
+    return commit('reconciliation', reconcileRuntime(inspection, runtime.data, { sessionCapture: true }), { inspection_handle, runtime_handle });
   }, sessionWrite);
   tool('export_artifact', 'Explicitly write a new JSON or standalone HTML file inside the workspace. JSON cases remain compatible with the CLI. Existing files/symlinks are never overwritten.', z.object({ handle: handleSchema, output_path: pathSchema, format: z.enum(['json', 'html']) }).strict(), ({ handle, output_path, format }, context) => {
     const entry = store.get(handle); const content = format === 'json' ? canonical(entry.data) + '\n' : renderReport(reportPayload(entry, store));

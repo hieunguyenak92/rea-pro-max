@@ -1,0 +1,83 @@
+{
+  "engine": "0.8.0",
+  "date": "2026-11-18",
+  "platform": "macOS arm64",
+  "format_evidence": "bounded-static",
+  "cases": [
+    {
+      "case": "bundled macOS object files",
+      "exit": 2,
+      "verdict": "narrowed",
+      "receipt_sha256": "1f7c77adc3a45133287ce2f39271fb6946e0973f1f108b343826b875e8b9088c",
+      "reference_sha256": "da97ef130669286037ccc4c37995c2b93839295406cc415049159a4f524040f2",
+      "candidate_sha256": "7c9e310af55aad19e65c6e6b73a0909056549d00b56d55edc0199aec04aa3f4b",
+      "changes": [
+        "minimum_os_raised",
+        "target_removed"
+      ]
+    },
+    {
+      "case": "bundled Java class files",
+      "exit": 2,
+      "verdict": "narrowed",
+      "receipt_sha256": "a59ab05016fc5d7fca0550abd8641b429b984e1d71d089cfcdeb09cef790f647",
+      "reference_sha256": "c73ba03c89092b399f29155f700d3ee405a361607b0b5278704378237b39b004",
+      "candidate_sha256": "2abdb996f4c6a01a015892449bef251c1e43849e6bac6f8fe4207b8e42e5e074",
+      "changes": [
+        "minimum_java_raised"
+      ]
+    },
+    {
+      "case": "linked macOS executables",
+      "exit": 2,
+      "verdict": "narrowed",
+      "receipt_sha256": "f08ad0f0dd1f6f234f0e1d5db901571a6bc6728986bfd3d0db43a4db86e22ee0",
+      "reference_sha256": "679d415cf73840ce5af5f8b6ec36e36366401798dc1032810ef87c683159c501",
+      "candidate_sha256": "40c38d0cb4a86cc61e52b70fd61331c504ea7f99476cea7047304c7212d4cf80",
+      "changes": [
+        "minimum_os_raised",
+        "target_removed"
+      ]
+    },
+    {
+      "case": "linked macOS executables, reverse order",
+      "exit": 0,
+      "verdict": "preserved",
+      "receipt_sha256": "16cfcf21b738a206b8b62e61c7cc75c96f9736a8487fa083f469254ff0053769",
+      "reference_sha256": "40c38d0cb4a86cc61e52b70fd61331c504ea7f99476cea7047304c7212d4cf80",
+      "candidate_sha256": "679d415cf73840ce5af5f8b6ec36e36366401798dc1032810ef87c683159c501",
+      "changes": [
+        "minimum_os_lowered",
+        "target_added"
+      ]
+    }
+  ],
+  "bundled_policy": {
+    "exit": 2,
+    "checks": {
+      "build-files": "pass",
+      "deployment-targets": "fail"
+    },
+    "receipt_sha256": "f45d6565dd0ac57671372a63c9f45bf9b9b5bf4713000bc818dae367d8303cc1"
+  },
+  "corpus": {
+    "distribution": "OpenJDK 26.0.2",
+    "archive": "java.base.jmod",
+    "entry_scope": "classes/**/*.class, supplied individually to inspectDeploymentTargets",
+    "observations": {
+      "archive_sha256": "fbd4e7b9e6049fd0518ee9baf27906f5651352e52d8d913a204079a9c07d399a",
+      "complete": 7406,
+      "unknown": 0,
+      "kinds": {
+        "module": 1,
+        "class": 6261,
+        "interface": 868,
+        "enum": 239,
+        "annotation": 37
+      },
+      "majors": {
+        "70": 7406
+      }
+    }
+  }
+}

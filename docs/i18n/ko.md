@@ -8,6 +8,8 @@ Claude Code, Codex, 호환 MCP 클라이언트를 위한 독립적인 리버스 
 
 [기록된 실험실 살펴보기](https://hieunguyenak92.github.io/rea-pro-max/#explorer) · [스킬 설치](../INSTALL.md) · [검증 기록](../VALIDATION.md) · [릴리스](https://github.com/hieunguyenak92/rea-pro-max/releases)
 
+**v0.8에서는 새 빌드에서 지원이 빠진 환경을 확인할 수 있습니다.** Mach-O 파일 두 개 또는 Java 클래스 파일 두 개를 `target-diff`로 비교하면 빠진 아키텍처, 최소 OS 버전 상승, Java 미리 보기 기능 요구사항의 변화를 확인할 수 있습니다. 예제 CI는 파일 수정을 허용해도 최소 Java 버전이 11에서 17로 올라가면 실패합니다. 프로그램을 실행하지 않고 선언을 읽으며, 근거가 부족하면 `unknown`을 반환합니다. [영문 재현 예제](../NATIVE-TARGETS.md)
+
 ![REA Pro Max — Understand the mechanism](../media/hero.png)
 
 ![자체 합성 실험의 실제 REA Pro Max 워크벤치](../media/workbench.png)
@@ -28,7 +30,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **결과는 실행 가능한 코드와 검토할 수 있는 증거입니다.** 이 제공자는 현재 문서화된 `rpm-kv-v1` 메시지 프로토콜과 선택한 초기화 경계만 검사합니다. 임의 확장 프로그램을 자동 복원하지 않습니다. 원시 증거에는 boot ID가 남으며 비교에서 선언된 관찰 필드만 제외됩니다. 메시지 receipt는 관찰하지 않은 UI·네트워크·파일 효과를 입증하지 않습니다.
 
-MCP는 **21개 도구**를 제공합니다. 런타임은 기본 비활성화이며 서버 등록 시 `--browser "/absolute/path/to/chromium"`을 추가하면 `capture_feature`와 `replay_feature`가 활성화됩니다. 각각 임시 프로필을 사용하며 호스트 에이전트가 수정을 작성합니다. `read_source_evidence`는 해시를 확인한 제한된 소스 조각을 읽습니다. include/exclude와 coverage는 읽은 파일, 제외한 파일, 파싱하지 않은 파일을 명시합니다. TypeScript/JSX 의미 분석은 아직 제공하지 않습니다.
+MCP는 **31개 도구**를 제공합니다. 런타임은 기본적으로 비활성화되어 있습니다. 서버 등록 시 `--browser "/absolute/path/to/chromium"`을 추가하면 `capture_feature`, `replay_feature`, `run_recovery`를 사용할 수 있습니다. Chromium은 별도의 임시 프로필에서 실행되고 호스트 에이전트가 수정 코드를 작성합니다. `reconcile_runtime`은 검사한 MV3 확장 프로그램과 같은 MCP 세션에서 캡처한 대상의 SHA-256이 일치할 때 서비스 워커 메시지 채널을 대조합니다. 모호한 채널과 연결되지 않은 이벤트도 결과에 남깁니다. `read_source_evidence`는 해시를 다시 확인한 뒤 범위를 제한해 소스 코드를 읽습니다. 어떤 파일을 읽었고 어떤 파일을 제외하거나 구문 분석하지 못했는지 표시합니다. TypeScript와 JSX의 의미 분석은 아직 지원하지 않습니다.
 
 [복원 흐름과 제한 — 영어](../RECOVERY.md) · [버전별 검증](../VALIDATION.md). `shrink`는 시도마다 새 자식 프로세스에서 기한을 두고 oracle을 실행합니다. 외부 상태는 oracle의 `reset()`이 담당합니다. 새 프로필과 자식 프로세스는 OS나 네트워크 샌드박스가 아닙니다.
 
@@ -58,7 +60,22 @@ Codex에서는 스킬을 선택하거나 같은 작업 앞에 `$rea-pro-max`를 
 
 ## 하나의 도구 모음, 세 가지 시작 방법
 
-**v0.4은 21개 도구의 로컬 MCP**, 선택적 실제 Chromium 캡처/replay와 해시 확인 소스 조각을 제공합니다. 스킬은 에이전트의 실행 가능한 구현 전달을 지원하며 CLI는 같은 커널을 사용합니다. 런타임 npm 설치는 필요 없습니다.
+**v0.7은 CLI와 로컬 MCP에 오프라인 릴리스 검사를 추가합니다.** 스킬은 에이전트가 실행 가능한 구현을 전달하도록 돕습니다. 도구를 실행할 때 추가 npm 패키지를 설치할 필요가 없습니다.
+
+- CLI의 `compare`와 MCP의 `compare_artifacts`는 두 빌드의 파일 트리를 SHA-256으로 대조합니다. 추가되거나 제거되거나 변경된 파일과 읽기 한도 내에서 검증한 ZIP 항목의 내용 차이를 보여 줍니다.
+- `api-diff`와 `compare_api_contract`는 OpenAPI JSON에 선언된 HTTP 메서드 및 경로 패턴을 저장된 HAR 요청과 대조합니다. 관찰됨, 미관찰, 모호함을 구별하고 HAR의 오리진, 실제 경로 값, 쿼리, 헤더 및 본문을 출력에서 제외합니다.
+- Intel HEX 레코드의 체크섬과 완결성을 검사하고 기본 UF2 블록의 구조, 주소 범위 및 시퀀스를 확인합니다. 확인한 영역이나 블록의 SHA-256과 생략된 범위를 보고합니다.
+- `wasm-inspect`는 WebAssembly 모듈의 공개 가져오기·내보내기 선언을 읽습니다. `wasm-diff`는 두 모듈에서 선언된 이름, 종류와 지원되는 타입을 대조합니다. `playwright-trace`는 저장된 Playwright v10 트레이스의 작업을 요약합니다.
+
+[지원 범위 및 REA 6.9 대조 자료(영어)](../REA-6.9.md)
+
+### 소스 체크아웃에서 릴리스 검사 실행
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs release-check skills/rea-pro-max/assets/labs/release/policy.json
+```
+
+CLI의 `release-check`와 MCP의 `check_release`는 동일한 정책을 적용합니다. 허용 목록에 명시한 파일 변경, 내용이 동일하다고 검증된 ZIP 재패키징, Wasm의 공개 ABI, 지정한 오리진으로 범위를 제한한 HAR의 필수 HTTP 관측 항목을 한 번에 확인합니다. 정책에 따라 Playwright v10 트레이스의 작업 증거도 요구할 수 있습니다. `pass`, `fail`, `unknown` 판정은 제출된 정책과 증거에만 적용됩니다. [릴리스 검사 가이드(영어)](../RELEASE-CHECK.md)
 
 ### Claude Code 또는 Codex에 MCP 연결
 
@@ -107,6 +124,7 @@ Claude Code에서는 `/rea-pro-max`, Codex에서는 스킬 선택 또는 `$rea-p
 | `record_observation` | 출처·권한 수준·바인딩을 포함한 관찰 저장. |
 | `rank_probes` | 허용된 실험 순위 결정. 실험 자체는 실행하지 않음. |
 | `verify_behavior` | 유한한 계약 아래 receipt 파일 비교. |
+| `check_release` | 로컬 증거로 선언된 릴리스 요건을 검사합니다. |
 | `export_artifact` | 새 워크스페이스 파일에 JSON/독립 HTML 내보내기. |
 | `run_owned_lab` | 동봉된 자체 워커의 제어 모델 실행. |
 | `list_task_prompts` | 36개 템플릿을 계열별로 페이지 조회. |
@@ -226,4 +244,4 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
 
 `assets/recovery-web/`는 네트워크가 없는 자체 fixture입니다. reference, 의도적으로 결함을 가진 starter, 독립 작성 recovered가 지연 응답, latest-wins 취소, NFKC Unicode, 빈 결과/오류, localStorage, 키보드 focus와 responsive markup을 보여 줍니다. 자세한 내용은 [WEB-RECOVERY.md](../WEB-RECOVERY.md)를 참고하세요.
 
-Craft Anything은 선택적 provider이며 필수 dependency가 아닙니다. Adapter는 `js_app_map`, `web_site_capture`, `app_graphs_compare`라는 타입이 지정된 alias만 호출하고 MCP handshake, 고정 version/commit, tool 목록, 경로, 시간/바이트 제한과 정리를 확인합니다. commit을 증명하지 못하는 binary는 거부합니다. Craft를 자동 설치하거나 코드와 branding을 포함하지 않습니다. [PROVIDERS.md](../PROVIDERS.md)를 확인하세요.
+Craft Anything은 선택형 제공자입니다. 운영자가 MCP 서버를 시작할 때 `--craft-config /absolute/path/to/craft-launcher.json`을 지정하면 사용할 수 있습니다. 어댑터는 고정된 버전과 커밋, MCP 핸드셰이크, 도구 목록, 경로, 시간 및 바이트 한도와 프로세스 정리를 확인합니다. 제공하는 작업은 `js_app_map`, `web_site_capture`, `app_graphs_compare`입니다. 활성화하기 전에 Craft를 별도로 설치하세요. [제공자 안내(영어)](../PROVIDERS.md).

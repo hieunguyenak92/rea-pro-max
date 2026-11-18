@@ -106,13 +106,26 @@ def smoke_test(data):
                                      "--candidate", lab / "candidate.json"], expected=2))
         if verdict["status"] != "fail" or not (lab / "report.html").is_file():
             raise ValueError("Extracted CLI lost the verification/report artifacts.")
+        api = skill / "assets/labs/api"
+        comparison = json.loads(invoke(["api-diff", api / "openapi.json", api / "traffic.har"]))
+        if comparison["coverage"]["operations"]["observed"] != 2 or comparison["coverage"]["observations"]["unmatched"] != 1:
+            raise ValueError("Extracted API comparison disagrees with the owned fixture.")
+        release = json.loads(invoke(["release-check", skill / "assets/labs/release/policy.json"]))
+        if release["status"] != "pass" or len(release["checks"]) != 4:
+            raise ValueError("Extracted release check disagrees with the bundled policy.")
+        targets = skill / "assets/labs/targets"
+        inspected = json.loads(invoke(["target-inspect", targets / "java11/TargetSample.class"]))
+        narrowed = json.loads(invoke(["target-diff", targets / "universal-macos11.o",
+                                      targets / "arm64-macos12.o"], expected=2))
+        if inspected["targets"][0]["javaRelease"] != 11 or narrowed["status"] != "narrowed":
+            raise ValueError("Extracted CLI missed the compiler-produced deployment targets.")
         mcp = subprocess.run([node, str(ROOT / "tools/check-mcp.mjs"), "--server",
                               str(skill / "scripts/mcp-server.mjs"), "--workspace", str(extracted)],
                              cwd=extracted, text=True, encoding="utf-8", capture_output=True,
                              timeout=60, check=False)
         if mcp.returncode != 0:
             raise ValueError(f"Extracted MCP check failed; run npm ci --ignore-scripts for the development client: {mcp.stderr}")
-        return {"commands": ["help", "demo", "verify"], "verification": "fail",
+        return {"commands": ["help", "demo", "verify", "api-diff", "release-check", "target-inspect", "target-diff"], "verification": "fail",
                 "reduced_actions": len(reduced["sequence"]), "mcp": json.loads(mcp.stdout)}
 
 

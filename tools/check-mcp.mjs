@@ -11,7 +11,7 @@ const { values } = parseArgs({ options: { server: { type: 'string' }, workspace:
 const entry = resolve(values.server || join(root, 'skills/rea-pro-max/scripts/mcp-server.mjs'));
 const temporary = mkdtempSync(join(values.workspace || tmpdir(), 'rpm-mcp-smoke-'));
 const expectedVersion = JSON.parse(readFileSync(join(root,'package.json'),'utf8')).version;
-const names = ['get_capabilities','inspect_artifact','read_artifact','create_case','revise_case','record_observation','rank_probes','verify_behavior','export_artifact','run_owned_lab','list_task_prompts','import_case','read_source_evidence','capture_feature','replay_feature','capture_web','replay_web','craft_provider_doctor','craft_provider_inspect','craft_provider_capture','craft_provider_compare'];
+const names = ['get_capabilities','inspect_artifact','read_artifact','create_case','revise_case','record_observation','rank_probes','verify_behavior','reconcile_runtime','export_artifact','run_owned_lab','list_task_prompts','import_case','read_source_evidence','capture_feature','replay_feature','capture_web','replay_web','run_recovery','craft_provider_doctor','craft_provider_inspect','craft_provider_capture','craft_provider_compare','compare_artifacts','compare_api_contract','inspect_wasm_interface','compare_wasm_interfaces','inspect_playwright_trace','check_release','inspect_deployment_targets','compare_deployment_targets'];
 const results = [];
 try {
   for (const modern of [false,true]) {
@@ -33,6 +33,25 @@ try {
       const capabilities = await call('get_capabilities'); assert.equal(capabilities.execution_policy.arbitrary_oracle,false);
       const inspected = await call('inspect_artifact',{path:'target'});
       assert.equal(inspected.summary.artifact.kind,'manifest-v3');
+      const sameBuild = await call('compare_artifacts',{reference_path:'target',candidate_path:'target'});
+      assert.equal(sameBuild.summary.status,'same-admitted-bytes');
+      cpSync(resolve(dirname(entry),'../assets/labs/api'),join(workspace,'api'),{recursive:true});
+      const coverage = await call('compare_api_contract',{openapi_path:'api/openapi.json',har_path:'api/traffic.har'});
+      assert.equal(coverage.summary.operations,3);
+      const observations = await call('read_artifact',{handle:coverage.handle,section:'observations',limit:1});
+      assert.equal(observations.total,3);assert.equal(observations.next_offset,1);
+      const releaseFixture = join(workspace,'release');
+      cpSync(resolve(dirname(entry),'../assets/labs/release'),releaseFixture,{recursive:true});
+      const release = await call('check_release',{path:'release/policy.json'});
+      assert.equal(release.summary.status,'pass');assert.equal(release.summary.checks.length,4);
+      const abi = await call('compare_wasm_interfaces',{reference_path:'release/reference/engine.wasm',candidate_path:'release/candidate/engine.wasm'});
+      assert.equal(abi.summary.status,'same-interface');
+      const inspectedAbi = await call('inspect_wasm_interface',{path:'release/candidate/engine.wasm'});
+      assert.equal(inspectedAbi.summary.exports,1);
+      const trace = await call('inspect_playwright_trace',{trace_path:'release/catalog.trace'});
+      assert.equal(trace.summary.status,'complete');assert.equal(trace.summary.coverage.actions.completed,4);
+      await call('export_artifact',{handle:release.handle,output_path:'release-verdict.json',format:'json'});
+      assert.equal(JSON.parse(readFileSync(join(workspace,'release-verdict.json'),'utf8')).receipt_sha256,release.summary.receipt_sha256);
       const evidence = await call('read_artifact',{handle:inspected.handle,section:'evidence',limit:1});assert.equal(evidence.items.length,1);
       const source = await call('read_source_evidence',{inspection_handle:inspected.handle,evidence_id:evidence.items[0].id,max_chars:100}); assert.equal(typeof source.source,'string'); assert.ok(source.source.length<=100);
       if (!values.browser) {
@@ -61,7 +80,16 @@ try {
       writeFileSync(join(workspace,'candidate.json'),JSON.stringify({...reference,cases:[{...reference.cases[0],output:false}]}));
       const verdict=await call('verify_behavior',{reference_path:'reference.json',candidate_path:'candidate.json'});assert.equal(verdict.summary.status,'fail');
       const prompts=await call('list_task_prompts',{limit:1});assert.equal(prompts.catalog_total,36);
-      results.push({protocol:modern?'2026-07-28 discovery':'legacy initialization',tools:names.length,inspection:true,portable_case:true,source_excerpt:true,actual_browser_replay:Boolean(values.browser),owned_lab:'intentional mismatch; 3 retained actions',finite_verification:'fail preserved as a valid result',report_bytes:exported.bytes});
+      cpSync(resolve(dirname(entry),'../assets/labs/targets'),join(workspace,'targets'),{recursive:true});
+      const target = await call('inspect_deployment_targets',{path:'targets/java11/TargetSample.class'});
+      assert.equal(target.summary.format,'jvm-class');
+      const targetDiff = await call('compare_deployment_targets',{reference_path:'targets/universal-macos11.o',candidate_path:'targets/arm64-macos12.o'});
+      assert.equal(targetDiff.summary.status,'narrowed');
+      const losses = await call('read_artifact',{handle:targetDiff.handle,section:'changes',limit:2});
+      assert.deepEqual(losses.items.map(row => row.reason).sort(),['minimum_os_raised','target_removed']);
+      const nativeRelease = await call('check_release',{path:'targets/policy.json'});
+      assert.deepEqual(nativeRelease.summary.checks.map(row => row.status),['pass','fail']);
+      results.push({protocol:modern?'2026-07-28 discovery':'legacy initialization',tools:names.length,inspection:true,artifact_comparison:true,deployment_targets:true,api_contract_comparison:true,wasm_interface:true,playwright_trace:true,release_policy:true,portable_case:true,source_excerpt:true,actual_browser_replay:Boolean(values.browser),owned_lab:'intentional mismatch; 3 retained actions',finite_verification:'fail preserved as a valid result',report_bytes:exported.bytes});
     } finally { await client.close(); assert.equal(stderr,'','MCP server wrote unexpected diagnostics'); }
   }
   console.log(JSON.stringify({server:values.server?'extracted-runtime':'checkout-runtime',version:expectedVersion,checks:results},null,2));

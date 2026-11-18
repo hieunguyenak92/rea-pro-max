@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "rea_pro_max": "0.7.0",
+  "recorded_on": "2026-11-18",
+  "scope": "Owned loopback application and separately authored build artifacts. Browser observations entered the release check as reported evidence.",
+  "toolchain": {
+    "playwright_core": "1.64.1",
+    "chromium": "156.0.8078.4",
+    "node": "22.23.0",
+    "platform": "darwin",
+    "architecture": "arm64"
+  },
+  "trace": {
+    "source_files": {
+      "trace": {
+        "sha256": "f59a21f440c0e9161935998513ff012e46de160ca9c2f62cd71442833313f5df",
+        "bytes": 7945
+      },
+      "network": {
+        "sha256": "c37b5b69fe7470b0259804d6d3e62703a9c27f1991832af10418d654a8d9a511",
+        "bytes": 3983
+      }
+    },
+    "context": {
+      "trace_version": 10,
+      "origin": "library",
+      "browser": "chromium",
+      "source_line": 1
+    },
+    "authority": "reported",
+    "receipt_sha256": "086ea0cb85fec8f0af9c328d598c4d93daa359053f220aea03b6b70b84dc8ed0",
+    "actions": {
+      "total": 6,
+      "completed": 6,
+      "failed": 0,
+      "incomplete": 0,
+      "invalid": 0,
+      "omitted": 0
+    },
+    "network_resources": 2,
+    "http_status_classes": {
+      "2xx": 2
+    }
+  },
+  "release_verdicts": [
+    {
+      "receipt_sha256": "0c84674b7ba2f2785c6441b1714441f5ffdecf672b786a8b5473ad8b299dfef3",
+      "status": "pass",
+      "policy_file_sha256": "e01411af89ca3c7598d99c899be1a5f54daa1eebd212500731b4b89c922901f8",
+      "reference_build_sha256": "f18017df664dcfcbd77d1f875c58b7086e8abe6176985b659a6b3a0f545f666f",
+      "candidate_build_sha256": "c8867d6cec2237661c7fd4d89a8c31763ae2edc00648f65783ed8093f6556ed5",
+      "checks": [
+        {
+          "id": "build-files",
+          "status": "pass"
+        },
+        {
+          "id": "wasm-interface",
+          "status": "pass"
+        },
+        {
+          "id": "api-coverage",
+          "status": "pass"
+        },
+        {
+          "id": "playwright-trace",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "receipt_sha256": "3111a217a86c1fe1ce80ee17975cbffcb311b53c2287f6b0b5ee6b40e193c5b1",
+      "status": "fail",
+      "policy_file_sha256": "e01411af89ca3c7598d99c899be1a5f54daa1eebd212500731b4b89c922901f8",
+      "reference_build_sha256": "f18017df664dcfcbd77d1f875c58b7086e8abe6176985b659a6b3a0f545f666f",
+      "candidate_build_sha256": "aad01a265d6dc701d7f94ea93e376b0644bee0e3f18d901bb1bcc8187c3f5ca3",
+      "checks": [
+        {
+          "id": "build-files",
+          "status": "pass"
+        },
+        {
+          "id": "wasm-interface",
+          "status": "fail"
+        },
+        {
+          "id": "api-coverage",
+          "status": "pass"
+        },
+        {
+          "id": "playwright-trace",
+          "status": "pass"
+        }
+      ]
+    }
+  ],
+  "cli_and_current_mcp_receipt_match": [
+    "playwright-evidence",
+    "release-check (deliberate ABI change)"
+  ]
+}

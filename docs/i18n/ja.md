@@ -8,6 +8,8 @@ Claude Code、Codex、互換MCPクライアントのための独立したリバ�
 
 [記録済みラボを体験](https://hieunguyenak92.github.io/rea-pro-max/#explorer) · [スキルを導入](../INSTALL.md) · [検証記録](../VALIDATION.md) · [リリース](https://github.com/hieunguyenak92/rea-pro-max/releases)
 
+**v0.8 では、新しいビルドで対象外になる実行環境を確認できます。** Mach-O ファイル同士または Java クラスファイル同士を `target-diff` で比較すると、削除されたアーキテクチャ、最低 OS バージョンの引き上げ、Java のプレビュー機能要件の変化が分かります。付属例の CI はファイル変更を許可しても、Java 11 から 17 への引き上げを検出して失敗します。プログラムは実行せず、宣言から判定できない場合は `unknown` を返します。 [再現手順（英語）](../NATIVE-TARGETS.md)
+
 ![REA Pro Max — Understand the mechanism](../media/hero.png)
 
 ![自作合成ラボからの実際のREA Pro Maxワークベンチ](../media/workbench.png)
@@ -28,7 +30,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **成果物は、実行できるコードと確認できる証拠です。** このproviderは現在、文書化された`rpm-kv-v1`メッセージプロトコルと選択したリセット境界を検査します。任意の拡張を自動復元するものではありません。boot IDは生の証拠に残し、比較では宣言済みの観測フィールドだけを除外します。メッセージreceiptは未観測のUI・ネットワーク・ファイル効果を証明しません。
 
-MCPは**21ツール**です。runtimeは既定で無効です。サーバー登録時に`--browser "/absolute/path/to/chromium"`を加えると`capture_feature`と`replay_feature`が使えます。それぞれ一時プロファイルで実行し、修正コードはホストエージェントが書きます。`read_source_evidence`はハッシュ確認済みのソース断片を返します。include/excludeとcoverageは採用・除外・未解析ファイルを明示し、TypeScript/JSXの意味解析はまだ提供しません。
+MCPでは**31のツール**を利用できます。ランタイムは既定で無効です。サーバー登録時に `--browser "/absolute/path/to/chromium"` を追加すると `capture_feature`、`replay_feature`、`run_recovery` が使えます。Chromiumは専用の一時プロファイルで動作し、修正コードはホストエージェントが書きます。`reconcile_runtime` は、検査したMV3拡張機能と同じMCPセッションでキャプチャした対象のSHA-256が一致する場合に、サービスワーカーのメッセージチャネルを照合します。曖昧なチャネルや対応付けられなかったイベントも結果に残します。`read_source_evidence` はハッシュを再確認してから、範囲を限定したソースコードを返します。読み込み済み、除外、未解析のファイルが分かります。TypeScriptとJSXの意味解析は未対応です。
 
 [復元手順と制限・英語](../RECOVERY.md) · [バージョン別検証](../VALIDATION.md)。`shrink`は各試行を期限付きの新しい子プロセスで実行します。外部状態のリセットはoracleの`reset()`が担当します。新しいプロファイルや子プロセスはOS・ネットワークのサンドボックスではありません。
 
@@ -58,7 +60,22 @@ Codexではスキルを選択するか、同じ依頼の先頭に`$rea-pro-max`�
 
 ## 一つのツールキット。三つの始め方。
 
-**v0.4は21ツールのローカルMCP**、任意設定の実Chromium capture/replay、ハッシュ確認済みソース断片を提供します。スキルは実行可能な実装の納品を導き、CLIは同じカーネルを使います。利用時のnpmインストールは不要です。
+**v0.7では、CLIとローカルMCPにオフラインのリリース検査が加わりました。** スキルはエージェントが動く実装を引き渡せるよう、作業を案内します。ツールの実行時にnpmパッケージを追加でインストールする必要はありません。
+
+- CLIの `compare` とMCPの `compare_artifacts` は、2つのビルドのファイルツリーをSHA-256で照合します。追加、削除、変更されたファイルと、読み取り上限内で検証したZIPエントリの内容差分を記録します。
+- `api-diff` と `compare_api_contract` は、OpenAPI JSONに定義されたHTTPメソッドとパステンプレートを、保存済みHARのリクエストと照合します。観測済み、未観測、判定が曖昧な操作を示します。HARのオリジン、実際のパス値、クエリ、ヘッダー、本文は出力に含めません。
+- Intel HEXのレコードごとのチェックサムと完全性を確認します。基本的なUF2については、ブロックの構造、アドレス範囲、シーケンスを検証します。確認した領域やブロックのSHA-256と、検査対象外となった範囲を報告します。
+- `wasm-inspect` は、WebAssemblyモジュールの公開インポートとエクスポートの宣言を読み取ります。`wasm-diff` は、2つのモジュールの宣言名、種別、対応する型を比較します。`playwright-trace` は、保存済みのPlaywright v10トレースに記録された操作を要約します。
+
+[対応範囲とREA 6.9との照合結果（英語）](../REA-6.9.md)
+
+### ソースのチェックアウトからリリース検査を実行
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs release-check skills/rea-pro-max/assets/labs/release/policy.json
+```
+
+CLIの `release-check` とMCPの `check_release` は、同じポリシーを適用します。許可リストに明記したファイル変更、内容の一致を確認したZIPの再パッケージ、Wasmの公開ABI、指定したオリジンに絞ったHARの必須HTTP観測項目をまとめて確認します。ポリシーでPlaywright v10の操作記録も必須にできます。`pass`、`fail`、`unknown` の判定は、指定されたポリシーと証拠の範囲に限られます。 [リリース検査ガイド（英語）](../RELEASE-CHECK.md)
 
 ### Claude CodeまたはCodexへMCPを接続
 
@@ -107,6 +124,7 @@ Claude Codeでは`/rea-pro-max`、Codexではスキル選択または`$rea-pro-m
 | `record_observation` | 出典・authority・bindingsを保った観測を記録。 |
 | `rank_probes` | 許可された実験を順位付け。実験自体は実行しない。 |
 | `verify_behavior` | 有限の契約に従ってreceiptファイルを比較。 |
+| `check_release` | ローカルの証拠に基づく、宣言済みリリース条件の検査。 |
 | `export_artifact` | 新しいワークスペースファイルにJSONまたは独立HTMLを出力。 |
 | `run_owned_lab` | 同梱の自作workerによる制御モデルだけを実行。 |
 | `list_task_prompts` | 36テンプレートを系統別にページ表示。 |
@@ -226,4 +244,4 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
 
 `assets/recovery-web/`はネットワークを使わない所有fixtureです。遅延応答、latest-winsキャンセル、NFKC Unicode、空/エラー状態、localStorage、キーボードfocus、responsive markupをreference、意図的に壊したstarter、独立実装recoveredで確認できます。詳細は[WEB-RECOVERY.md](../WEB-RECOVERY.md)を参照してください。
 
-Craft Anythingは任意のproviderであり必須依存ではありません。Adapterは`js_app_map`、`web_site_capture`、`app_graphs_compare`の型付きaliasだけを呼び、MCP handshake、固定version/commit、tool一覧、パス、時間/バイト制限、cleanupを確認します。commitを提示できないbinaryは拒否されます。Craftを自動インストールせず、コードやbrandingも同梱しません。[PROVIDERS.md](../PROVIDERS.md)をご覧ください。
+Craft Anythingはオプションのプロバイダーです。利用するには、運用者がMCPサーバーの起動時に `--craft-config /absolute/path/to/craft-launcher.json` を指定します。アダプターは、固定したバージョンとコミット、MCPのハンドシェイク、ツール一覧、パス、時間とバイト数の上限、プロセスの後処理を確認します。対象の操作は `js_app_map`、`web_site_capture`、`app_graphs_compare` です。有効にする前にCraftを別途インストールしてください。[プロバイダーの利用ガイド（英語）](../PROVIDERS.md)。

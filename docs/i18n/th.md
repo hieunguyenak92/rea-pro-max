@@ -8,6 +8,8 @@
 
 [สำรวจแล็บที่บันทึกไว้](https://hieunguyenak92.github.io/rea-pro-max/#explorer) · [ติดตั้งสกิล](../INSTALL.md) · [บันทึกการตรวจสอบ](../VALIDATION.md) · [รุ่นที่เผยแพร่](https://github.com/hieunguyenak92/rea-pro-max/releases)
 
+**v0.8 ตรวจพบว่าบิลด์ใหม่เลิกรองรับสภาพแวดล้อมใดบ้าง** ใช้ `target-diff` เปรียบเทียบไฟล์ Mach-O สองไฟล์หรือไฟล์คลาส Java สองไฟล์ เพื่อดูสถาปัตยกรรมที่หายไป เวอร์ชันระบบขั้นต่ำที่สูงขึ้น หรือข้อกำหนดฟีเจอร์พรีวิวของ Java ที่เปลี่ยนไป ในตัวอย่าง CI อนุญาตให้แก้ไฟล์ แต่ยังตรวจพบและปฏิเสธการเพิ่มเวอร์ชันขั้นต่ำจาก Java 11 เป็น 17 เครื่องมืออ่านข้อมูลที่ประกาศไว้โดยไม่รันโปรแกรม และคืนค่า `unknown` เมื่อข้อมูลไม่เพียงพอ [ตัวอย่างและวิธีตรวจสอบซ้ำภาษาอังกฤษ](../NATIVE-TARGETS.md)
+
 ![REA Pro Max — Understand the mechanism](../media/hero.png)
 
 ![เวิร์กเบนช์ REA Pro Max จริงจากแล็บสังเคราะห์ของโครงการ](../media/workbench.png)
@@ -28,7 +30,7 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs recovery replay --reference ./re
 
 **ผลลัพธ์คือโค้ดที่รันได้และหลักฐานที่ตรวจสอบได้** provider นี้ตรวจเฉพาะโปรโตคอลข้อความ `rpm-kv-v1` ที่ระบุไว้และขอบเขต reset ที่เลือก ยังไม่สร้างส่วนขยายทุกชนิดกลับมาอัตโนมัติ boot ID ยังคงอยู่ในหลักฐานดิบ มีเพียงฟิลด์สังเกตที่ประกาศนี้เท่านั้นที่ถูกตัดออกจากการเปรียบเทียบ receipt ข้อความไม่ยืนยันผลข้างเคียง UI เครือข่าย หรือไฟล์ที่ไม่ได้สังเกต
 
-MCP มี **21 เครื่องมือ** runtime ปิดตามค่าเริ่มต้น เพิ่ม `--browser "/absolute/path/to/chromium"` ตอนลงทะเบียนเซิร์ฟเวอร์เพื่อเปิด `capture_feature` และ `replay_feature` ซึ่งใช้โปรไฟล์ชั่วคราวแยกกัน เอเจนต์ของ host ยังเป็นผู้แก้โค้ด `read_source_evidence` อ่านส่วนซอร์สขนาดจำกัดพร้อมตรวจ hash ส่วน include/exclude และ coverage ระบุไฟล์ที่รับเข้า ตัดออก และยังไม่ parse ชัดเจน ยังไม่รองรับการวิเคราะห์ความหมาย TypeScript/JSX
+MCP มี **31 เครื่องมือ** เปิดการบันทึกและเล่นซ้ำใน Chromium ด้วย `--browser "/absolute/path/to/chromium"` ตอนเริ่มเซิร์ฟเวอร์ แต่ละรอบใช้โปรไฟล์ชั่วคราวแยกกัน `reconcile_runtime` เชื่อมช่องทางข้อความของ MV3 worker กับเหตุการณ์จากอาร์ติแฟกต์ที่มีค่าแฮชตรงกัน และเก็บกรณีที่กำกวมไว้ `read_source_evidence` อ่านส่วนของซอร์สในขนาดที่จำกัดพร้อมตรวจแฮช ส่วน `include`, `exclude` และ `coverage` แสดงไฟล์ที่รับเข้า ตัดออก หรือยังไม่ได้วิเคราะห์
 
 [ขั้นตอน recovery และข้อจำกัด — อังกฤษ](../RECOVERY.md) · [การตรวจสอบตามเวอร์ชัน](../VALIDATION.md) `shrink` รัน oracle ใน child process ใหม่ทุกครั้งพร้อม deadline ส่วน `reset()` ของ oracle รับผิดชอบสถานะภายนอก โปรไฟล์ใหม่และ child process ไม่ใช่ sandbox ของระบบปฏิบัติการหรือเครือข่าย
 
@@ -58,7 +60,25 @@ REA Pro Max นำคำถามเหล่านี้มาอยู่ใ�
 
 ## เครื่องมือชุดเดียว เริ่มต้นได้สามทาง
 
-**v0.4 ให้ MCP ในเครื่อง 21 เครื่องมือ** เพิ่ม capture/replay บน Chromium จริงแบบเลือกเปิด และส่วนซอร์สที่ตรวจ hash สกิลช่วยให้เอเจนต์ส่งมอบ implementation ที่รันได้ CLI ใช้เคอร์เนลเดียวกันและไม่ต้องติดตั้ง npm เพื่อใช้งาน
+**v0.8.0 มีเครื่องมือ MCP ในเครื่อง 31 รายการ** สำหรับเปรียบเทียบผลบิลด์ วัดความครอบคลุมของ API ตรวจเฟิร์มแวร์ และตรวจรุ่นก่อนเผยแพร่แบบออฟไลน์ สกิลช่วยให้เอเจนต์สร้างโค้ดที่รันได้ CLI ใช้แกนเดียวกันและทำงานได้โดยไม่ต้องติดตั้งแพ็กเกจ npm
+
+- `compare` ใน CLI และ `compare_artifacts` ใน MCP เปรียบเทียบไฟล์สองไฟล์หรือโครงสร้างไดเรกทอรีสองชุดด้วย SHA-256 สำหรับ ZIP ที่รองรับ ผลลัพธ์จะแสดงการเปลี่ยนแปลงของเนื้อหาไฟล์ที่ตรวจสอบได้ และแยกการจัดแพ็กเกจใหม่ออกจากการแก้เนื้อหาไฟล์
+- `api-diff` และ `compare_api_contract` จับคู่เมธอดและเส้นทางจาก OpenAPI JSON กับคำขอใน HAR ที่บันทึกไว้ ความครอบคลุมจำกัดอยู่ที่ข้อมูลชุดนั้น ผลลัพธ์จะละเนื้อหาคำขอ ส่วนหัว และพารามิเตอร์คิวรี
+- การตรวจแบบสแตติกตรวจสอบเรคคอร์ดและเช็กซัมของ Intel HEX รวมทั้งโครงสร้างและช่วงของบล็อก UF2 แบบพื้นฐาน ผลลัพธ์ระบุขีดจำกัดและส่วนที่ตรวจสอบได้ไม่ครบ
+
+[คู่มือขอบเขตที่รองรับและความเกี่ยวข้องกับ REA 6.9.0 (ภาษาอังกฤษ)](../REA-6.9.md)
+
+### ตรวจรุ่นก่อนเผยแพร่แบบออฟไลน์
+
+`release-check` ใน CLI และ `check_release` ใน MCP ใช้นโยบาย JSON ตรวจไดเรกทอรีบิลด์สองชุดในครั้งเดียว โดยตรวจการเปลี่ยนแปลงไฟล์ที่อนุญาตตามพาธและประเภท การจัดแพ็ก ZIP ใหม่พร้อมตรวจสอบเนื้อหา ABI สาธารณะที่ประกาศในโมดูล WebAssembly ผล HTTP ที่ต้องพบใน HAR จาก origin ที่ระบุ และการกระทำจาก trace Playwright v10 ที่บันทึกไว้หากเลือกใช้
+
+รันนโยบายตัวอย่างจากโฟลเดอร์รากของรีโพซิทอรี
+
+```sh
+node skills/rea-pro-max/scripts/rea-pro-max.mjs release-check skills/rea-pro-max/assets/labs/release/policy.json
+```
+
+รายงานให้ผล `pass`, `fail` หรือ `unknown` ตามกฎและหลักฐานที่ป้อน หากต้องการตรวจรายละเอียดแยกกัน ให้ใช้ `wasm-inspect`, `wasm-diff` หรือ `playwright-trace` [คู่มือตรวจรุ่นก่อนเผยแพร่ (ภาษาอังกฤษ)](../RELEASE-CHECK.md)
 
 ### เชื่อม MCP กับ Claude Code หรือ Codex
 
@@ -98,6 +118,11 @@ node /absolute/path/to/rea-pro-max/skills/rea-pro-max/scripts/mcp-server.mjs --w
 | --- | --- |
 | `get_capabilities` | ดูเวอร์ชัน workspace ขอบเขต ขีดจำกัด และนโยบายการรัน |
 | `inspect_artifact` | วิเคราะห์เป้าหมายในขอบเขตแบบสแตติกและเก็บผลเต็มไว้ผ่าน handle |
+| `compare_artifacts` | เปรียบเทียบไฟล์หรือโครงสร้างไดเรกทอรีในเครื่อง พร้อมเนื้อหา ZIP ที่ตรวจสอบได้ |
+| `compare_api_contract` | จับคู่เมธอดและเส้นทางจาก OpenAPI JSON กับคำขอใน HAR ที่บันทึกไว้ |
+| `check_release` | ตรวจบิลด์ในเครื่องสองชุดและหลักฐาน QA ตามนโยบายที่ระบุ |
+| `inspect_wasm_interface` / `compare_wasm_interfaces` | ตรวจหรือเปรียบเทียบ ABI สาธารณะที่ประกาศในโมดูล WebAssembly ที่รองรับ |
+| `inspect_playwright_trace` | อ่าน trace Playwright v10 ที่บันทึกไว้และไฟล์เครือข่ายถ้ามี โดยแสดงเฉพาะเมทาดาทา |
 | `read_artifact` | อ่านส่วนหรือหน้าที่ต้องการโดยไม่ส่งกราฟทั้งหมดซ้ำ |
 | `read_source_evidence` | อ่านส่วนซอร์สขนาดจำกัดตามหลักฐานพร้อมตรวจ hash |
 | `capture_feature` | เก็บสถานการณ์ MV3 ใน Chromium จริงเมื่อเปิด runtime |
@@ -226,4 +251,4 @@ node skills/rea-pro-max/scripts/rea-pro-max.mjs web replay \
 
 `assets/recovery-web/` เป็น fixture ของเราเองที่ไม่ใช้เครือข่าย มี reference, starter ที่ตั้งใจใส่ข้อผิดพลาด และ recovered ที่เขียนแยกกัน ครอบคลุม delayed response, การยกเลิกแบบ latest-wins, Unicode NFKC, สถานะว่าง/ผิดพลาด, localStorage, keyboard focus และ responsive markup อ่าน [WEB-RECOVERY.md](../WEB-RECOVERY.md)
 
-Craft Anything เป็น provider เสริมและไม่ใช่ dependency ตัว adapter เรียกเฉพาะ alias แบบมีชนิด `js_app_map`, `web_site_capture`, `app_graphs_compare` พร้อมตรวจ MCP handshake, version/commit ที่ pin ไว้, รายการเครื่องมือ, path, ขีดจำกัดเวลา/ไบต์ และ cleanup binary ที่พิสูจน์ commit ไม่ได้จะถูกปฏิเสธ ไม่มีการติดตั้ง Craft อัตโนมัติและไม่รวมโค้ดหรือแบรนด์ของ Craft ดู [PROVIDERS.md](../PROVIDERS.md)
+หากต้องการใช้ Craft Anything ให้เริ่มเซิร์ฟเวอร์ด้วย `--craft-config FILE` และให้ผู้ดูแลกำหนดโปรแกรมที่จะเรียกใช้ อะแดปเตอร์ตรวจ MCP handshake เวอร์ชันและ commit รายการเครื่องมือที่ประกาศ รวมถึงขีดจำกัดของพาธ เวลา และจำนวนไบต์ เครื่องมือเรียกได้เฉพาะ `js_app_map`, `web_site_capture` และ `app_graphs_compare` อ่าน [คู่มือผู้ให้บริการ (ภาษาอังกฤษ)](../PROVIDERS.md)

@@ -1,0 +1,9 @@
+{"type":"context-options","version":10,"origin":"library","browserName":"chromium","monotonicTime":1000}
+{"type":"before","callId":"call@0","startTime":1001,"class":"Frame","method":"goto"}
+{"type":"after","callId":"call@0","endTime":1004}
+{"type":"before","callId":"call@1","startTime":1006,"class":"Frame","method":"click"}
+{"type":"after","callId":"call@1","endTime":1009}
+{"type":"before","callId":"call@2","startTime":1011,"class":"Frame","method":"waitForSelector"}
+{"type":"after","callId":"call@2","endTime":1014}
+{"type":"before","callId":"call@3","startTime":1016,"class":"Frame","method":"textContent"}
+{"type":"after","callId":"call@3","endTime":1019}

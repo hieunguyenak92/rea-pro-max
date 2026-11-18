@@ -17,14 +17,21 @@ if (mode === 'large') { process.stdout.write('x'.repeat(5000)); setTimeout(() =>
 const server = { name: 'craft-anything', version: mode === 'drift' ? '0.5.0' : '0.4.0', commit: '${CRAFT_ANYTHING_MANIFEST.commit}' };
 const tools = [{ name: 'js_app_map' }, { name: 'web_site_capture' }, { name: 'app_graphs_compare' }];
 const line = readline.createInterface({ input: process.stdin });
-line.on('line', raw => {
+let stage = 0;
+line.on('line', async raw => {
   let request; try { request = JSON.parse(raw); } catch { return; }
   if (mode === 'timeout') return;
   if (request.method === 'initialize') {
+    await new Promise(resolve => setTimeout(resolve, 10));
+    stage = 1;
     process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, result: { protocolVersion: '${MCP_PROTOCOL_VERSION}', capabilities: { tools: {} }, serverInfo: server } }) + '\\n');
   } else if (request.method === 'tools/list') {
+    if (stage !== 1) return;
+    await new Promise(resolve => setTimeout(resolve, 10));
+    stage = 2;
     process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, result: { tools } }) + '\\n');
   } else if (request.method === 'tools/call') {
+    if (stage !== 2) return;
     if (mode === 'provider-error') process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, result: { isError: true, content: [{ type: 'text', text: 'fixture failure' }] } }) + '\\n');
     else process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, result: { structuredContent: { ok: true, tool: request.params.name, input: request.params.arguments } } }) + '\\n');
     if (mode !== 'hang') process.stdin.pause();

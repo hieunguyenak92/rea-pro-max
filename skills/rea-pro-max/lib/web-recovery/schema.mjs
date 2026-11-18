@@ -321,13 +321,16 @@ export function captureToWebIR(capture, options = {}) {
   });
   const observations = cases.map((item, index) => {
     const output = own(item, 'output') ? item.output : null;
+    const domSummary = object(output) && own(output, 'screenshot_sha256')
+      ? Object.fromEntries(Object.entries(output).filter(([key]) => key !== 'screenshot_sha256'))
+      : output;
     const state = own(item, 'state') ? item.state : null;
     const effects = own(item, 'effects') ? item.effects : [];
     const screenshot = item.screenshot_sha256 ?? item.output?.screenshot_sha256 ?? capture.screenshot_sha256 ?? options.screenshot_sha256;
     return {
       id: item.id ?? `observation-${index + 1}`,
       action_id: item.id ?? actions[index]?.id,
-      dom: { summary: output },
+      dom: { summary: domSummary },
       network: { summary: effects },
       storage: { summary: state },
       ...(screenshot === undefined ? {} : { visual: { artifact_hash: screenshot } }),
